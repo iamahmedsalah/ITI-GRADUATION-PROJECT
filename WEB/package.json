@@ -1,0 +1,31 @@
+{
+  "name": "ilma-mvp",
+  "version": "1.0.0",
+  "description": "ILMA is a modern, AI-powered recommendation system website for Software Engineering (SWE) courses designed specifically for Arabic-speaking users. The platform personalizes course recommendations based on user behavior, skill level, and learning goals.",
+  "license": "ISC",
+  "author": "ITI-ALEX-TEAM-",
+  "type": "module",
+  "main": "backend/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cross-env NODE_ENV=production node backend/server.js",
+    "dev": "cross-env  NODE_ENV=development nodemon backend/server.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.6.2",
+    "morgan": "^1.10.1",
+    "nodemailer": "^8.0.7",
+    "winston": "^3.19.0"
+  }
+}
