@@ -13,6 +13,8 @@ dotenv.config({ path: [".env", ".env.local"] });
 import dbConfig from "./config/database.js";
 import logger from "./utils/logger.js";
 import authRoutes from "./routes/auth.route.js";
+import roadmapsRoutes from "./routes/roadmaps.route.js";
+import coursesRoutes from "./routes/courses.route.js";
 
 
 // Set DNS overrides
@@ -131,6 +133,12 @@ app.get("/", (_req, res) => {
 
 // Auth Routes
 app.use("/api/auth", authRoutes);
+
+// Roadmaps Routes (Templates + User assignments)
+app.use("/api/roadmaps", roadmapsRoutes);
+
+// Courses Routes
+app.use("/api/courses", coursesRoutes);
 
 // Error handler
 app.use((err, req, res, _next) => {
