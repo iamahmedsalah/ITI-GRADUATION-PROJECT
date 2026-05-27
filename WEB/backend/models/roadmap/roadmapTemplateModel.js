@@ -1,0 +1,147 @@
+import mongoose from "mongoose";
+
+const roadmapStepSchema = new mongoose.Schema(
+  {
+    stepKey: {
+      type: String,
+      required: [true, "Please add a step key"],
+      trim: true,
+    },
+    title: {
+      type: String,
+      required: [true, "Please add a step title"],
+      trim: true,
+      maxlength: [120, "Step title must be at most 120 characters"],
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [1000, "Step description must be at most 1000 characters"],
+    },
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+    resources: [
+      {
+        title: { type: String, trim: true, maxlength: [120, "Resource title must be at most 120 characters"] },
+        url: { type: String, trim: true },
+      },
+    ],
+    order: {
+      type: Number,
+      required: [true, "Please add a step order"],
+      min: 0,
+    },
+    estimatedMinutes: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    required: {
+      type: Boolean,
+      default: true,
+    },
+    dependsOn: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+  },
+  { _id: false }
+);
+
+const roadmapTemplateSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: [true, "Please add a roadmap title"],
+      trim: true,
+      maxlength: [150, "Roadmap title must be at most 150 characters"],
+      index: true,
+    },
+    slug: {
+      type: String,
+      required: [true, "Please add a roadmap slug"],
+      trim: true,
+      lowercase: true,
+      unique: true,
+      index: true,
+    },
+    goal: {
+      type: String,
+      required: [true, "Please add a roadmap goal"],
+      trim: true,
+      maxlength: [300, "Roadmap goal must be at most 300 characters"],
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [2000, "Roadmap description must be at most 2000 characters"],
+    },
+    targetRole: {
+      type: String,
+      enum: ["student", "instructor", "admin", "jobSeeker", "careerSwitcher"],
+      default: "student",
+      index: true,
+    },
+    targetLevel: {
+      type: String,
+      enum: ["beginner", "intermediate", "advanced"],
+      default: "beginner",
+      index: true,
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+    steps: {
+      type: [roadmapStepSchema],
+      validate: {
+        validator: (steps) => Array.isArray(steps) && steps.length > 0,
+        message: "A roadmap must contain at least one step.",
+      },
+      default: [],
+    },
+    estimatedTotalMinutes: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    source: {
+      type: String,
+      enum: ["admin", "ai", "manual"],
+      default: "manual",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
+
+roadmapTemplateSchema.pre("save", function () {
+  if (Array.isArray(this.steps)) {
+    this.steps.sort((left, right) => left.order - right.order);
+  }
+});
+
+roadmapTemplateSchema.set("toJSON", {
+  transform: function (doc, ret) {
+    delete ret.__v;
+    return ret;
+  },
+});
+
+const RoadmapTemplate = mongoose.model("RoadmapTemplate", roadmapTemplateSchema);
+
+export default RoadmapTemplate;
