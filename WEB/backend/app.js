@@ -160,7 +160,9 @@ app.get("/", (_req, res) => {
   });
 });
 
-
+app.get("/api/docs", (_req, res) => {
+  res.redirect("/api/docs/index.html");
+});
 
 app.get("/api/docs/index.html", (_req, res) => {
   res.type("text/html").send(swaggerHtml);
