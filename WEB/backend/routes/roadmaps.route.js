@@ -45,6 +45,23 @@ const router = express.Router();
  *         schema:
  *           type: string
  *           maxLength: 100
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *       - in: query
+ *         name: targetLevel
+ *         schema:
+ *           type: string
+ *           enum: [beginner, intermediate, advanced]
+ *       - in: query
+ *         name: targetRole
+ *         schema:
+ *           type: string
+ *           enum: [student, instructor, admin, jobSeeker, careerSwitcher]
  */
 router.get("/search", searchRoadmapsAndTopics);
 /**
@@ -53,6 +70,30 @@ router.get("/search", searchRoadmapsAndTopics);
  *   get:
  *     tags: [Roadmaps]
  *     summary: List all roadmap templates
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *       - in: query
+ *         name: targetLevel
+ *         schema:
+ *           type: string
+ *           enum: [beginner, intermediate, advanced]
+ *       - in: query
+ *         name: targetRole
+ *         schema:
+ *           type: string
+ *           enum: [student, instructor, admin, jobSeeker, careerSwitcher]
  */
 router.get("/templates", getAllRoadmapTemplates);
 /**
@@ -123,6 +164,29 @@ router.use(protect);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateRoadmapTemplateRequest'
+ *           example:
+ *             title: Full Stack Web Development 2024
+ *             slug: fullstack-webdev-2024
+ *             goal: Become a full-stack web developer
+ *             description: Complete roadmap for mastering full-stack development
+ *             targetRole: student
+ *             targetLevel: beginner
+ *             tags: [web, fullstack]
+ *             isActive: true
+ *             contentFormat: json
+ *             estimatedTotalMinutes: 300
+ *             steps:
+ *               - stepKey: html-css
+ *                 title: HTML & CSS Fundamentals
+ *                 order: 1
+ *                 estimatedMinutes: 60
+ *                 required: true
+ *               - stepKey: javascript
+ *                 title: JavaScript Programming
+ *                 order: 2
+ *                 estimatedMinutes: 90
+ *                 required: true
+ *                 dependsOn: [html-css]
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -155,6 +219,10 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateRoadmapTemplateRequest'
+ *           example:
+ *             title: Updated Roadmap Title
+ *             description: Updated description
+ *             isActive: true
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -260,6 +328,13 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/RoadmapStepInput'
+ *           example:
+ *             stepKey: api-design
+ *             title: API Design Fundamentals
+ *             order: 5
+ *             estimatedMinutes: 75
+ *             required: false
+ *             dependsOn: [nodejs]
  */
 router.post(
   "/templates/:templateId/steps",
@@ -314,6 +389,10 @@ router.use(authorizeRoles("student"));
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AssignRoadmapRequest'
+ *           example:
+ *             templateId: 665f5019b8a4e3d9c8d41a11
+ *             notes: Starting this learning journey
+ *             targetDate: 2026-12-31T00:00:00.000Z
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -381,6 +460,12 @@ router.get("/:roadmapId", getRoadmapProgress);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateRoadmapStepProgressRequest'
+ *           example:
+ *             status: completed
+ *             score: 95
+ *             timeSpentMinutes: 60
+ *             attempts: 1
+ *             notes: Completed successfully
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'

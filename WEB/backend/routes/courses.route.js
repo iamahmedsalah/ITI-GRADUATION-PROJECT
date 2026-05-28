@@ -40,6 +40,9 @@ router.use(authorizeRoles("student"));
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/EnrollCourseRequest'
+ *           example:
+ *             courseId: 665f4f10b8a4e3d9c8d41a10
+ *             roadmapId: 665f5019b8a4e3d9c8d41a11
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -61,6 +64,12 @@ router.post(
  *     summary: Get courses for authenticated student
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [notStarted, inProgress, completed, abandoned]
  */
 router.get("/", getUserCourses);
 
@@ -103,6 +112,11 @@ router.get("/:courseId", validateUserEnrollment, getCourseProgress);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateCourseProgressRequest'
+ *           example:
+ *             lessonId: lesson-1
+ *             watchedMinutes: 30
+ *             isComplete: true
+ *             notes: Lesson completed
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -158,6 +172,9 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/RateCourseRequest'
+ *           example:
+ *             rating: 5
+ *             notes: Excellent course, learned a lot
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'

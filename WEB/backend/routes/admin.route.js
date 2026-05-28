@@ -68,6 +68,9 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AuthLoginRequest'
+ *           example:
+ *             identifier: admin@test.com
+ *             password: Password@123
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -85,6 +88,8 @@ router.post("/auth/login", loginLimiter, loginValidation, adminLogin);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AuthVerifyEmailRequest'
+ *           example:
+ *             code: "123456"
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -102,6 +107,8 @@ router.post("/auth/verify-email", verifyEmailValidation, adminVerifyEmail);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *           example:
+ *             email: admin@example.com
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -131,6 +138,8 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *           example:
+ *             password: NewPassword@123
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -261,6 +270,17 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AdminUpdateUserRequest'
+ *           examples:
+ *             promoteInstructor:
+ *               summary: Promote and verify user
+ *               value:
+ *                 role: instructor
+ *                 isVerified: true
+ *             deactivateUser:
+ *               summary: Deactivate user with reason
+ *               value:
+ *                 isActive: false
+ *                 deactivationReason: Policy verify
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -335,6 +355,29 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateRoadmapTemplateRequest'
+ *           example:
+ *             title: Full Stack Web Development 2024
+ *             slug: fullstack-webdev-2024
+ *             goal: Become a full-stack web developer
+ *             description: Complete roadmap for mastering full-stack development
+ *             targetRole: student
+ *             targetLevel: beginner
+ *             tags: [web, fullstack]
+ *             isActive: true
+ *             contentFormat: json
+ *             estimatedTotalMinutes: 300
+ *             steps:
+ *               - stepKey: html-css
+ *                 title: HTML & CSS Fundamentals
+ *                 order: 1
+ *                 estimatedMinutes: 60
+ *                 required: true
+ *               - stepKey: javascript
+ *                 title: JavaScript Programming
+ *                 order: 2
+ *                 estimatedMinutes: 90
+ *                 required: true
+ *                 dependsOn: [html-css]
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -386,6 +429,10 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateRoadmapTemplateRequest'
+ *           example:
+ *             title: Updated Roadmap Title
+ *             description: Updated description
+ *             isActive: true
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -523,6 +570,36 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AdminCreateCourseRequest'
+ *           example:
+ *             title: React Advanced Patterns
+ *             slug: react-advanced-patterns
+ *             description: Master advanced React patterns and best practices for production applications
+ *             shortDescription: Advanced React patterns for professional developers
+ *             level: advanced
+ *             category: Web Development
+ *             isPublished: true
+ *             isFeatured: true
+ *             durationMinutes: 180
+ *             tags: [react, javascript, advanced]
+ *             prerequisites: [React basics, JavaScript ES6+]
+ *             learningOutcomes:
+ *               - Master advanced React patterns
+ *               - Build scalable applications
+ *               - Optimize performance
+ *             sections:
+ *               - sectionKey: hooks-patterns
+ *                 title: Advanced Hooks Patterns
+ *                 order: 1
+ *                 lessons:
+ *                   - lessonKey: custom-hooks
+ *                     title: Creating Custom Hooks
+ *                     durationMinutes: 45
+ *                     isPreview: false
+ *                     order: 1
+ *                   - lessonKey: hook-composition
+ *                     title: Hook Composition Patterns
+ *                     durationMinutes: 60
+ *                     order: 2
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -574,6 +651,17 @@ router.get(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AdminUpdateCourseRequest'
+ *           examples:
+ *             basicUpdate:
+ *               summary: Update title and publish flags
+ *               value:
+ *                 title: Updated Course Title
+ *                 isPublished: true
+ *                 isFeatured: true
+ *             assignInstructor:
+ *               summary: Assign instructor to course
+ *               value:
+ *                 instructor: 665f4f10b8a4e3d9c8d41a10
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'

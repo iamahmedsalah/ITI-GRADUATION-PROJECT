@@ -35,6 +35,12 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AuthSignupRequest'
+ *           example:
+ *             username: student_test
+ *             Fname: Test
+ *             Lname: Student
+ *             email: student_test@example.com
+ *             password: Password@123
  *     responses:
  *       201:
  *         description: User created successfully
@@ -54,6 +60,8 @@ router.post("/signup", signupValidation, signupUniquenessValidation, signup);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AuthVerifyEmailRequest'
+ *           example:
+ *             code: "123456"
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -71,6 +79,9 @@ router.post("/verify-email", verifyEmailValidation, verifyEmail);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AuthLoginRequest'
+ *           example:
+ *             identifier: student1@test.com
+ *             password: Password@123
  *     responses:
  *       200:
  *         description: Login successful
@@ -90,6 +101,8 @@ router.post("/login", loginLimiter, loginValidation, login);
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *           example:
+ *             email: student_test@example.com
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
@@ -119,6 +132,8 @@ router.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *           example:
+ *             password: NewPassword@123
  *     responses:
  *       400:
  *         $ref: '#/components/responses/ValidationError'
