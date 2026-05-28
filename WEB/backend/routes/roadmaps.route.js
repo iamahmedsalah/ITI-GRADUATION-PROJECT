@@ -39,6 +39,12 @@ const router = express.Router();
  *   get:
  *     tags: [Roadmaps]
  *     summary: Search roadmaps and roadmap topics
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *           maxLength: 100
  */
 router.get("/search", searchRoadmapsAndTopics);
 /**
@@ -74,7 +80,7 @@ router.get("/templates/by-slug/:slug", getRoadmapTemplateBySlug);
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get("/templates/:templateId", getRoadmapTemplate);
 /**
@@ -88,7 +94,7 @@ router.get("/templates/:templateId", getRoadmapTemplate);
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  *       - in: path
  *         name: stepKey
  *         required: true
@@ -111,6 +117,15 @@ router.use(protect);
  *     summary: Create a roadmap template (admin)
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateRoadmapTemplateRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/templates",
@@ -133,7 +148,16 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateRoadmapTemplateRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.put(
   "/templates/:templateId",
@@ -158,7 +182,7 @@ router.put(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.delete(
   "/templates/:templateId",
@@ -181,7 +205,7 @@ router.delete(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post(
   "/templates/:templateId/publish",
@@ -205,7 +229,7 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post(
   "/templates/:templateId/unpublish",
@@ -229,7 +253,13 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RoadmapStepInput'
  */
 router.post(
   "/templates/:templateId/steps",
@@ -252,7 +282,7 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  *       - in: path
  *         name: stepKey
  *         required: true
@@ -278,6 +308,15 @@ router.use(authorizeRoles("student"));
  *     summary: Assign a roadmap template to authenticated student
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AssignRoadmapRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/assign",
@@ -312,7 +351,7 @@ router.get("/", getUserRoadmaps);
  *         name: roadmapId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get("/:roadmapId", getRoadmapProgress);
 
@@ -330,12 +369,21 @@ router.get("/:roadmapId", getRoadmapProgress);
  *         name: roadmapId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  *       - in: path
  *         name: stepKey
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateRoadmapStepProgressRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.put(
   "/:roadmapId/steps/:stepKey/progress",

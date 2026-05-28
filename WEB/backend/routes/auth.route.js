@@ -29,9 +29,17 @@ const router = express.Router();
  *   post:
  *     tags: [Auth]
  *     summary: Create a user account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthSignupRequest'
  *     responses:
  *       201:
  *         description: User created successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/signup", signupValidation, signupUniquenessValidation, signup);
 /**
@@ -40,6 +48,15 @@ router.post("/signup", signupValidation, signupUniquenessValidation, signup);
  *   post:
  *     tags: [Auth]
  *     summary: Verify a user email address
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthVerifyEmailRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/verify-email", verifyEmailValidation, verifyEmail);
 /**
@@ -48,9 +65,17 @@ router.post("/verify-email", verifyEmailValidation, verifyEmail);
  *   post:
  *     tags: [Auth]
  *     summary: Login a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthLoginRequest'
  *     responses:
  *       200:
  *         description: Login successful
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/login", loginLimiter, loginValidation, login);
 /**
@@ -59,6 +84,15 @@ router.post("/login", loginLimiter, loginValidation, login);
  *   post:
  *     tags: [Auth]
  *     summary: Request a password reset link
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/forgot-password",
@@ -78,6 +112,16 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *           pattern: "^[a-fA-F0-9]{40}$"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
 

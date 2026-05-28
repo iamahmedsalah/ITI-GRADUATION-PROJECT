@@ -62,6 +62,15 @@ const router = express.Router();
  *   post:
  *     tags: [Admin Auth]
  *     summary: Login an admin user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthLoginRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/auth/login", loginLimiter, loginValidation, adminLogin);
 /**
@@ -70,6 +79,15 @@ router.post("/auth/login", loginLimiter, loginValidation, adminLogin);
  *   post:
  *     tags: [Admin Auth]
  *     summary: Verify admin email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthVerifyEmailRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/auth/verify-email", verifyEmailValidation, adminVerifyEmail);
 /**
@@ -78,6 +96,15 @@ router.post("/auth/verify-email", verifyEmailValidation, adminVerifyEmail);
  *   post:
  *     tags: [Admin Auth]
  *     summary: Request admin password reset
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/auth/forgot-password",
@@ -97,6 +124,16 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
+ *           pattern: "^[a-fA-F0-9]{40}$"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResetPasswordRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/auth/reset-password/:token",
@@ -147,6 +184,40 @@ router.get("/overview", adminListLimiter, getAdminOverview);
  *     summary: List users for admin
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *           maxLength: 100
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [student, instructor, admin]
+ *       - in: query
+ *         name: isVerified
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
  */
 router.get("/users", adminListLimiter, adminUsersListValidation, getAdminUsers);
 /**
@@ -162,7 +233,7 @@ router.get("/users", adminListLimiter, adminUsersListValidation, getAdminUsers);
  *         name: userId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get(
   "/users/:userId",
@@ -183,7 +254,16 @@ router.get(
  *         name: userId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AdminUpdateUserRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.patch(
   "/users/:userId",
@@ -200,6 +280,40 @@ router.patch(
  *     summary: List roadmap templates for admin
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *           maxLength: 100
+ *       - in: query
+ *         name: targetRole
+ *         schema:
+ *           type: string
+ *           enum: [student, instructor, admin, jobSeeker, careerSwitcher]
+ *       - in: query
+ *         name: targetLevel
+ *         schema:
+ *           type: string
+ *           enum: [beginner, intermediate, advanced]
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
  */
 router.get(
   "/roadmaps",
@@ -215,6 +329,15 @@ router.get(
  *     summary: Create roadmap template
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateRoadmapTemplateRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/roadmaps/templates",
@@ -235,7 +358,7 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get(
   "/roadmaps/:templateId",
@@ -256,7 +379,16 @@ router.get(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateRoadmapTemplateRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.patch(
   "/roadmaps/:templateId",
@@ -277,7 +409,7 @@ router.patch(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.delete(
   "/roadmaps/:templateId",
@@ -298,7 +430,7 @@ router.delete(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post(
   "/roadmaps/:templateId/publish",
@@ -319,7 +451,7 @@ router.post(
  *         name: templateId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post(
   "/roadmaps/:templateId/unpublish",
@@ -336,6 +468,40 @@ router.post(
  *     summary: List courses for admin
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *           maxLength: 100
+ *       - in: query
+ *         name: level
+ *         schema:
+ *           type: string
+ *           enum: [beginner, intermediate, advanced]
+ *       - in: query
+ *         name: isPublished
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *       - in: query
+ *         name: isFeatured
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
  */
 router.get(
   "/courses",
@@ -351,6 +517,15 @@ router.get(
  *     summary: Create a course as admin
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AdminCreateCourseRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/courses",
@@ -371,7 +546,7 @@ router.post(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get(
   "/courses/:courseId",
@@ -392,7 +567,16 @@ router.get(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AdminUpdateCourseRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.patch(
   "/courses/:courseId",
@@ -413,7 +597,7 @@ router.patch(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.delete(
   "/courses/:courseId",
@@ -430,6 +614,30 @@ router.delete(
  *     summary: List admin action logs
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *       - in: query
+ *         name: targetType
+ *         schema:
+ *           type: string
+ *           enum: [user, roadmapTemplate, course, system]
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           maxLength: 100
  */
 router.get(
   "/logs",

@@ -34,6 +34,15 @@ router.use(authorizeRoles("student"));
  *     summary: Enroll the authenticated student in a course
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/EnrollCourseRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/enroll",
@@ -69,7 +78,7 @@ router.get("/", getUserCourses);
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.get("/:courseId", validateUserEnrollment, getCourseProgress);
 
@@ -87,7 +96,16 @@ router.get("/:courseId", validateUserEnrollment, getCourseProgress);
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCourseProgressRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.put(
   "/:courseId/progress",
@@ -110,7 +128,7 @@ router.put(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post(
   "/:courseId/complete",
@@ -133,7 +151,16 @@ router.post(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RateCourseRequest'
+ *     responses:
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post(
   "/:courseId/rate",
@@ -156,7 +183,7 @@ router.post(
  *         name: courseId
  *         required: true
  *         schema:
- *           type: string
+ *           $ref: '#/components/schemas/ObjectId'
  */
 router.post("/:courseId/abandon", validateUserEnrollment, abandonCourse);
 
