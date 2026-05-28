@@ -9,6 +9,7 @@ import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import Course from "../models/course/courseModel.js";
 import AdminActionLog from "../models/admin/adminActionLogModel.js";
+import { resolveCourseImageUrls } from "../config/cloudinary.js";
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
@@ -464,6 +465,8 @@ export const createCourseByAdmin = async (req, res) => {
       deletedAt: null,
     };
 
+    await resolveCourseImageUrls(courseData, { slug: courseData.slug });
+
     if (courseData.slug) {
       const existingBySlug = await Course.findOne({
         slug: courseData.slug,
@@ -527,6 +530,13 @@ export const createCourseByAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Admin create course error:", error);
+
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     if (error.code === 11000) {
       const duplicatedField = Object.keys(error.keyPattern || {})[0] || "field";
@@ -1286,6 +1296,12 @@ export const updateCourseByAdmin = async (req, res) => {
       }
     }
 
+    const updatePayload = { ...req.body };
+    await resolveCourseImageUrls(updatePayload, {
+      slug: updatePayload.slug || course.slug,
+      courseId: course._id,
+    });
+
     const updatableFields = [
       "title",
       "slug",
@@ -1293,6 +1309,8 @@ export const updateCourseByAdmin = async (req, res) => {
       "shortDescription",
       "level",
       "category",
+      "thumbnailUrl",
+      "bannerUrl",
       "isPublished",
       "isFeatured",
       "instructor",
@@ -1308,8 +1326,8 @@ export const updateCourseByAdmin = async (req, res) => {
     };
 
     for (const field of updatableFields) {
-      if (req.body[field] !== undefined) {
-        course[field] = req.body[field];
+      if (updatePayload[field] !== undefined) {
+        course[field] = updatePayload[field];
       }
     }
 
@@ -1344,6 +1362,13 @@ export const updateCourseByAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Admin update course error:", error);
+
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     if (error.code === 11000) {
       const duplicatedField = Object.keys(error.keyPattern || {})[0] || "field";

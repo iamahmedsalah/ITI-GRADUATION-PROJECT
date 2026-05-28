@@ -61,6 +61,21 @@ const swaggerDefinition = {
           },
         },
       },
+      CourseImageInput: {
+        nullable: true,
+        oneOf: [
+          {
+            type: "string",
+            format: "uri",
+            example: "https://example.com/course-thumbnail.png",
+          },
+          {
+            type: "string",
+            pattern: "^data:image\\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\\r\\n]+$",
+            example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+          },
+        ],
+      },
       AuthSignupRequest: {
         type: "object",
         required: ["username", "Fname", "Lname", "email", "password"],
@@ -281,8 +296,8 @@ const swaggerDefinition = {
           tags: { type: "array", items: { type: "string" } },
           category: { type: "string", maxLength: 120 },
           instructor: { $ref: "#/components/schemas/ObjectId" },
-          thumbnailUrl: { type: "string", format: "uri" },
-          bannerUrl: { type: "string", format: "uri" },
+          thumbnailUrl: { $ref: "#/components/schemas/CourseImageInput" },
+          bannerUrl: { $ref: "#/components/schemas/CourseImageInput" },
           durationMinutes: { type: "number", minimum: 0 },
           sections: { type: "array", items: {} },
           prerequisites: { type: "array", items: { type: "string" } },
@@ -306,6 +321,8 @@ const swaggerDefinition = {
           shortDescription: { type: "string", maxLength: 300 },
           level: { type: "string", enum: ["beginner", "intermediate", "advanced"] },
           category: { type: "string", maxLength: 120 },
+          thumbnailUrl: { $ref: "#/components/schemas/CourseImageInput" },
+          bannerUrl: { $ref: "#/components/schemas/CourseImageInput" },
           isPublished: { type: "boolean" },
           isFeatured: { type: "boolean" },
           instructor: { $ref: "#/components/schemas/ObjectId" },

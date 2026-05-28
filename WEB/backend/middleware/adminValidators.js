@@ -5,6 +5,20 @@ const objectIdSchema = z
   .trim()
   .regex(/^[0-9a-fA-F]{24}$/, "ID must be a valid 24-character hexadecimal value.");
 
+const imageDataUriSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+$/,
+    "Image must be a valid URL or base64 data URI.",
+  );
+
+const imageInputSchema = z.union([
+  z.string().trim().url("Image must be a valid URL or base64 data URI."),
+  imageDataUriSchema,
+  z.null(),
+]);
+
 const formatZodErrors = (issues) =>
   issues.map((issue) => ({
     field: issue.path.length ? issue.path.join(".") : "request",
@@ -243,8 +257,8 @@ const createCourseSchema = z.object({
     tags: z.array(z.string().trim().toLowerCase()).optional(),
     category: z.string().trim().max(120).optional(),
     instructor: objectIdSchema.optional(),
-    thumbnailUrl: z.string().trim().url().optional(),
-    bannerUrl: z.string().trim().url().optional(),
+    thumbnailUrl: imageInputSchema.optional(),
+    bannerUrl: imageInputSchema.optional(),
     durationMinutes: z.number({ error: "Duration must be a number." }).min(0).optional(),
     sections: z.array(z.any()).optional(),
     prerequisites: z.array(z.string().trim()).optional(),
@@ -273,6 +287,8 @@ const updateCourseSchema = z
       shortDescription: z.string().trim().max(300).optional(),
       level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
       category: z.string().trim().max(120).optional(),
+      thumbnailUrl: imageInputSchema.optional(),
+      bannerUrl: imageInputSchema.optional(),
       isPublished: z.boolean().optional(),
       isFeatured: z.boolean().optional(),
       instructor: objectIdSchema.optional(),
