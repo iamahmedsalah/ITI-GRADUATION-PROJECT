@@ -44,6 +44,7 @@ const normalizePagination = (page = 1, limit = 20) => {
   };
 };
 
+
 const getRequestIp = (req) =>
   req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
   req.socket?.remoteAddress ||
@@ -418,6 +419,7 @@ export const getAdminOverview = async (_req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Admin overview retrieved successfully.",
       data: {
         users: {
           total: totalUsers,
@@ -598,6 +600,7 @@ export const getAdminUsers = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: users.length > 0 ? "Users retrieved successfully." : "No users found.",
       data: users,
       pagination: {
         total,
@@ -666,6 +669,7 @@ export const getAdminUserById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "User details retrieved successfully.",
       data: {
         user,
         profile,
@@ -869,6 +873,10 @@ export const getAdminRoadmaps = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        data.length > 0
+          ? "Roadmap templates retrieved successfully."
+          : "No roadmap templates found.",
       data,
       pagination: {
         total,
@@ -908,6 +916,7 @@ export const getAdminRoadmapById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Roadmap template retrieved successfully.",
       data: {
         ...template,
         assignedUsers: assignments,
@@ -1180,6 +1189,10 @@ export const getAdminCourses = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        courses.length > 0
+          ? "Courses retrieved successfully."
+          : "No courses found.",
       data: courses,
       pagination: {
         total,
@@ -1220,6 +1233,7 @@ export const getAdminCourseById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Course details retrieved successfully.",
       data: {
         ...course,
         enrollments,
@@ -1476,6 +1490,10 @@ export const getAdminActionLogs = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        logs.length > 0
+          ? "Admin action logs retrieved successfully."
+          : "No admin action logs found.",
       data: logs,
       pagination: {
         total,

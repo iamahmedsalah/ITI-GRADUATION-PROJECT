@@ -2,6 +2,7 @@ import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import Course from "../models/course/courseModel.js";
 
+
 const logActivity = async (userId, type, courseId, metadata = {}) => {
   try {
     await UserActivity.create({
@@ -308,6 +309,7 @@ export const getCourseProgress = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Course progress retrieved successfully.",
       data: progress,
     });
   } catch (error) {
@@ -349,6 +351,10 @@ export const getUserCourses = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        activeCourses.length > 0
+          ? "Courses retrieved successfully."
+          : "No courses found.",
       data: activeCourses,
     });
   } catch (error) {

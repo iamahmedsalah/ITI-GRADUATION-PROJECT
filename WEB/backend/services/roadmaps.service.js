@@ -2,6 +2,7 @@ import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 
+
 const slugifyStepKey = (value) =>
   String(value || "")
     .toLowerCase()
@@ -301,6 +302,7 @@ export const getRoadmapProgress = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Roadmap progress retrieved successfully.",
       data: {
         roadmap,
         stepProgress,
@@ -327,6 +329,8 @@ export const getUserRoadmaps = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        roadmaps.length > 0 ? "Roadmaps retrieved successfully." : "No roadmaps found.",
       data: roadmaps,
     });
   } catch (error) {
@@ -460,6 +464,7 @@ export const getRoadmapTemplate = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Roadmap template retrieved successfully.",
       data: template,
     });
   } catch (error) {
@@ -491,6 +496,7 @@ export const getRoadmapTemplateBySlug = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Roadmap template retrieved successfully.",
       data: template,
     });
   } catch (error) {
@@ -528,6 +534,7 @@ export const getRoadmapTopic = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Roadmap topic retrieved successfully.",
       data: {
         roadmap: {
           _id: template._id,
@@ -571,6 +578,10 @@ export const getAllRoadmapTemplates = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        templates.length > 0
+          ? "Roadmap templates retrieved successfully."
+          : "No roadmap templates found.",
       data: templates,
       pagination: {
         total,
@@ -654,6 +665,10 @@ export const searchRoadmapsAndTopics = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message:
+        roadmaps.length > 0 || topics.length > 0
+          ? "Search results retrieved successfully."
+          : "No roadmaps or topics found.",
       data: {
         roadmaps,
         topics,

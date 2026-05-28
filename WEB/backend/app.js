@@ -65,19 +65,19 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // CORS
-const configuredOrigins = String(
-  process.env.CLIENT_URL || process.env.PRODUCTION_URL || "",
-)
+const configuredOrigins = `${process.env.CLIENT_URL || ""},${process.env.PRODUCTION_URL || ""}`
   .split(",")
-  .map((o) => o.trim())
+  .map((origin) => origin.trim())
   .filter(Boolean);
 
-const staticAllowedOrigins = new Set([...configuredOrigins]);
+const staticAllowedOrigins = new Set(configuredOrigins);
 const allowVercelPreviewOrigins =
   process.env.ALLOW_VERCEL_PREVIEW_ORIGINS === "true";
 
 const isAllowedOrigin = (origin) => {
-  if (staticAllowedOrigins.has(origin)) return true;
+  if (staticAllowedOrigins.has(origin)) {
+    return true;
+  }
 
   if (
     allowVercelPreviewOrigins &&
