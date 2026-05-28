@@ -21,6 +21,7 @@ import {
   swaggerSpec,
   swaggerUiAssetPath,
   swaggerInitializerJs,
+  swaggerHtml,
 } from "./docs/swagger.js";
 import errorHandler from "./middleware/errorHandler.js";
 
@@ -72,9 +73,18 @@ const configuredOrigins = String(
   .filter(Boolean);
 
 const staticAllowedOrigins = new Set([...configuredOrigins]);
+const allowVercelPreviewOrigins =
+  process.env.ALLOW_VERCEL_PREVIEW_ORIGINS === "true";
 
 const isAllowedOrigin = (origin) => {
   if (staticAllowedOrigins.has(origin)) return true;
+
+  if (
+    allowVercelPreviewOrigins &&
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+  ) {
+    return true;
+  }
 
   if (process.env.NODE_ENV !== "production") {
     return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -150,8 +160,10 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.get("/api/docs", (_req, res) => {
-  res.redirect("/api/docs/index.html");
+
+
+app.get("/api/docs/index.html", (_req, res) => {
+  res.type("text/html").send(swaggerHtml);
 });
 
 app.get("/api/docs/swagger.json", (_req, res) => {

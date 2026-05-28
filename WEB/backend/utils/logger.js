@@ -31,6 +31,32 @@ const localFormat = printf(
   }
 );
 
+const isServerlessRuntime =
+  process.env.VERCEL === "1" ||
+  process.env.VERCEL === "true" ||
+  Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+const baseConsoleTransport = new winston.transports.Console({
+  format:
+    process.env.NODE_ENV === "production"
+      ? combine(json())
+      : combine(colorize({ all: true }), localFormat),
+});
+
+const fileTransports = isServerlessRuntime
+  ? []
+  : [
+      new winston.transports.File({
+        filename: "logs/error.log",
+        level: "error",
+        format: combine(json()),
+      }),
+      new winston.transports.File({
+        filename: "logs/combined.log",
+        format: combine(json()),
+      }),
+    ];
+
 const logger = winston.createLogger({
   levels: winston.config.npm.levels,
 
@@ -45,42 +71,25 @@ const logger = winston.createLogger({
     errors({ stack: true })
   ),
 
-  transports: [
-    // Console transport
-    new winston.transports.Console({
-      format:
-        process.env.NODE_ENV === "production"
-          ? combine(json())
-          : combine(colorize({ all: true }), localFormat),
-    }),
-
-    // Error file
-    new winston.transports.File({
-      filename: "logs/error.log",
-      level: "error",
-      format: combine(json()),
-    }),
-
-    // Combined logs
-    new winston.transports.File({
-      filename: "logs/combined.log",
-      format: combine(json()),
-    }),
-  ],
+  transports: [baseConsoleTransport, ...fileTransports],
 
   // Handle exceptions
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: "logs/exceptions.log",
-    }),
-  ],
+  exceptionHandlers: isServerlessRuntime
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: "logs/exceptions.log",
+        }),
+      ],
 
   // Handle promise rejections
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: "logs/rejections.log",
-    }),
-  ],
+  rejectionHandlers: isServerlessRuntime
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: "logs/rejections.log",
+        }),
+      ],
 });
 
 // Morgan integration
