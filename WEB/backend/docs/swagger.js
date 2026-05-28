@@ -1,17 +1,17 @@
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUiDist from "swagger-ui-dist";
-// import path from "node:path";
-// import { fileURLToPath } from "node:url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// const toGlobSafePath = (inputPath) => inputPath.replace(/\\/g, "/");
+const toGlobSafePath = (inputPath) => inputPath.replace(/\\/g, "/");
 
-// const appSourcePath = toGlobSafePath(path.resolve(__dirname, "../app.js"));
-// const routesSourceGlob = toGlobSafePath(
-//   path.resolve(__dirname, "../routes/*.js"),
-// );
+const appSourcePath = toGlobSafePath(path.resolve(__dirname, "../app.js"));
+const routesSourceGlob = toGlobSafePath(
+  path.resolve(__dirname, "../routes/*.js"),
+);
 
 const swaggerDefinition = {
   openapi: "3.0.3",
