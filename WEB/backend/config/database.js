@@ -44,30 +44,55 @@ const dbConfig = async () => {
         return mongoose.connection;
     }
 
-    const dbUrl = process.env.DB_URL;
-    if (!dbUrl) {
+    const primaryDbUrl = process.env.DB_URL;
+    const fallbackDbUrl = process.env.DB_URL_FALLBACK;
+
+    if (!primaryDbUrl) {
         const err = new Error("DB_URL is not configured");
         err.code = "DB_URL_MISSING";
         err.customMessage = "Database config is missing on server.";
         throw err;
     }
 
-    try {
-        connectionPromise = mongoose.connect(dbUrl, {
+    const connectWithUrl = async (url, label) => {
+        logger.info(`Attempting database connection via ${label}`);
+        connectionPromise = mongoose.connect(url, {
             dbName: "iti_Grad_Project",
             serverSelectionTimeoutMS: 15000,
             socketTimeoutMS: 45000,
         });
 
         const conn = await connectionPromise;
-        
-        // Structured logging output
         logger.info("Database connection established successfully", {
             host: conn.connection.host,
-            database: conn.connection.name
+            database: conn.connection.name,
+            strategy: label,
         });
-        
         return conn.connection;
+    };
+
+    try {
+        try {
+            return await connectWithUrl(primaryDbUrl, "DB_URL");
+        } catch (primaryError) {
+            const parsedPrimaryError = parseDatabaseError(primaryError);
+
+            const shouldTryFallback =
+                fallbackDbUrl &&
+                fallbackDbUrl !== primaryDbUrl &&
+                parsedPrimaryError.code === "DB_DNS_RESOLUTION_FAILED";
+
+            if (!shouldTryFallback) {
+                throw parsedPrimaryError;
+            }
+
+            logger.warn("Primary DB URL failed with DNS issue. Trying DB_URL_FALLBACK.", {
+                code: parsedPrimaryError.code,
+                message: parsedPrimaryError.message,
+            });
+
+            return await connectWithUrl(fallbackDbUrl, "DB_URL_FALLBACK");
+        }
     } catch (err) {
         connectionPromise = null;
         const parsedError = parseDatabaseError(err);
@@ -80,8 +105,12 @@ const dbConfig = async () => {
             stack: parsedError.stack // Helpful for deep tracking locally
         });
 
-        if (!process.env.VERCEL) {
-            logger.warn("Non-serverless environment detected. Terminating process due to DB failure.");
+        const shouldExitOnFail =
+            process.env.DB_EXIT_ON_FAIL === "true" ||
+            (process.env.NODE_ENV === "production" && !process.env.VERCEL);
+
+        if (shouldExitOnFail) {
+            logger.warn("DB_EXIT_ON_FAIL enabled. Terminating process due to DB failure.");
             process.exit(1);
         }
         

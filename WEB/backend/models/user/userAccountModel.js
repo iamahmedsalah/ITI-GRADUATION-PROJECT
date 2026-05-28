@@ -55,6 +55,21 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    deactivatedAt: Date,
+    deactivatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    deactivationReason: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Deactivation reason must be at most 500 characters"],
+    },
     failedLoginAttempts: {
       type: Number,
       default: 0,

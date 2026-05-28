@@ -8,6 +8,12 @@ const formatZodErrors = (issues) =>
     message: issue.message,
   }));
 
+const buildFieldErrorResponse = (field, message, topMessage = "Validation failed.") => ({
+  success: false,
+  message: topMessage,
+  errors: [{ field, message }],
+});
+
 const validateRequest = (schema) => async (req, res, next) => {
   const result = await schema.safeParseAsync({
     body: req.body ?? {},
@@ -34,9 +40,9 @@ const enrollCourseSchema = z.object({
       .trim()
       .regex(/^[0-9a-fA-F]{24}$/, "Invalid course ID format."),
     roadmapId: z
-      .string({ error: "Roadmap ID must be a valid MongoDB ID." })
+      .string({ error: "Roadmap ID must be a string when provided." })
       .trim()
-      .regex(/^[0-9a-fA-F]{24}$/, "Invalid roadmap ID format.")
+      .regex(/^[0-9a-fA-F]{24}$/, "Roadmap ID must be a valid 24-character hexadecimal value.")
       .optional(),
   }),
   params: z.object({}).passthrough(),
@@ -118,16 +124,23 @@ export const validateCourseExists = async (req, res, next) => {
       .lean();
 
     if (!course) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Course not found." });
+      return res.status(404).json(
+        buildFieldErrorResponse(
+          "courseId",
+          "No course exists with this ID.",
+          "Course not found."
+        )
+      );
     }
 
     if (!course.isPublished) {
-      return res.status(403).json({
-        success: false,
-        message: "This course is not published.",
-      });
+      return res.status(403).json(
+        buildFieldErrorResponse(
+          "courseId",
+          "This course is currently unpublished.",
+          "Access denied."
+        )
+      );
     }
 
     req.course = course;
@@ -154,10 +167,13 @@ export const validateEnrollmentStatus = async (req, res, next) => {
       .lean();
 
     if (progress && progress.status !== "abandoned") {
-      return res.status(409).json({
-        success: false,
-        message: "You are already enrolled in this course.",
-      });
+      return res.status(409).json(
+        buildFieldErrorResponse(
+          "courseId",
+          "You are already enrolled in this course.",
+          "Enrollment conflict."
+        )
+      );
     }
 
     return next();
@@ -183,10 +199,13 @@ export const validateUserEnrollment = async (req, res, next) => {
       .lean();
 
     if (!progress) {
-      return res.status(403).json({
-        success: false,
-        message: "You must be enrolled in this course first.",
-      });
+      return res.status(403).json(
+        buildFieldErrorResponse(
+          "courseId",
+          "You need to enroll in this course before updating progress.",
+          "Access denied."
+        )
+      );
     }
 
     req.enrollment = progress;

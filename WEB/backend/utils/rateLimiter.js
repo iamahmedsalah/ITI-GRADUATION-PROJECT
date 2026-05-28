@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 
 // Rate limiters
@@ -18,11 +18,37 @@ const forgotPasswordLimiterOptions = {
   legacyHeaders: false,
   message: { success: false, message: "Too many password reset requests, try again later." },
   keyGenerator: (req) => {
-    return (req.body && req.body.email) ? String(req.body.email).toLowerCase() : req.ip;
+    return (req.body && req.body.email)
+      ? String(req.body.email).toLowerCase()
+      : ipKeyGenerator(req.ip);
   },
 };
 
 export const forgotPasswordLimiter = rateLimit(forgotPasswordLimiterOptions);
 
+// Admin endpoints rate limiters
+export const adminListLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.ADMIN_LIST_RATE_LIMIT || "100", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many admin list requests, try again later." },
+});
 
-export default { loginLimiter, forgotPasswordLimiter };
+export const adminWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.ADMIN_WRITE_RATE_LIMIT || "50", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many admin write requests, try again later." },
+});
+
+export const adminPublishLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.ADMIN_PUBLISH_RATE_LIMIT || "20", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many publish requests, try again later." },
+});
+
+export default { loginLimiter, forgotPasswordLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };

@@ -102,10 +102,25 @@ const roadmapTemplateSchema = new mongoose.Schema(
     steps: {
       type: [roadmapStepSchema],
       validate: {
-        validator: (steps) => Array.isArray(steps) && steps.length > 0,
-        message: "A roadmap must contain at least one step.",
+        validator: function (steps) {
+          const hasSteps = Array.isArray(steps) && steps.length > 0;
+          const hasMarkdown = typeof this.contentMarkdown === "string" && this.contentMarkdown.trim().length > 0;
+          return hasSteps || hasMarkdown;
+        },
+        message: "A roadmap must contain at least one step or markdown content.",
       },
       default: [],
+    },
+    contentFormat: {
+      type: String,
+      enum: ["json", "markdown"],
+      default: "json",
+      index: true,
+    },
+    contentMarkdown: {
+      type: String,
+      trim: true,
+      maxlength: [50000, "Markdown content must be at most 50000 characters"],
     },
     estimatedTotalMinutes: {
       type: Number,
@@ -128,6 +143,17 @@ const roadmapTemplateSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+roadmapTemplateSchema.index({
+  title: "text",
+  goal: "text",
+  description: "text",
+  tags: "text",
+  "steps.title": "text",
+  "steps.description": "text",
+  "steps.stepKey": "text",
+  contentMarkdown: "text",
+});
 
 roadmapTemplateSchema.pre("save", function () {
   if (Array.isArray(this.steps)) {

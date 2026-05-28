@@ -6,8 +6,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 // Load Env variables
-dotenv.config({ path: [".env", ".env.local"] });
-
+if (process.env.NODE_ENV !== "test") {
+  dotenv.config({ path: [".env", ".env.local"] });
+}
 
 // Now safely import custom modules
 import dbConfig from "./config/database.js";
@@ -15,22 +16,56 @@ import logger from "./utils/logger.js";
 import authRoutes from "./routes/auth.route.js";
 import roadmapsRoutes from "./routes/roadmaps.route.js";
 import coursesRoutes from "./routes/courses.route.js";
+import adminRoutes from "./routes/admin.route.js";
+import {
+  swaggerSpec,
+  swaggerUiAssetPath,
+  swaggerInitializerJs,
+} from "./docs/swagger.js";
+import errorHandler from "./middleware/errorHandler.js";
 
+// Optional DNS override (use system DNS by default).
+// This avoids SRV lookup failures on networks that block public DNS resolvers.
+const dnsServers = String(process.env.DNS_SERVERS || "")
+  .split(",")
+  .map((server) => server.trim())
+  .filter(Boolean);
 
-// Set DNS overrides
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
+if (dnsServers.length > 0) {
+  try {
+    dns.setServers(dnsServers);
+    logger.info("Custom DNS servers applied", { dnsServers });
+  } catch (error) {
+    logger.warn(
+      "Failed to apply custom DNS servers; falling back to system DNS",
+      {
+        dnsServers,
+        message: error.message,
+      },
+    );
+  }
+}
 
 const app = express();
 
 app.set("trust proxy", 1);
 
 // Database connection
-dbConfig();
-
+if (process.env.NODE_ENV !== "test") {
+  dbConfig().catch((error) => {
+    logger.warn(
+      "Initial database connection failed. API will keep running and retry on requests.",
+      {
+        code: error.code,
+        message: error.customMessage || error.message,
+      },
+    );
+  });
+}
 
 // CORS
 const configuredOrigins = String(
-  process.env.CLIENT_URL || process.env.PRODUCTION_URL || ""
+  process.env.CLIENT_URL || process.env.PRODUCTION_URL || "",
 )
   .split(",")
   .map((o) => o.trim())
@@ -63,7 +98,7 @@ app.use(
     },
 
     credentials: true,
-  })
+  }),
 );
 
 // Body parser
@@ -74,16 +109,60 @@ app.use(cookieParser());
 // Morgan logger
 if (process.env.NODE_ENV === "development") {
   app.use(
-  morgan(
-    ":remote-addr :method :url :status :response-time ms - :res[content-length]",
-    {
-      stream: logger.stream,
-    }
-  )
-);
+    morgan(
+      ":remote-addr :method :url :status :response-time ms - :res[content-length]",
+      {
+        stream: logger.stream,
+      },
+    ),
+  );
 }
 
 logger.info(`Mode: In ${process.env.NODE_ENV}`);
+
+// Routes that must stay alive even if the database is unavailable.
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Health check
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ */
+app.get("/api/health", (_req, res) => {
+  logger.info("Health check endpoint called");
+
+  res.status(200).json({
+    ok: true,
+    service: "backend-api",
+  });
+});
+
+app.get("/", (_req, res) => {
+  logger.info("Root endpoint called");
+
+  res.status(200).json({
+    message: "backend is running",
+    health: "/api/health",
+  });
+});
+
+app.get("/api/docs", (_req, res) => {
+  res.redirect("/api/docs/index.html");
+});
+
+app.get("/api/docs/swagger.json", (_req, res) => {
+  res.type("application/json").send(swaggerSpec);
+});
+
+app.get("/api/docs/swagger-initializer.js", (_req, res) => {
+  res.type("application/javascript").send(swaggerInitializerJs);
+});
+
+app.use("/api/docs", express.static(swaggerUiAssetPath));
 
 // Reconnect middleware
 app.use("/api", async (req, res, next) => {
@@ -111,26 +190,6 @@ app.use("/api", async (req, res, next) => {
   }
 });
 
-// Routes
-app.get("/api/health", (_req, res) => {
-  logger.info("Health check endpoint called");
-
-  res.status(200).json({
-    ok: true,
-    service: "backend-api",
-  });
-});
-
-app.get("/", (_req, res) => {
-  logger.info("Root endpoint called");
-
-  res.status(200).json({
-    message: "backend is running",
-    health: "/api/health",
-  });
-});
-
-
 // Auth Routes
 app.use("/api/auth", authRoutes);
 
@@ -140,26 +199,9 @@ app.use("/api/roadmaps", roadmapsRoutes);
 // Courses Routes
 app.use("/api/courses", coursesRoutes);
 
-// Error handler
-app.use((err, req, res, _next) => {
-  logger.error(`Unhandled request error on ${req.method} ${req.originalUrl}`, {
-    message: err.message,
-    stack: err.stack,
-    ip: req.ip,
-    method: req.method,
-    url: req.originalUrl,
-  });
+// Admin Routes
+app.use("/api/admin", adminRoutes);
 
-  if (err?.type === "entity.parse.failed") {
-    logger.warn("Invalid JSON payload received", { ip: req.ip, url: req.originalUrl });
-    return res.status(400).json({ success: false, message: "Invalid JSON payload." });
-  }
-
-  if (String(err?.message || "").startsWith("CORS blocked")) {
-    logger.warn("Blocked by CORS policy", { origin: req.headers.origin, ip: req.ip });
-    return res.status(403).json({ success: false, message: "Origin is not allowed by CORS policy." });
-  }
-
-  return res.status(500).json({ success: false, message: "Internal server error." });
-});
+// Centralized error middleware
+app.use(errorHandler);
 export default app;

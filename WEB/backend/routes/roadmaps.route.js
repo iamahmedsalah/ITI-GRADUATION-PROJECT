@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/protectsRoutes.js";
+import { protect, authorizeRoles } from "../middleware/protectsRoutes.js";
 import {
   assignRoadmapValidation,
   updateStepProgressValidation,
@@ -8,6 +8,7 @@ import {
   createRoadmapTemplateValidation,
   updateRoadmapTemplateValidation,
   publishTemplateValidation,
+  validateTemplateExistsInParams,
   validateUniqueSlug,
 } from "../middleware/roadmapValidators.js";
 import {
@@ -18,6 +19,9 @@ import {
   createRoadmapTemplate,
   getRoadmapTemplate,
   getAllRoadmapTemplates,
+  getRoadmapTemplateBySlug,
+  getRoadmapTopic,
+  searchRoadmapsAndTopics,
   updateRoadmapTemplate,
   deleteRoadmapTemplate,
   publishRoadmapTemplate,
@@ -28,71 +32,316 @@ import {
 
 const router = express.Router();
 
-// ============ ROADMAP TEMPLATES - PUBLIC ROUTES ============
+//  ROADMAP TEMPLATES - PUBLIC ROUTES
+/**
+ * @openapi
+ * /roadmaps/search:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Search roadmaps and roadmap topics
+ */
+router.get("/search", searchRoadmapsAndTopics);
+/**
+ * @openapi
+ * /roadmaps/templates:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: List all roadmap templates
+ */
 router.get("/templates", getAllRoadmapTemplates);
+/**
+ * @openapi
+ * /roadmaps/templates/by-slug/{slug}:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Get a roadmap template by slug
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.get("/templates/by-slug/:slug", getRoadmapTemplateBySlug);
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Get roadmap template details by ID
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.get("/templates/:templateId", getRoadmapTemplate);
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}/topics/{stepKey}:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Get a roadmap topic by template and step key
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: stepKey
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.get("/templates/:templateId/topics/:stepKey", getRoadmapTopic);
 
-// ============ ALL PROTECTED ROUTES BELOW ============
+// ALL PROTECTED ROUTES BELOW
 router.use(protect);
 
-// ============ ROADMAP TEMPLATES - PROTECTED ROUTES (Admin/Instructor) ============
+//  ROADMAP TEMPLATES - PROTECTED ROUTES (Admin only)
 
 // POST - Create new roadmap template
-router.post("/templates", createRoadmapTemplateValidation, createRoadmapTemplate);
+/**
+ * @openapi
+ * /roadmaps/templates:
+ *   post:
+ *     tags: [Roadmaps]
+ *     summary: Create a roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post(
+  "/templates",
+  authorizeRoles("admin"),
+  createRoadmapTemplateValidation,
+  createRoadmapTemplate,
+);
 
 // PUT - Update roadmap template
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}:
+ *   put:
+ *     tags: [Roadmaps]
+ *     summary: Update a roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.put(
   "/templates/:templateId",
+  authorizeRoles("admin"),
   updateRoadmapTemplateValidation,
+  validateTemplateExistsInParams,
   validateUniqueSlug,
-  updateRoadmapTemplate
+  updateRoadmapTemplate,
 );
 
 // DELETE - Delete roadmap template
-router.delete("/templates/:templateId", deleteRoadmapTemplate);
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}:
+ *   delete:
+ *     tags: [Roadmaps]
+ *     summary: Delete a roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.delete(
+  "/templates/:templateId",
+  authorizeRoles("admin"),
+  validateTemplateExistsInParams,
+  deleteRoadmapTemplate,
+);
 
 // POST - Publish roadmap template
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}/publish:
+ *   post:
+ *     tags: [Roadmaps]
+ *     summary: Publish a roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.post(
   "/templates/:templateId/publish",
+  authorizeRoles("admin"),
   publishTemplateValidation,
-  publishRoadmapTemplate
+  validateTemplateExistsInParams,
+  publishRoadmapTemplate,
 );
 
 // POST - Unpublish roadmap template
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}/unpublish:
+ *   post:
+ *     tags: [Roadmaps]
+ *     summary: Unpublish a roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.post(
   "/templates/:templateId/unpublish",
+  authorizeRoles("admin"),
   publishTemplateValidation,
-  unpublishRoadmapTemplate
+  validateTemplateExistsInParams,
+  unpublishRoadmapTemplate,
 );
 
 // POST - Add step to template
-router.post("/templates/:templateId/steps", addStepToTemplate);
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}/steps:
+ *   post:
+ *     tags: [Roadmaps]
+ *     summary: Add a step to roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.post(
+  "/templates/:templateId/steps",
+  authorizeRoles("admin"),
+  validateTemplateExistsInParams,
+  addStepToTemplate,
+);
 
 // DELETE - Remove step from template
-router.delete("/templates/:templateId/steps/:stepKey", removeStepFromTemplate);
+/**
+ * @openapi
+ * /roadmaps/templates/{templateId}/steps/{stepKey}:
+ *   delete:
+ *     tags: [Roadmaps]
+ *     summary: Remove a step from roadmap template (admin)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: templateId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: stepKey
+ *         required: true
+ *         schema:
+ *           type: string
+ */
+router.delete(
+  "/templates/:templateId/steps/:stepKey",
+  authorizeRoles("admin"),
+  validateTemplateExistsInParams,
+  removeStepFromTemplate,
+);
 
-// ============ USER ROADMAPS - PROTECTED ROUTES (Student) ============
+//  USER ROADMAPS - PROTECTED ROUTES (Student)
+router.use(authorizeRoles("student"));
 
 // POST - Assign a roadmap to authenticated user
+/**
+ * @openapi
+ * /roadmaps/assign:
+ *   post:
+ *     tags: [Roadmaps]
+ *     summary: Assign a roadmap template to authenticated student
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post(
   "/assign",
   assignRoadmapValidation,
   validateTemplateExists,
-  assignRoadmapToUser
+  assignRoadmapToUser,
 );
 
 // GET - Get all roadmaps for authenticated user
+/**
+ * @openapi
+ * /roadmaps:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Get roadmaps for authenticated student
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get("/", getUserRoadmaps);
 
 // GET - Get roadmap progress with step details
+/**
+ * @openapi
+ * /roadmaps/{roadmapId}:
+ *   get:
+ *     tags: [Roadmaps]
+ *     summary: Get roadmap progress details by roadmap ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roadmapId
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.get("/:roadmapId", getRoadmapProgress);
 
 // PUT - Update step progress
+/**
+ * @openapi
+ * /roadmaps/{roadmapId}/steps/{stepKey}/progress:
+ *   put:
+ *     tags: [Roadmaps]
+ *     summary: Update progress for a roadmap step
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roadmapId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: stepKey
+ *         required: true
+ *         schema:
+ *           type: string
+ */
 router.put(
   "/:roadmapId/steps/:stepKey/progress",
   updateStepProgressValidation,
   validateRoadmapExists,
-  updateStepProgress
+  updateStepProgress,
 );
 
 export default router;

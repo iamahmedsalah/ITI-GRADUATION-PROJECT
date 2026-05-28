@@ -7,7 +7,7 @@
   "type": "module",
   "main": "backend/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test backend/test/health.test.js",
     "start": "cross-env NODE_ENV=production node backend/server.js",
     "dev": "cross-env  NODE_ENV=development nodemon backend/server.js"
   },
@@ -27,6 +27,8 @@
     "morgan": "^1.10.1",
     "nanoid": "^5.1.11",
     "nodemailer": "^8.0.7",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-dist": "^5.32.6",
     "winston": "^3.19.0",
     "zod": "^4.4.3"
   }

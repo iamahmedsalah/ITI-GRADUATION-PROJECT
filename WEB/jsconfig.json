@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "target": "es2022",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["backend/**/*.js"],
+  "exclude": ["node_modules", "**/node_modules"]
+}

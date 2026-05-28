@@ -8,6 +8,12 @@ const formatZodErrors = (issues) =>
     message: issue.message,
   }));
 
+const buildFieldErrorResponse = (field, message, topMessage = "Validation failed.") => ({
+  success: false,
+  message: topMessage,
+  errors: [{ field, message }],
+});
+
 const validateRequest = (schema) => async (req, res, next) => {
   const result = await schema.safeParseAsync({
     body: req.body ?? {},
@@ -99,16 +105,23 @@ export const validateRoadmapExists = async (req, res, next) => {
       .lean();
 
     if (!roadmap) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Roadmap not found." });
+      return res.status(404).json(
+        buildFieldErrorResponse(
+          "roadmapId",
+          "No roadmap exists with this ID.",
+          "Roadmap not found."
+        )
+      );
     }
 
     if (roadmap.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "You do not have permission to access this roadmap.",
-      });
+      return res.status(403).json(
+        buildFieldErrorResponse(
+          "roadmapId",
+          "You do not have permission to access this roadmap.",
+          "Access denied."
+        )
+      );
     }
 
     req.roadmap = roadmap;
@@ -126,14 +139,18 @@ export const validateTemplateExists = async (req, res, next) => {
   const { templateId } = req.body;
 
   try {
-    const template = await RoadmapTemplate.findById(templateId)
-      .select("_id steps")
+    const template = await RoadmapTemplate.findOne({ _id: templateId, isActive: true })
+      .select("_id steps isActive")
       .lean();
 
     if (!template) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Roadmap template not found." });
+      return res.status(404).json(
+        buildFieldErrorResponse(
+          "templateId",
+          "No active roadmap template exists with this ID.",
+          "Roadmap template not found."
+        )
+      );
     }
 
     req.template = template;
@@ -239,8 +256,36 @@ const createRoadmapTemplateSchema = z.object({
     source: z
       .enum(["admin", "ai", "manual"], { error: "Invalid source." })
       .optional(),
+    contentFormat: z
+      .enum(["json", "markdown"], { error: "contentFormat must be either json or markdown." })
+      .optional(),
+    contentMarkdown: z
+      .string()
+      .trim()
+      .max(50000, "Markdown content must be at most 50000 characters")
+      .optional(),
   }),
   params: z.object({}).passthrough(),
+}).superRefine((payload, ctx) => {
+  const { contentFormat, contentMarkdown, steps } = payload.body;
+  const hasSteps = Array.isArray(steps) && steps.length > 0;
+  const hasMarkdown = typeof contentMarkdown === "string" && contentMarkdown.trim().length > 0;
+
+  if (contentFormat === "markdown" && !hasMarkdown) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["body", "contentMarkdown"],
+      message: "Markdown content is required when content format is set to markdown.",
+    });
+  }
+
+  if (!hasSteps && !hasMarkdown) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["body", "steps"],
+      message: "Provide at least one step or markdown content.",
+    });
+  }
 });
 
 const updateRoadmapTemplateSchema = z.object({
@@ -250,6 +295,14 @@ const updateRoadmapTemplateSchema = z.object({
       .trim()
       .min(3, "Title must be at least 3 characters")
       .max(150, "Title must be at most 150 characters")
+      .optional(),
+    slug: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens")
+      .min(3, "Slug must be at least 3 characters")
+      .max(100, "Slug must be at most 100 characters")
       .optional(),
     goal: z
       .string()
@@ -275,6 +328,14 @@ const updateRoadmapTemplateSchema = z.object({
       .min(0, "Estimated total minutes cannot be negative")
       .optional(),
     isActive: z.boolean().optional(),
+    contentFormat: z
+      .enum(["json", "markdown"])
+      .optional(),
+    contentMarkdown: z
+      .string()
+      .trim()
+      .max(50000, "Markdown content must be at most 50000 characters")
+      .optional(),
   }),
   params: z.object({
     templateId: z
@@ -304,7 +365,7 @@ export const updateRoadmapTemplateValidation = validateRequest(
 
 export const publishTemplateValidation = validateRequest(publishTemplateSchema);
 
-export const validateTemplateExists = async (req, res, next) => {
+export const validateTemplateExistsInParams = async (req, res, next) => {
   const templateId = req.params.templateId;
 
   try {
@@ -313,9 +374,13 @@ export const validateTemplateExists = async (req, res, next) => {
       .lean();
 
     if (!template) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Roadmap template not found." });
+      return res.status(404).json(
+        buildFieldErrorResponse(
+          "templateId",
+          "No roadmap template exists with this ID.",
+          "Roadmap template not found."
+        )
+      );
     }
 
     req.template = template;
@@ -346,8 +411,8 @@ export const validateUniqueSlug = async (req, res, next) => {
     if (existingTemplate) {
       return res.status(409).json({
         success: false,
-        message: "This slug is already taken.",
-        errors: [{ field: "slug", message: "Slug must be unique." }],
+        message: "Validation failed.",
+        errors: [{ field: "slug", message: "Slug is already in use. Please choose another one." }],
       });
     }
 

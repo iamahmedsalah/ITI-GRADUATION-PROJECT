@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import User from "../models/user/userModel.js";
+import User from "../models/user/userAccountModel.js";
 
 // JWT Auth Guard
 export const protect = async (req, res, next) => {
@@ -36,6 +36,13 @@ export const protect = async (req, res, next) => {
             });
         }
 
+        if (user.isActive === false) {
+            return res.status(403).json({
+                success: false,
+                message: "This account is deactivated. Please contact support.",
+            });
+        }
+
         // Invalidate tokens issued before the last password change
         if (user.passwordChangedAt) {
             const pwdChangedTs = parseInt(new Date(user.passwordChangedAt).getTime() / 1000, 10);
@@ -63,6 +70,23 @@ export const protect = async (req, res, next) => {
     }
 };
 
+// Role-based authorization guard
+export const authorizeRoles = (...roles) => {
+    const allowedRoles = roles.filter(Boolean);
+
+    return (req, res, next) => {
+        const userRole = req.user?.role;
+
+        if (!userRole || !allowedRoles.includes(userRole)) {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have permission to perform this action.",
+            });
+        }
+
+        return next();
+    };
+};
 
 
-export default { protect }
+export default { protect, authorizeRoles }

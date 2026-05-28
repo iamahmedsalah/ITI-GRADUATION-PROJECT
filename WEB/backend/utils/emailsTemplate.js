@@ -229,10 +229,6 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
                   <td style="padding:10px; border:1px solid #e5e7eb;">{passwordChangedAt}</td>
                 </tr>
                 <tr>
-                  <td style="padding:10px; border:1px solid #e5e7eb; color:#6b7280;">Time</td>
-                  <td style="padding:10px; border:1px solid #e5e7eb;">{resetTime}</td>
-                </tr>
-                <tr>
                   <td style="padding:10px; border:1px solid #e5e7eb; color:#6b7280;">IP Address</td>
                   <td style="padding:10px; border:1px solid #e5e7eb;">{ipAddress}</td>
                 </tr>

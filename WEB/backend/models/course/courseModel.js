@@ -143,6 +143,11 @@ const courseSchema = new mongoose.Schema(
       completionRate: { type: Number, default: 0, min: 0, max: 100 },
       averageRating: { type: Number, default: 0, min: 0, max: 5 },
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

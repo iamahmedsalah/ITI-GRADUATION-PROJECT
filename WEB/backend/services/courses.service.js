@@ -21,6 +21,7 @@ export const enrollCourse = async (req, res) => {
 
   try {
     const course = await Course.findById(courseId)
+      .where({ deletedAt: null })
       .select("_id title sections durationMinutes");
 
     if (!course) {
@@ -64,7 +65,7 @@ export const enrollCourse = async (req, res) => {
             lastAccessedAt: new Date(),
           },
         },
-        { new: true }
+        { new: true },
       );
     } else {
       enrollment = await UserCourseProgress.create(enrollmentData);
@@ -75,7 +76,7 @@ export const enrollCourse = async (req, res) => {
     });
 
     const populatedEnrollment = await UserCourseProgress.findById(
-      enrollment._id
+      enrollment._id,
     )
       .populate("course", "title description thumbnailUrl")
       .select("-__v");
@@ -120,7 +121,7 @@ export const updateCourseProgress = async (req, res) => {
     if (watchedMinutes !== undefined) {
       updateData.watchedMinutes = Math.max(
         progress.watchedMinutes || 0,
-        watchedMinutes
+        watchedMinutes,
       );
     }
 
@@ -138,15 +139,17 @@ export const updateCourseProgress = async (req, res) => {
 
       updateData.currentLesson = lessonId;
 
-      const course = await Course.findById(courseId).select("sections");
+      const course = await Course.findById(courseId)
+        .where({ deletedAt: null })
+        .select("sections");
       if (course) {
         const totalLessons = course.sections.reduce(
           (sum, section) => sum + (section.lessons?.length || 0),
-          0
+          0,
         );
         const completedCount = updateData.completedLessonIds.length;
         updateData.progressPercent = Math.round(
-          (completedCount / totalLessons) * 100
+          (completedCount / totalLessons) * 100,
         );
       }
     } else if (lessonId) {
@@ -156,7 +159,7 @@ export const updateCourseProgress = async (req, res) => {
     const updatedProgress = await UserCourseProgress.findByIdAndUpdate(
       progress._id,
       updateData,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (isComplete) {
@@ -213,7 +216,7 @@ export const completeCourse = async (req, res) => {
           progressPercent: 100,
         },
       },
-      { new: true }
+      { new: true },
     );
 
     await logActivity(userId, "course_complete", courseId);
@@ -259,7 +262,7 @@ export const rateCourse = async (req, res) => {
           notes: notes || progress.notes,
         },
       },
-      { new: true }
+      { new: true },
     );
 
     await logActivity(userId, "rating", courseId, {
@@ -290,14 +293,16 @@ export const getCourseProgress = async (req, res) => {
       user: userId,
       course: courseId,
     })
-      .populate("course", "title description sections durationMinutes")
+      .populate(
+        "course",
+        "title description sections durationMinutes deletedAt",
+      )
       .select("-__v");
 
-    if (!progress) {
+    if (!progress || progress.course?.deletedAt) {
       return res.status(404).json({
         success: false,
-        message:
-          "You are not enrolled in this course or progress not found.",
+        message: "You are not enrolled in this course or progress not found.",
       });
     }
 
@@ -322,18 +327,29 @@ export const getUserCourses = async (req, res) => {
   try {
     const query = { user: userId };
 
-    if (status && ["notStarted", "inProgress", "completed", "abandoned"].includes(status)) {
+    if (
+      status &&
+      ["notStarted", "inProgress", "completed", "abandoned"].includes(status)
+    ) {
       query.status = status;
     }
 
     const courses = await UserCourseProgress.find(query)
-      .populate("course", "title description thumbnailUrl durationMinutes")
+      .populate(
+        "course",
+        "title description thumbnailUrl durationMinutes deletedAt",
+      )
       .select("-__v")
       .sort({ lastAccessedAt: -1 });
 
+    // Filter out deleted courses
+    const activeCourses = courses.filter(
+      (enrollment) => !enrollment.course?.deletedAt,
+    );
+
     return res.status(200).json({
       success: true,
-      data: courses,
+      data: activeCourses,
     });
   } catch (error) {
     console.error("Get user courses error:", error);
@@ -372,7 +388,7 @@ export const abandonCourse = async (req, res) => {
     const abandonedProgress = await UserCourseProgress.findByIdAndUpdate(
       progress._id,
       { status: "abandoned" },
-      { new: true }
+      { new: true },
     );
 
     return res.status(200).json({

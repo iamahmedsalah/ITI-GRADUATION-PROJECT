@@ -1,5 +1,5 @@
 import { z } from "zod";
-import User from "../models/user/userModel.js";
+import User from "../models/user/userAccountModel.js";
 
 const formatZodErrors = (issues) =>
   issues.map((issue) => ({
@@ -135,27 +135,70 @@ const resetPasswordSchema = z.object({
 export const signupValidation = validateRequest(signupSchema);
 
 export const signupUniquenessValidation = async (req, res, next) => {
-  const username = req.body?.username;
+  try {
+    const username = req.body?.username;
+    const email = req.body?.email;
 
-  if (!username) {
-    return next();
-  }
+    if (!username && !email) {
+      return next();
+    }
 
-  const normalizedUsername = String(username).trim().toLowerCase();
+    const normalizedUsername = username
+      ? String(username).trim().toLowerCase()
+      : null;
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : null;
 
-  const existingUser = await User.findOne({ username: normalizedUsername })
-      .select("_id")
+    const filters = [];
+    if (normalizedUsername) {
+      filters.push({ username: normalizedUsername });
+    }
+    if (normalizedEmail) {
+      filters.push({ email: normalizedEmail });
+    }
+
+    const existingUser = await User.findOne({ $or: filters })
+      .select("username email isActive")
       .lean();
 
-  if (existingUser) {
-    return res.status(409).json({
-      success: false,
-      message: "Validation failed.",
-      errors: [{ field: "username", message: "Username is already taken." }],
-    });
-  }
+    if (existingUser) {
+      if (existingUser.isActive === false) {
+        return res.status(409).json({
+          success: false,
+          message: "Validation failed.",
+          errors: [
+            {
+              field: "identifier",
+              message:
+                "An account with this email or username exists but is deactivated. Please contact support to reactivate it.",
+            },
+          ],
+        });
+      }
 
-  return next();
+      const conflictField =
+        normalizedEmail && existingUser.email === normalizedEmail
+          ? "email"
+          : "username";
+
+      return res.status(409).json({
+        success: false,
+        message: "Validation failed.",
+        errors: [
+          {
+            field: conflictField,
+            message:
+              conflictField === "email"
+                ? "Email is already registered."
+                : "Username is already taken.",
+          },
+        ],
+      });
+    }
+
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 };
 
 export const verifyEmailValidation = validateRequest(verifyEmailSchema);

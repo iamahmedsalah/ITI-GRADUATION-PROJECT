@@ -1,4 +1,4 @@
-import User from "../models/user/userModel.js";
+import User from "../models/user/userAccountModel.js";
 import crypto from "crypto";
 import { customAlphabet } from "nanoid";
 import {
@@ -16,27 +16,53 @@ const toPublicUser = (user) => ({
   username: user.username,
   name: `${user.Fname} ${user.Lname}`,
   email: user.email,
+  role: user.role,
   isVerified: user.isVerified,
   lastLogin: user.lastLogin,
 });
 
-const generateVerificationToken = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
+const generateVerificationToken = customAlphabet(
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  8,
+);
+
+const buildSignupConflictResponse = (field) => ({
+  success: false,
+  message: "Validation failed.",
+  errors: [
+    {
+      field,
+      message:
+        field === "email"
+          ? "Email is already registered."
+          : "Username is already taken.",
+    },
+  ],
+});
+
+const buildDeactivatedSignupConflictResponse = () => ({
+  success: false,
+  message: "Validation failed.",
+  errors: [
+    {
+      field: "identifier",
+      message:
+        "An account with this email or username exists but is deactivated. Please contact support to reactivate it.",
+    },
+  ],
+});
 
 // POST - Sign Up
 export const signup = async (req, res) => {
-
   const { username, Fname, Lname, email, password } = req.body;
 
   try {
-
     if (!username || !Fname || !Lname || !email || !password) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message:
-            "Username, First Name, Last Name, email, and password are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Username, First Name, Last Name, email, and password are required.",
+      });
     }
 
     const normalizedUsername = String(username).trim().toLowerCase();
@@ -49,12 +75,12 @@ export const signup = async (req, res) => {
       $or: [{ email: normalizedEmail }, { username: normalizedUsername }],
     });
     if (existing) {
-      const field =
-        existing.email === normalizedEmail ? "email" : "username";
-      return res.status(409).json({
-        success: false,
-        message: `A user with that ${field} already exists.`,
-      });
+      if (existing.isActive === false) {
+        return res.status(409).json(buildDeactivatedSignupConflictResponse());
+      }
+
+      const field = existing.email === normalizedEmail ? "email" : "username";
+      return res.status(409).json(buildSignupConflictResponse(field));
     }
 
     const verificationToken = generateVerificationToken();
@@ -86,11 +112,10 @@ export const signup = async (req, res) => {
     const message = String(error?.message || "");
 
     if (error?.code === 11000) {
-      const duplicatedField = Object.keys(error?.keyPattern || {})[0] || "field";
-      return res.status(409).json({
-        success: false,
-        message: `A user with that ${duplicatedField} already exists.`,
-      });
+      const duplicatedField =
+        Object.keys(error?.keyPattern || {})[0] || "field";
+      const conflictField = duplicatedField === "email" ? "email" : "username";
+      return res.status(409).json(buildSignupConflictResponse(conflictField));
     }
 
     if (
@@ -124,25 +149,36 @@ export const login = async (req, res) => {
   const { password } = body;
 
   if (!identifier || !password) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Please enter your email address or username and password.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Please enter your email address or username and password.",
+    });
   }
 
   try {
     const normalizedIdentifier = String(identifier).trim().toLowerCase();
 
     const user = await User.findOne({
-      $or: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }],
+      $or: [
+        { email: normalizedIdentifier },
+        { username: normalizedIdentifier },
+      ],
     }).select("+password");
 
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, message: "Invalid email/username or password." });
+        .json({
+          success: false,
+          message: "Invalid email/username or password.",
+        });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: "This account is deactivated. Please contact support.",
+      });
     }
 
     // Account lockout: check if account is locked
@@ -159,7 +195,8 @@ export const login = async (req, res) => {
     if (!isMatch) {
       // Increment failed attempts and set lock if threshold reached
       const MAX_FAILED = parseInt(process.env.MAX_FAILED_LOGIN, 10) || 5;
-      const LOCK_TIME = parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 60 * 60 * 1000; // 1 hour
+      const LOCK_TIME =
+        parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 60 * 60 * 1000; // 1 hour
 
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= MAX_FAILED) {
@@ -169,7 +206,10 @@ export const login = async (req, res) => {
 
       return res
         .status(401)
-        .json({ success: false, message: "Invalid email/username or password." });
+        .json({
+          success: false,
+          message: "Invalid email/username or password.",
+        });
     }
 
     if (user.isVerified === false) {
@@ -270,31 +310,31 @@ export const forgetPassword = async (req, res) => {
     }
 
     const user = await User.findOne({ email: String(email).toLowerCase() });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User does not exist." });
+    if (user) {
+      const resetToken = crypto.randomBytes(20).toString("hex");
+      const hashedResetToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+      user.resetPasswordToken = hashedResetToken;
+      user.resetPasswordExpireAt = Date.now() + 60 * 60 * 1000;
+      await user.save();
+
+      const frontendBase =
+        process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
+      const resetURL = `${frontendBase}/reset-password/${resetToken}`;
+
+      await sendPasswordResetEmail(
+        user.email,
+        resetURL,
+        `${user.Fname} ${user.Lname}`,
+      );
     }
-
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    const hashedResetToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-    user.resetPasswordToken = hashedResetToken;
-    user.resetPasswordExpireAt = Date.now() + 60 * 60 * 1000;
-    await user.save();
-
-    const frontendBase =
-      process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
-    const resetURL = `${frontendBase}/reset-password/${resetToken}`;
-
-    await sendPasswordResetEmail(
-      user.email,
-      resetURL,
-      `${user.Fname} ${user.Lname}`,
-    );
 
     return res.status(200).json({
       success: true,
-      message: "Password reset email sent successfully.",
+      message:
+        "If an account with that email exists, a password reset link has been sent.",
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -349,7 +389,9 @@ export const resetPassword = async (req, res) => {
 
     await user.save();
 
-    const passwordChangedAt = new Date(user.passwordChangedAt || Date.now()).toLocaleString("en-US", {
+    const passwordChangedAt = new Date(
+      user.passwordChangedAt || Date.now(),
+    ).toLocaleString("en-US", {
       timeZone: "Africa/Cairo",
       dateStyle: "medium",
       timeStyle: "medium",
@@ -400,4 +442,3 @@ export default {
   resetPassword,
   checkAuth,
 };
-
