@@ -17,7 +17,7 @@ import {
   authFormVariants,
   createPageVariants,
 } from "../libs/motionVariants";
-import { buildApiUrl } from "../utils/api";
+import { buildApiUrl, readJsonSafe } from "../utils/api";
 import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
 import { resetPasswordSchema } from "../types/validationSchemas";
 import { useResendCooldown } from "../hooks/useResendCooldown";
@@ -148,7 +148,7 @@ function ResetPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data = (await response.json()) as BackendResponseError;
+      const data = await readJsonSafe<BackendResponseError>(response, {});
 
       if (!response.ok) {
         toast.error(
@@ -193,7 +193,7 @@ function ResetPasswordPage() {
         },
       );
 
-      const data = (await response.json()) as BackendResponseError;
+      const data = await readJsonSafe<BackendResponseError>(response, {});
 
       if (!response.ok) {
         toast.error(

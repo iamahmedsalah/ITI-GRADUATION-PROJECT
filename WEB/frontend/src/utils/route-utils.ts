@@ -1,6 +1,6 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router-dom'
 import type { LanguagePref } from '../context/LanguageContext'
-import { buildApiUrl } from './api'
+import { buildApiUrl, readJsonSafe } from './api'
 
 export type RouteLanguageData = {
   language: LanguagePref
@@ -111,11 +111,11 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
     return redirect(`/${language}/login`)
   }
 
-  const data = (await response.json().catch(() => ({}))) as {
+  const data = await readJsonSafe<{
     success?: boolean
     authenticated?: boolean
     user?: AuthUser
-  }
+  }>(response, {})
 
   if (!data.authenticated || !data.user) {
     return redirect(`/${language}/login`)

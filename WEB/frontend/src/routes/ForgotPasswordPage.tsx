@@ -12,7 +12,7 @@ import {
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl } from '../utils/api'
+import { buildApiUrl, readJsonSafe } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { forgotPasswordSchema } from '../types/validationSchemas'
 import { z } from 'zod'
@@ -56,7 +56,7 @@ function ForgotPasswordPage() {
         body: JSON.stringify(values),
       })
 
-      const data = (await response.json()) as BackendResponseError
+      const data = await readJsonSafe<BackendResponseError>(response, {})
 
       if (!response.ok) {
         toast.error(

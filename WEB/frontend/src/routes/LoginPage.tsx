@@ -14,7 +14,7 @@ import {
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl } from '../utils/api'
+import { buildApiUrl, readJsonSafe } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { loginSchema } from '../types/validationSchemas'
 import { z } from 'zod'
@@ -62,7 +62,7 @@ function LoginPage() {
         body: JSON.stringify(values),
       })
 
-      const data = (await response.json()) as BackendResponseError
+      const data = await readJsonSafe<BackendResponseError>(response, {})
 
       if (!response.ok) {
 

@@ -12,7 +12,7 @@ import {
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl } from '../utils/api'
+import { buildApiUrl, readJsonSafe } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { verifyEmailSchema } from '../types/validationSchemas'
 import { useResendCooldown } from '../hooks/useResendCooldown'
@@ -95,7 +95,7 @@ function VerifyEmailPage() {
         body: JSON.stringify({ email: resendEmail }),
       })
 
-      const data = (await response.json()) as BackendResponseError
+      const data = await readJsonSafe<BackendResponseError>(response, {})
 
       if (!response.ok) {
         toast.error(
@@ -130,7 +130,7 @@ function VerifyEmailPage() {
         body: JSON.stringify({ code: code.toUpperCase().trim() }),
       })
 
-      const data = (await response.json()) as BackendResponseError
+      const data = await readJsonSafe<BackendResponseError>(response, {})
 
       if (!response.ok) {
         toast.error(
