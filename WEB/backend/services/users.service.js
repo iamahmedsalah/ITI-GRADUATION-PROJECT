@@ -27,7 +27,40 @@ const SOCIAL_PROVIDER_CONFIG = {
 
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
-const FRONTEND_ORIGIN = process.env.PRODUCTION_URL
+const parseOrigins = (...values) =>
+  values
+    .flatMap((value) => String(value || "").split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+const isLocalhostOrigin = (origin) => {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+};
+
+const resolveFrontendOrigin = () => {
+  const candidates = parseOrigins(
+    process.env.FRONTEND_URL,
+    process.env.PRODUCTION_URL,
+    process.env.CLIENT_URL,
+  );
+
+  if (candidates.length === 0) {
+    return "http://localhost:5173";
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return candidates.find((origin) => !isLocalhostOrigin(origin)) || candidates[0];
+  }
+
+  return candidates[0];
+};
+
+const FRONTEND_ORIGIN = resolveFrontendOrigin();
 const DEFAULT_SOCIAL_INTENT = "signup";
 
 const toPublicUser = (user) => ({
