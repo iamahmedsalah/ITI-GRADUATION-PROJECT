@@ -27,17 +27,7 @@ const SOCIAL_PROVIDER_CONFIG = {
 
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
-const parseFirstOrigin = (envVal) =>
-  String(envVal || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)[0];
-
-const FRONTEND_ORIGIN =
-  parseFirstOrigin(process.env.CLIENT_URL) ||
-  parseFirstOrigin(process.env.PRODUCTION_URL) ||
-  "http://localhost:5173";
-
+const FRONTEND_ORIGIN = process.env.PRODUCTION_URL
 const DEFAULT_SOCIAL_INTENT = "signup";
 
 const toPublicUser = (user) => ({
