@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
@@ -33,6 +33,9 @@ function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
   const { email } = (location.state as VerifyEmailLocationState | null) ?? {}
   const emailFromQuery = searchParams.get('email') ?? undefined
+  const oauthVerified = searchParams.get('oauth_verified') === '1'
+  const oauthProvider = searchParams.get('provider') ?? 'google'
+  const isGmailSignupVerification = oauthProvider === 'google' && !oauthVerified
   const resendEmail = email ?? emailFromQuery
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -57,6 +60,18 @@ function VerifyEmailPage() {
   })
 
   const codeValue = useWatch({ control, name: 'code' }) ?? ''
+
+  useEffect(() => {
+    if (!oauthVerified) {
+      return
+    }
+
+    const redirectTimer = setTimeout(() => {
+      navigate(`/${language}/dashboard`, { replace: true })
+    }, 2200)
+
+    return () => clearTimeout(redirectTimer)
+  }, [language, navigate, oauthVerified])
 
   const onResendCode = async () => {
     if (!resendEmail) {
@@ -154,6 +169,11 @@ function VerifyEmailPage() {
     visible: { opacity: 1, y: 0 },
   }
 
+  const verifyTitle = isGmailSignupVerification ? t('verify.gmailSignupTitle') : t('verify.title')
+  const verifySubtitle = isGmailSignupVerification
+    ? t('verify.gmailSignupSubtitle', { email: email ?? t('verify.defaultEmail') })
+    : t('verify.subtitle', { email: email ?? t('verify.defaultEmail') })
+
   return (
     <motion.main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:px-6 sm:py-10" variants={pageVariants} initial="hidden" animate="show">
       <motion.div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-(--border) bg-(--surface) shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-sm" initial="hidden" animate="visible" variants={containerVariants}>
@@ -166,10 +186,10 @@ function VerifyEmailPage() {
               {t('verify.badge')}
             </div>
             <h1 className="bg-linear-to-r from-(--gd-primary) to-(--gd-secondary) bg-clip-text text-2xl font-bold text-transparent sm:text-3xl">
-              {t('verify.title')}
+              {verifyTitle}
             </h1>
             <p className="mt-4 max-w-md text-sm leading-6 text-(--text)">
-              {t('verify.subtitle', { email: email ?? t('verify.defaultEmail') })}
+              {verifySubtitle}
             </p>
 
             <div className="mt-7 grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
@@ -179,65 +199,89 @@ function VerifyEmailPage() {
           </motion.section>
 
           <motion.form dir={direction} className="grid gap-5 px-6 py-8 sm:px-8" onSubmit={handleSubmit(onSubmit)} variants={authFormVariants}>
-            <motion.section className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4 sm:p-5" variants={authFormSectionVariants}>
-              <motion.h2 variants={authFormFieldItemVariants} className="text-sm font-semibold uppercase tracking-[0.14em] text-(--text)">
-                {t('verify.sectionTitle')}
-              </motion.h2>
+            {oauthVerified ? (
+              <motion.section className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4 sm:p-5" variants={authFormSectionVariants}>
+                <motion.h2 variants={authFormFieldItemVariants} className="text-sm font-semibold uppercase tracking-[0.14em] text-(--text)">
+                  {t('verify.oauthVerifiedTitle')}
+                </motion.h2>
 
-              <motion.div variants={authFormFieldItemVariants}>
-                <FormInput
-                  {...register('code')}
-                  label={t('verify.code')}
-                  placeholder={t('verify.placeholder')}
-                  autoComplete="one-time-code"
-                  inputMode="text"
-                  className="text-center uppercase tracking-[0.35em] placeholder:normal-case placeholder:tracking-normal"
-                  error={errors.code ? t(errors.code.message ?? '') : undefined}
-                  success={Boolean(touchedFields.code && !errors.code && codeValue.trim().length === 8)}
-                  successMessage={t('formInput.valid')}
-                />
-              </motion.div>
+                <motion.p variants={authFormFieldItemVariants} className="text-sm leading-6 text-(--text)">
+                  {t('verify.oauthVerifiedMessage', { provider: t(`signup.social.${oauthProvider}`) })}
+                </motion.p>
 
-              <motion.div variants={authFormFieldItemVariants} className="flex flex-wrap gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-2xl bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(29,185,84,0.2)] transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : t('verify.submit')}
-                </button>
-              </motion.div>
-            </motion.section>
+                <motion.div variants={authFormFieldItemVariants} className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/${language}/dashboard`, { replace: true })}
+                    className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-2xl bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(29,185,84,0.2)] transition-transform duration-200 hover:-translate-y-0.5"
+                  >
+                    {t('verify.continueToDashboard')}
+                  </button>
+                </motion.div>
+              </motion.section>
+            ) : (
+              <>
+                <motion.section className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4 sm:p-5" variants={authFormSectionVariants}>
+                  <motion.h2 variants={authFormFieldItemVariants} className="text-sm font-semibold uppercase tracking-[0.14em] text-(--text)">
+                    {t('verify.sectionTitle')}
+                  </motion.h2>
 
-            <motion.div variants={authFormFieldItemVariants} className="grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text)">
-              <p className="text-center">
-                {t('verify.noCode')}{' '}
-              </p>
+                  <motion.div variants={authFormFieldItemVariants}>
+                    <FormInput
+                      {...register('code')}
+                      label={t('verify.code')}
+                      placeholder={t('verify.placeholder')}
+                      autoComplete="one-time-code"
+                      inputMode="text"
+                      className="text-center uppercase tracking-[0.35em] placeholder:normal-case placeholder:tracking-normal"
+                      error={errors.code ? t(errors.code.message ?? '') : undefined}
+                      success={Boolean(touchedFields.code && !errors.code && codeValue.trim().length === 8)}
+                      successMessage={t('formInput.valid')}
+                    />
+                  </motion.div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3">
-                <div>
-                  <p className="font-medium text-(--text-h)">{t('verify.resendTitle')}</p>
-                  <p className="text-xs text-(--text)">
-                    {isCoolingDown
-                      ? t('verify.resendWait', { time: cooldownLabel })
-                      : t('verify.resendPrompt')}
+                  <motion.div variants={authFormFieldItemVariants} className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-2xl bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(29,185,84,0.2)] transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : t('verify.submit')}
+                    </button>
+                  </motion.div>
+                </motion.section>
+
+                <motion.div variants={authFormFieldItemVariants} className="grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text)">
+                  <p className="text-center">
+                    {t('verify.noCode')}{' '}
                   </p>
-                </div>
 
-                <button
-                  type="button"
-                  onClick={onResendCode}
-                  disabled={!resendEmail || isCoolingDown || isResending}
-                  className="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isResending ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  ) : (
-                    t('verify.resendButton')
-                  )}
-                </button>
-              </div>
-            </motion.div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3">
+                    <div>
+                      <p className="font-medium text-(--text-h)">{t('verify.resendTitle')}</p>
+                      <p className="text-xs text-(--text)">
+                        {isCoolingDown
+                          ? t('verify.resendWait', { time: cooldownLabel })
+                          : t('verify.resendPrompt')}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={onResendCode}
+                      disabled={!resendEmail || isCoolingDown || isResending}
+                      className="inline-flex cursor-pointer items-center justify-center rounded-2xl bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isResending ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        t('verify.resendButton')
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
           </motion.form>
         </div>
       </motion.div>

@@ -121,6 +121,12 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
     return redirect(`/${language}/login`)
   }
 
+  if (!data.user.isVerified) {
+    const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(data.user.email)}`
+
+    return redirect(verifyPath)
+  }
+
   return {
     language,
     user: data.user,

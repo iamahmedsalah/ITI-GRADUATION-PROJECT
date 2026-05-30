@@ -98,6 +98,10 @@
     "submit": "تسجيل الدخول",
     "adminLogin": "دخول المدير",
     "forgotPassword": "نسيت كلمة المرور؟",
+    "socialDivider": "أو سجل الدخول عبر",
+    "social": {
+      "google": "تسجيل الدخول عبر جوجل"
+    },
     "needAccount": "ليس لديك حساب؟",
     "createOne": "أنشئ حسابا"
   },
@@ -119,11 +123,10 @@
     "profileSection": "البيانات الشخصية",
     "securitySection": "إعداد الأمان",
     "organizeTitle": "تسجيل منظم",
-    "socialDivider": "أو تابع عبر",
+    "socialDivider": " او الاستمرار ",
     "socialSoon": "تسجيل {{provider}} سيكون متاحًا قريبًا.",
     "social": {
-      "google": "إنشاء حساب عبر Google",
-      "facebook": "إنشاء حساب عبر Facebook"
+      "google": "إنشاء حساب عبر جوجل"
     },
     "submit": "إنشاء الحساب",
     "backToLogin": "العودة لتسجيل الدخول",
@@ -135,7 +138,12 @@
     "badge": "تأكيد الحساب",
     "title": "تأكيد البريد الإلكتروني",
     "subtitle": "أدخل رمز التحقق المكون من 8 أحرف والمُرسل إلى {{email}}.",
+    "gmailSignupTitle": "تحقق من Gmail وأدخل الرمز",
+    "gmailSignupSubtitle": "أرسلنا رمز التحقق إلى عنوان Gmail الخاص بك: {{email}}.",
     "organizeTitle": "خطوة التحقق",
+    "oauthVerifiedTitle": "تم التحقق من الحساب",
+    "oauthVerifiedMessage": "حساب {{provider}} الخاص بك تم التحقق منه وجاهز للاستخدام. يمكنك المتابعة إلى لوحة التحكم الآن.",
+    "continueToDashboard": "المتابعة إلى لوحة التحكم",
     "sectionTitle": "تأكيد الرمز",
     "defaultEmail": "عنوان بريدك الإلكتروني",
     "code": "رمز التحقق",

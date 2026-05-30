@@ -1,35 +1,9 @@
-import { createElement } from 'react'
 import { TranslateIcon } from '@hugeicons/core-free-icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useLanguage } from '../../context/LanguageContext'
 import { toggleWrapperVariants } from '../../libs/motionVariants'
-
-type HugeIconData = typeof TranslateIcon
-
-function RenderHugeIcon({ icon, size = 18, className }: { icon: HugeIconData; size?: number; className?: string }) {
-  const children = icon.map(([tag, attrs], index) =>
-    createElement(tag, {
-      ...attrs,
-      key: attrs.key ?? index,
-    }),
-  )
-
-  return createElement(
-    'svg',
-    {
-      width: size,
-      height: size,
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      xmlns: 'http://www.w3.org/2000/svg',
-      role: 'img',
-      'aria-hidden': 'true',
-      className,
-    },
-    children,
-  )
-}
 
 export function LangToggleButton() {
   const { language, setLanguage } = useLanguage()
@@ -62,7 +36,7 @@ export function LangToggleButton() {
             exit={{ opacity: 0, scale: 0.68, rotate: language === 'ar' ? 35 : -35, y: -6 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
-            <RenderHugeIcon icon={TranslateIcon} className="size-4.5" />
+            <HugeiconsIcon icon={TranslateIcon} size={18} className="size-4.5" />
           </motion.span>
         </AnimatePresence>
       </button>

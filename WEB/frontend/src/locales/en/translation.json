@@ -98,6 +98,11 @@
     "submit": "Sign in",
     "adminLogin": "Admin login",
     "forgotPassword": "Forgot password?",
+    "socialDivider": "Or sign in with",
+    "socialHint": "Or use Google to sign in if you created your account that way.",
+    "social": {
+      "google": "Sign in with Google"
+    },
     "needAccount": "Need an account?",
     "createOne": "Create one"
   },
@@ -120,8 +125,7 @@
     "socialDivider": "Or continue with",
     "socialSoon": "{{provider}} signup is coming soon.",
     "social": {
-      "google": "Sign up with Google",
-      "facebook": "Sign up with Facebook"
+      "google": "Sign up with Google"
     },
     "submit": "Create account",
     "backToLogin": "Back to login",
@@ -133,7 +137,12 @@
     "badge": "Verify account",
     "title": "Verify email",
     "subtitle": "Enter the 8-character verification code sent to {{email}}.",
+    "gmailSignupTitle": "Check your Gmail and enter the code",
+    "gmailSignupSubtitle": "We sent a verification code to your Gmail address: {{email}}.",
     "organizeTitle": "Verification step",
+    "oauthVerifiedTitle": "Account verified",
+    "oauthVerifiedMessage": "Your {{provider}} account is verified and ready to use. You can continue to your dashboard now.",
+    "continueToDashboard": "Continue to dashboard",
     "sectionTitle": "Code confirmation",
     "defaultEmail": "your email address",
     "code": "Verification code",

@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Facebook01Icon, GoogleIcon } from "@hugeicons/core-free-icons";
+import { GoogleIcon } from "@hugeicons/core-free-icons";
 import { useLanguage } from "../context/LanguageContext";
 import {
   authFormFieldGridVariants,
@@ -194,10 +194,9 @@ function SignupPage() {
     };
   }, []);
 
-  const handleSocialSignup = (provider: "google" | "facebook") => {
-    toast.info(
-      t("signup.socialSoon", { provider: t(`signup.social.${provider}`) }),
-    );
+  const handleSocialSignup = () => {
+    const socialAuthUrl = buildApiUrl(`/auth/oauth/signup/google?language=${language}`)
+    window.location.assign(socialAuthUrl);
   };
 
   return (
@@ -246,22 +245,14 @@ function SignupPage() {
                 <span>{t("signup.socialDivider")}</span>
                 <span className="h-px flex-1 bg-(--border)" />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-1">
                 <button
                   type="button"
-                  onClick={() => handleSocialSignup("google")}
+                  onClick={handleSocialSignup}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
                 >
                   <HugeiconsIcon icon={GoogleIcon} size={18} />
                   <span>{t("signup.social.google")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSocialSignup("facebook")}
-                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
-                >
-                  <HugeiconsIcon icon={Facebook01Icon} size={18} />
-                  <span>{t("signup.social.facebook")}</span>
                 </button>
               </div>
 

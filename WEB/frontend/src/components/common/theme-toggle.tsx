@@ -1,35 +1,12 @@
-import { createElement } from 'react'
-import { DeviceAccessIcon, Moon01Icon, Sun01Icon,  } from '@hugeicons/core-free-icons'
+import {
+  DeviceAccessIcon,
+  Moon02Icon,
+  Sun01Icon,
+} from '@hugeicons/core-free-icons';
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from '../../context/ThemeContext'
 import { toggleWrapperVariants } from '../../libs/motionVariants'
-
-type HugeIconData = typeof Sun01Icon
-
-function RenderHugeIcon({ icon, size = 18, className }: { icon: HugeIconData; size?: number; className?: string }) {
-  const children = icon.map(([tag, attrs], index) =>
-    createElement(tag, {
-      ...attrs,
-      key: attrs.key ?? index,
-    }),
-  )
-
-
-  return createElement(
-    'svg',
-    {
-      width: size,
-      height: size,
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      xmlns: 'http://www.w3.org/2000/svg',
-      role: 'img',
-      'aria-hidden': 'true',
-      className,
-    },
-    children,
-  )
-}
+import { HugeiconsIcon } from '@hugeicons/react';
 
 export function ThemeToggleButton() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -59,7 +36,7 @@ export function ThemeToggleButton() {
               exit={{ opacity: 0, scale: 0.72, rotate: 28, y: -8 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              <RenderHugeIcon icon={DeviceAccessIcon} className="size-4.5" />
+              <HugeiconsIcon icon={DeviceAccessIcon} size={18} className="size-4.5" />
               <motion.span
                 aria-hidden="true"
                 className={`absolute -top-1.5 -right-1.5 size-2 rounded-full border-2 border-(--bg) ${
@@ -79,7 +56,7 @@ export function ThemeToggleButton() {
               exit={{ opacity: 0, scale: 0.68, rotate: 55, y: -6 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              <RenderHugeIcon icon={Moon01Icon} className="size-4.5" />
+              <HugeiconsIcon icon={Moon02Icon} size={18} className="size-4.5" />
             </motion.span>
           ) : (
             <motion.span
@@ -89,7 +66,7 @@ export function ThemeToggleButton() {
               exit={{ opacity: 0, scale: 0.68, rotate: -55, y: -6 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              <RenderHugeIcon icon={Sun01Icon} className="size-4.5" />
+              <HugeiconsIcon icon={Sun01Icon} size={18} className="size-4.5" />
             </motion.span>
           )}
         </AnimatePresence>

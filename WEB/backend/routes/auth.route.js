@@ -25,6 +25,8 @@ import {
   resendPasswordReset,
   resetPassword,
   checkAuth,
+  startSocialAuth,
+  handleSocialAuthCallback,
 } from "../services/users.service.js";
 
 const router = express.Router();
@@ -172,6 +174,11 @@ router.post(
   forgetPasswordValidation,
   resendPasswordReset,
 );
+
+router.get("/oauth/login/google", startSocialAuth("google", "login"));
+router.get("/oauth/signup/google", startSocialAuth("google", "signup"));
+router.get("/oauth/google", startSocialAuth("google", "signup"));
+router.get("/oauth/google/callback", handleSocialAuthCallback("google"));
 /**
  * @openapi
  * /auth/reset-password/{token}:

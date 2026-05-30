@@ -11,6 +11,25 @@ import generateTokenSetCookie, {
   getAuthCookieOptions,
 } from "../utils/generateTokenSetCookie.js";
 
+const generateSocialSuffix = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 6);
+
+const SOCIAL_PROVIDER_CONFIG = {
+  google: {
+    authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+    scope: "openid email profile",
+    callbackPath: "/auth/oauth/google/callback",
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  },
+};
+
+const SOCIAL_CALLBACK_ERROR = "oauth_error";
+const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
+const FRONTEND_ORIGIN = process.env.CLIENT_URL || process.env.PRODUCTION_URL || "http://localhost:5173";
+const DEFAULT_SOCIAL_INTENT = "signup";
+
 const toPublicUser = (user) => ({
   _id: user._id,
   username: user.username,
@@ -27,8 +46,316 @@ const generateVerificationToken = customAlphabet(
 );
 
 const buildFrontendUrl = (path) => {
-  const frontendBase = process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
-  return `${frontendBase}${path}`;
+  return new URL(path, FRONTEND_ORIGIN).toString();
+};
+
+const normalizeLanguage = (language) => (String(language).toLowerCase().startsWith("ar") ? "ar" : "en");
+
+const normalizeSocialIntent = (intent) => (String(intent).toLowerCase() === "login" ? "login" : DEFAULT_SOCIAL_INTENT);
+
+const parseSocialState = (state, fallbackLanguage = "en") => {
+  const [languagePart, intentPart] = String(state || "").split(":");
+
+  return {
+    language: normalizeLanguage(languagePart || fallbackLanguage),
+    intent: normalizeSocialIntent(intentPart),
+  };
+};
+
+const getSocialRedirectPath = (language, path) => {
+  const normalizedLanguage = normalizeLanguage(language);
+  return `/${normalizedLanguage}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
+const getSocialProviderConfig = (provider) => {
+  const config = SOCIAL_PROVIDER_CONFIG[provider];
+
+  if (!config) {
+    throw new Error(`Unsupported social provider: ${provider}`);
+  }
+
+  if (!config.clientId || !config.clientSecret) {
+    throw new Error(`${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET must be configured`);
+  }
+
+  return config;
+};
+
+const buildBackendOrigin = (req) => {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = req.get("host");
+
+  return `${protocol}://${host}`;
+};
+
+const buildSocialCallbackUrl = (req, provider) => {
+  return new URL(`/api${SOCIAL_PROVIDER_CONFIG[provider].callbackPath}`, buildBackendOrigin(req)).toString();
+};
+
+const buildSocialStartUrl = (req, provider, language, intent = DEFAULT_SOCIAL_INTENT) => {
+  const config = getSocialProviderConfig(provider);
+  const callbackUrl = buildSocialCallbackUrl(req, provider);
+  const authorizationUrl = new URL(config.authorizationUrl);
+  const normalizedLanguage = normalizeLanguage(language);
+  const normalizedIntent = normalizeSocialIntent(intent);
+
+  authorizationUrl.searchParams.set("client_id", config.clientId);
+  authorizationUrl.searchParams.set("redirect_uri", callbackUrl);
+  authorizationUrl.searchParams.set("response_type", "code");
+  authorizationUrl.searchParams.set("scope", config.scope);
+  authorizationUrl.searchParams.set("state", `${normalizedLanguage}:${normalizedIntent}`);
+
+  if (provider === "google") {
+    authorizationUrl.searchParams.set("access_type", "offline");
+    authorizationUrl.searchParams.set("prompt", "select_account");
+  }
+
+  return authorizationUrl.toString();
+};
+
+const parseSocialName = (profile = {}) => {
+  const displayName = String(profile.name || "").trim();
+  const firstName = String(profile.first_name || "").trim();
+  const lastName = String(profile.last_name || "").trim();
+
+  if (firstName || lastName) {
+    return {
+      firstName: firstName || displayName.split(" ")[0] || "User",
+      lastName:
+        lastName ||
+        displayName.split(" ").slice(1).join(" ") ||
+        "Account",
+    };
+  }
+
+  const parts = displayName.split(" ").filter(Boolean);
+
+  if (parts.length === 0) {
+    return { firstName: "User", lastName: "Account" };
+  }
+
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" ") || "Account",
+  };
+};
+
+const generateSocialUsername = (email) => {
+  const localPart = String(email).split("@")[0] || "user";
+  const base = localPart
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/^[._-]+|[._-]+$/g, "")
+    .slice(0, 16) || "user";
+
+  return `${base}-${generateSocialSuffix()}`;
+};
+
+const generateUniqueSocialUsername = async (email) => {
+  let username = generateSocialUsername(email);
+
+  while (await User.exists({ username })) {
+    username = generateSocialUsername(email);
+  }
+
+  return username;
+};
+
+const exchangeCodeForSocialProfile = async (req, provider, code) => {
+  const config = getSocialProviderConfig(provider);
+  const callbackUrl = buildSocialCallbackUrl(req, provider);
+
+  const tokenResponse = await fetch(config.tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      redirect_uri: callbackUrl,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  const tokenData = await tokenResponse.json();
+
+  if (!tokenResponse.ok) {
+    throw new Error(tokenData?.error_description || tokenData?.error || "Google token exchange failed");
+  }
+
+  const profileResponse = await fetch(config.userInfoUrl, {
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+    },
+  });
+
+  const profileData = await profileResponse.json();
+
+  if (!profileResponse.ok) {
+    throw new Error(profileData?.error?.message || "Google profile fetch failed");
+  }
+
+  return {
+    email: profileData.email,
+    emailVerified: profileData.verified_email !== false,
+    name: profileData.name,
+    first_name: profileData.given_name,
+    last_name: profileData.family_name,
+    picture: profileData.picture,
+    providerId: profileData.id,
+  };
+};
+
+const handleSocialAuthSuccess = async (res, user) => {
+  user.lastLogin = Date.now();
+  user.failedLoginAttempts = 0;
+  user.lockUntil = undefined;
+
+  generateTokenSetCookie(res, user._id);
+  await user.save();
+
+  return user;
+};
+
+const redirectToDashboard = (res, language) => {
+  const redirectUrl = new URL(buildFrontendUrl(`/${normalizeLanguage(language)}/dashboard`));
+  return res.redirect(302, redirectUrl.toString());
+};
+
+const redirectWithSocialError = (res, language, message) => {
+  const normalizedLanguage = normalizeLanguage(language);
+  const redirectUrl = new URL(`/${normalizedLanguage}/login`, FRONTEND_ORIGIN);
+  redirectUrl.searchParams.set(SOCIAL_CALLBACK_ERROR, message);
+  return res.redirect(302, redirectUrl.toString());
+};
+
+const createOrLinkSocialUser = async (provider, profile, intent) => {
+  const email = String(profile.email || "").trim().toLowerCase();
+
+  if (!email) {
+    throw new Error(`${provider} account did not return an email address`);
+  }
+
+  const existingUser = await User.findOne({ email }).select("+password");
+
+  if (existingUser) {
+    if (existingUser.isActive === false) {
+      const error = new Error("This account is deactivated. Please contact support.");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (!existingUser.isVerified) {
+      existingUser.isVerified = true;
+    }
+
+    const { firstName, lastName } = parseSocialName(profile);
+    existingUser.Fname = existingUser.Fname || firstName;
+    existingUser.Lname = existingUser.Lname || lastName;
+
+    return {
+      user: existingUser,
+      requiresVerification: false,
+    };
+  }
+
+  if (intent === "login") {
+    const error = new Error("No account found for this email. Please sign up first.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const { firstName, lastName } = parseSocialName(profile);
+  const username = await generateUniqueSocialUsername(email);
+
+  const createdUser = await User.create({
+    username,
+    Fname: firstName,
+    Lname: lastName,
+    email,
+    password: crypto.randomBytes(32).toString("hex"),
+    isVerified: false,
+  });
+
+  return {
+    user: createdUser,
+    requiresVerification: true,
+  };
+};
+
+export const startSocialAuth = (provider, intent = DEFAULT_SOCIAL_INTENT) => (req, res) => {
+  try {
+    const { language = "en" } = req.query ?? {};
+    const redirectUrl = buildSocialStartUrl(req, provider, language, intent);
+    return res.redirect(302, redirectUrl);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const handleSocialAuthCallback = (provider) => async (req, res) => {
+  try {
+    const { code, state, error } = req.query ?? {};
+    const parsedState = parseSocialState(state || req.query.language || "en");
+    const intent = parsedState.intent;
+    const language = parsedState.language;
+
+    if (error) {
+      return redirectWithSocialError(res, language, String(error));
+    }
+
+    if (!code) {
+      return redirectWithSocialError(res, language, "Missing OAuth code");
+    }
+
+    const profile = await exchangeCodeForSocialProfile(req, provider, String(code));
+
+    if (!profile.email) {
+      return redirectWithSocialError(res, language, `${provider} account did not provide an email address`);
+    }
+
+    const { user, requiresVerification } = await createOrLinkSocialUser(provider, profile, intent);
+
+    if (intent === "signup") {
+      generateTokenSetCookie(res, user._id);
+      await issueVerificationEmail(user);
+      const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
+      const redirectUrl = new URL(buildFrontendUrl(redirectPath));
+      redirectUrl.searchParams.set("email", profile.email);
+      redirectUrl.searchParams.set("provider", provider);
+
+      return res.redirect(302, redirectUrl.toString());
+    }
+
+    if (requiresVerification) {
+      generateTokenSetCookie(res, user._id);
+      await issueVerificationEmail(user);
+      const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
+      const redirectUrl = new URL(buildFrontendUrl(redirectPath));
+      redirectUrl.searchParams.set("email", profile.email);
+      redirectUrl.searchParams.set("provider", provider);
+
+      return res.redirect(302, redirectUrl.toString());
+    }
+
+    await handleSocialAuthSuccess(res, user);
+    return redirectToDashboard(res, language);
+  } catch (error) {
+    const { language } = parseSocialState(req.query?.state || req.query?.language || "en");
+    if (error?.statusCode === 403) {
+      return redirectWithSocialError(res, language, error.message);
+    }
+
+    if (error?.statusCode === 404) {
+      return redirectWithSocialError(res, language, error.message);
+    }
+
+    console.error(`${provider} OAuth error:`, error);
+    return redirectWithSocialError(res, language, `${provider} login failed`);
+  }
 };
 
 const buildResetPasswordUrl = (token, email) => {

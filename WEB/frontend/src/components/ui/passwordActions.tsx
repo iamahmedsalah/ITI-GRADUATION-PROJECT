@@ -1,5 +1,5 @@
-import { createElement } from 'react'
 import { CheckmarkCircle01Icon, Copy01Icon, MagicWand03Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useLanguage } from '../../context/LanguageContext'
 
 type PasswordActionsProps = {
@@ -12,32 +12,6 @@ type PasswordActionsProps = {
   generateAriaLabel?: string
   copyAriaLabel?: string
   copyDisabled?: boolean
-}
-
-type HugeIconData = typeof Copy01Icon
-
-function RenderHugeIcon({ icon, size = 16, className }: { icon: HugeIconData; size?: number; className?: string }) {
-  const children = icon.map(([tag, attrs], index) =>
-    createElement(tag, {
-      ...attrs,
-      key: attrs.key ?? index,
-    }),
-  )
-
-  return createElement(
-    'svg',
-    {
-      width: size,
-      height: size,
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      xmlns: 'http://www.w3.org/2000/svg',
-      role: 'img',
-      'aria-hidden': 'true',
-      className,
-    },
-    children,
-  )
 }
 
 export default function PasswordActions({
@@ -62,7 +36,7 @@ export default function PasswordActions({
         aria-label={generateAriaLabel ?? generateLabel}
         className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-(--border) px-3 py-1.5 text-xs font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
       >
-        <RenderHugeIcon icon={MagicWand03Icon} />
+        <HugeiconsIcon icon={MagicWand03Icon} size={16} />
         <span>{generateLabel}</span>
       </button>
 
@@ -77,7 +51,7 @@ export default function PasswordActions({
             : 'border-(--border) text-(--text-h) hover:bg-(--surface-soft-hover)'
         }`}
       >
-        <RenderHugeIcon icon={copied ? CheckmarkCircle01Icon : Copy01Icon} />
+        <HugeiconsIcon icon={copied ? CheckmarkCircle01Icon : Copy01Icon} size={16} />
         <span>{copied ? copiedLabel : copyLabel}</span>
       </button>
     </div>

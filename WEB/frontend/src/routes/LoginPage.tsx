@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { GoogleIcon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../context/LanguageContext'
 import {
   authFormFieldItemVariants,
@@ -25,6 +27,7 @@ function LoginPage() {
   const { language, direction } = useLanguage()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const pageVariants = createPageVariants(direction)
@@ -111,6 +114,22 @@ function LoginPage() {
   const identifierValue = useWatch({ control, name: 'identifier' }) ?? ''
   const passwordValue = useWatch({ control, name: 'password' }) ?? ''
 
+  const handleSocialLogin = () => {
+    const socialAuthUrl = buildApiUrl(`/auth/oauth/login/google?language=${language}`)
+    window.location.assign(socialAuthUrl)
+  }
+
+  useEffect(() => {
+    const oauthError = searchParams.get('oauth_error')
+
+    if (!oauthError) {
+      return
+    }
+
+    toast.error(t('auth.loginFailed'))
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setSearchParams, t])
+
   return (
     <motion.main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:px-6 sm:py-10" variants={pageVariants} initial="hidden" animate="show">
       <motion.div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-(--border) bg-(--surface) shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-sm" initial="hidden" animate="visible" variants={containerVariants}>
@@ -133,6 +152,26 @@ function LoginPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text)">{t('login.organizeTitle')}</p>
               <p className="text-sm leading-6 text-(--text)">{t('login.helper')}</p>
             </div>
+
+            
+              <motion.div variants={authFormFieldItemVariants} className="grid gap-3 pt-2">
+                <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-(--text)">
+                  <span className="h-px flex-1 bg-(--border)" />
+                  <span>{t('login.socialDivider')}</span>
+                  <span className="h-px flex-1 bg-(--border)" />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-1">
+                  <button
+                    type="button"
+                    onClick={handleSocialLogin}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
+                  >
+                    <HugeiconsIcon icon={GoogleIcon} size={18} />
+                    <span>{t('login.social.google')}</span>
+                  </button>
+                </div>
+              </motion.div>
           </motion.section>
 
           <motion.form dir={direction} className="grid gap-5 px-6 py-8 sm:px-8" onSubmit={handleSubmit(onSubmit)} variants={authFormVariants}>
@@ -191,6 +230,7 @@ function LoginPage() {
                   {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : t('login.submit')}
                 </button>
               </motion.div>
+
             </motion.section>
 
             <motion.div variants={authFormFieldItemVariants} className="rounded-2xl border border-(--border) bg-(--surface-muted) px-4 py-3 text-center text-sm text-(--text)">
