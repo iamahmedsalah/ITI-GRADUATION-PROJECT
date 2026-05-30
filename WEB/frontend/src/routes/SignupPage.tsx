@@ -16,7 +16,7 @@ import {
   createPageVariants,
 } from "../libs/motionVariants";
 import { buildApiUrl } from "../utils/api";
-import { getAuthErrorMessage, type AuthErrorResponse } from "../utils/authResponse";
+import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
 import { signupSchema } from "../types/validationSchemas";
 import { z } from "zod";
 import PasswordStrengthSubmit from "../components/ui/passwordStrength";
@@ -69,11 +69,11 @@ function SignupPage() {
         body: JSON.stringify(values),
       });
 
-      const data = (await response.json()) as AuthErrorResponse;
+      const data = (await response.json()) as BackendResponseError;
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'auth.signupFailed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',

@@ -13,7 +13,7 @@ import {
   createPageVariants,
 } from '../libs/motionVariants'
 import { buildApiUrl } from '../utils/api'
-import { getAuthErrorMessage, type AuthErrorResponse } from '../utils/authResponse'
+import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { loginSchema } from '../types/validationSchemas'
 import { z } from 'zod'
 import PasswordVisibilityToggle from '../components/ui/passwordVisibilityToggle'
@@ -59,13 +59,13 @@ function LoginPage() {
         body: JSON.stringify(values),
       })
 
-      const data = (await response.json()) as AuthErrorResponse
+      const data = (await response.json()) as BackendResponseError
 
       if (!response.ok) {
 
 
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'auth.loginFailed',
             translate: t,
             locale: toastLocale,

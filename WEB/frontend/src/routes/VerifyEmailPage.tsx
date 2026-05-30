@@ -13,7 +13,7 @@ import {
   createPageVariants,
 } from '../libs/motionVariants'
 import { buildApiUrl } from '../utils/api'
-import { getAuthErrorMessage, type AuthErrorResponse } from '../utils/authResponse'
+import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { verifyEmailSchema } from '../types/validationSchemas'
 import { useResendCooldown } from '../hooks/useResendCooldown'
 import { z } from 'zod'
@@ -80,11 +80,11 @@ function VerifyEmailPage() {
         body: JSON.stringify({ email: resendEmail }),
       })
 
-      const data = (await response.json()) as AuthErrorResponse
+      const data = (await response.json()) as BackendResponseError
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'verify.resendFailed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',
@@ -115,11 +115,11 @@ function VerifyEmailPage() {
         body: JSON.stringify({ code: code.toUpperCase().trim() }),
       })
 
-      const data = (await response.json()) as AuthErrorResponse
+      const data = (await response.json()) as BackendResponseError
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'auth.verifyFailed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',

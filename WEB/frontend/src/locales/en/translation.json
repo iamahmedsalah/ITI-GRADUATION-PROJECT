@@ -30,12 +30,59 @@
     "accountLocked": "Your account is locked until {{time}} due to multiple failed login attempts.",
     "tooManyRequests": "Too many requests. Please try again later.",
     "validationFailed": "Validation failed.",
+    "invalidCredentials": "Invalid email, username, or password.",
+    "accountDeactivated": "This account is deactivated. Please contact support.",
+    "emailAlreadyRegistered": "Email is already registered.",
+    "usernameTaken": "Username is already taken.",
+    "invalidVerificationCode": "Invalid verification code.",
+    "serverAuthConfigError": "Server auth configuration error.",
     "signupFailed": "Signup failed.",
     "signupSuccess": "Account created successfully.",
     "logoutFailed": "Logout failed.",
     "logoutSuccess": "Logged out successfully.",
     "verifyFailed": "Verification failed.",
     "verifySuccess": "Email verified successfully."
+  },
+  "admin": {
+    "loginFailed": "Admin login failed.",
+    "loginSuccess": "Admin login successful.",
+    "invalidCredentials": "Invalid admin credentials.",
+    "accountDeactivated": "This admin account is deactivated.",
+    "verifyEmailRequired": "Admin email not verified.",
+    "invalidVerificationCode": "Invalid admin verification code.",
+    "verifySuccess": "Admin email verified successfully.",
+    "validation": {
+      "credentialsRequired": "Please enter your admin email/username and password.",
+      "idRequired": "A valid ID is required.",
+      "idHex": "ID must be a valid 24-character hexadecimal value.",
+      "pageNumber": "Page must be a number.",
+      "pageMin": "Page must be at least 1.",
+      "pageMax": "Page value is too large.",
+      "limitNumber": "Limit must be a number.",
+      "limitMin": "Limit must be at least 1.",
+      "limitMax": "Limit cannot be greater than 100.",
+      "deactivationReasonMax": "Deactivation reason must be at most 500 characters.",
+      "atLeastOneUserField": "Provide at least one field to update: role, isVerified, isActive, deactivationReason.",
+      "atLeastOneField": "Provide at least one field to update.",
+      "stepKeyRequired": "Step key is required.",
+      "stepKeyEmpty": "Step key cannot be empty.",
+      "stepKeyMax": "Step key must be at most 50 characters.",
+      "stepTitleRequired": "Step title is required.",
+      "stepTitleMin": "Step title must be at least 3 characters.",
+      "stepTitleMax": "Step title must be at most 120 characters.",
+      "stepDescriptionMax": "Step description must be at most 1000 characters.",
+      "resourceTitleMax": "Resource title must be at most 120 characters.",
+      "resourceUrl": "Invalid resource URL.",
+      "stepOrderNumber": "Step order must be a number.",
+      "stepOrderMin": "Step order cannot be negative.",
+      "estimatedMinutesNumber": "Estimated minutes must be a number.",
+      "estimatedMinutesMin": "Estimated minutes cannot be negative.",
+      "estimatedTotalMinutesNumber": "Estimated total minutes must be a number.",
+      "estimatedTotalMinutesMin": "Estimated total minutes cannot be negative.",
+      "slugPattern": "Slug must contain only lowercase letters, numbers, and hyphens.",
+      "durationNumber": "Duration must be a number.",
+      "imageInput": "Image must be a valid URL or base64 data URI."
+    }
   },
   "login": {
     "badge": "Welcome back",
@@ -198,15 +245,19 @@
   },
   "validation": {
     "password": {
+      "required": "Password is required.",
       "min": "Password must be at least 8 characters long.",
       "uppercase": "Password must include at least one uppercase letter.",
       "lowercase": "Password must include at least one lowercase letter.",
       "number": "Password must include at least one number.",
+      "requirements": "Password must include uppercase, lowercase, number and symbol.",
       "symbol": "Password must include at least one symbol.",
       "confirmMatch": "Passwords do not match."
     },
     "username": {
+      "required": "Username is required.",
       "min": "Username must be at least 3 characters long.",
+      "range": "Username must be between 3 and 24 characters long.",
       "max": "Username must be at most 24 characters long.",
       "pattern": "Username can only contain letters, numbers, dots, underscores, and hyphens."
     },
@@ -217,6 +268,7 @@
       "required": "Last name is required."
     },
     "email": {
+      "required": "Email is required.",
       "invalid": "Enter a valid email address.",
       "domain": "Use a supported email domain (gmail.com, outlook.com, hotmail.com, or test.com)."
     },
@@ -224,6 +276,7 @@
       "min": "Enter your email or username."
     },
     "verifyCode": {
+      "required": "Verification code is required.",
       "length": "Verification code must be 8 characters long.",
       "pattern": "Verification code can only contain letters and numbers."
     }

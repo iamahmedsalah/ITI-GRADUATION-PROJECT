@@ -18,7 +18,7 @@ import {
   createPageVariants,
 } from "../libs/motionVariants";
 import { buildApiUrl } from "../utils/api";
-import { getAuthErrorMessage, type AuthErrorResponse } from "../utils/authResponse";
+import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
 import { resetPasswordSchema } from "../types/validationSchemas";
 import { useResendCooldown } from "../hooks/useResendCooldown";
 import { z } from "zod";
@@ -148,11 +148,11 @@ function ResetPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data = (await response.json()) as AuthErrorResponse;
+      const data = (await response.json()) as BackendResponseError;
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'reset.resendFailed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',
@@ -193,11 +193,11 @@ function ResetPasswordPage() {
         },
       );
 
-      const data = (await response.json()) as AuthErrorResponse;
+      const data = (await response.json()) as BackendResponseError;
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'reset.failed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',

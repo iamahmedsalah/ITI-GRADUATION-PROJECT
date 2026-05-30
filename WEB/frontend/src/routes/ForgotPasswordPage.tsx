@@ -13,7 +13,7 @@ import {
   createPageVariants,
 } from '../libs/motionVariants'
 import { buildApiUrl } from '../utils/api'
-import { getAuthErrorMessage, type AuthErrorResponse } from '../utils/authResponse'
+import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { forgotPasswordSchema } from '../types/validationSchemas'
 import { z } from 'zod'
 import FormInput from '../components/ui/form-input'
@@ -56,11 +56,11 @@ function ForgotPasswordPage() {
         body: JSON.stringify(values),
       })
 
-      const data = (await response.json()) as AuthErrorResponse
+      const data = (await response.json()) as BackendResponseError
 
       if (!response.ok) {
         toast.error(
-          getAuthErrorMessage(response, data, {
+          getBackendResponseMessage(response, data, {
             fallbackKey: 'forgot.failed',
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',
