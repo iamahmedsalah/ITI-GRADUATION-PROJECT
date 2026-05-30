@@ -26,6 +26,22 @@ const forgotPasswordLimiterOptions = {
 
 export const forgotPasswordLimiter = rateLimit(forgotPasswordLimiterOptions);
 
+export const resendVerificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: parseInt(process.env.VERIFICATION_RESEND_RATE_LIMIT || "5", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many verification resend requests, try again later.",
+  },
+  keyGenerator: (req) => {
+    return req.body?.email
+      ? String(req.body.email).toLowerCase()
+      : ipKeyGenerator(req.ip);
+  },
+});
+
 // Admin endpoints rate limiters
 export const adminListLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -51,4 +67,4 @@ export const adminPublishLimiter = rateLimit({
   message: { success: false, message: "Too many publish requests, try again later." },
 });
 
-export default { loginLimiter, forgotPasswordLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };
+export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };

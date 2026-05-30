@@ -1,11 +1,16 @@
 import express from "express";
-import { loginLimiter, forgotPasswordLimiter } from "../utils/rateLimiter.js";
+import {
+  loginLimiter,
+  forgotPasswordLimiter,
+  resendVerificationLimiter,
+} from "../utils/rateLimiter.js";
 
 import { protect } from "../middleware/protectsRoutes.js";
 import {
   signupValidation,
   signupUniquenessValidation,
   verifyEmailValidation,
+  resendVerificationValidation,
   loginValidation,
   forgetPasswordValidation,
   resetPasswordValidation,
@@ -13,9 +18,11 @@ import {
 import {
   signup,
   verifyEmail,
+  resendVerificationEmail,
   login,
   logout,
   forgetPassword,
+  resendPasswordReset,
   resetPassword,
   checkAuth,
 } from "../services/users.service.js";
@@ -69,6 +76,32 @@ router.post("/signup", signupValidation, signupUniquenessValidation, signup);
 router.post("/verify-email", verifyEmailValidation, verifyEmail);
 /**
  * @openapi
+ * /auth/resend-verification-code:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Resend a verification code to the user's email address
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *           example:
+ *             email: student_test@example.com
+ *     responses:
+ *       200:
+ *         description: Verification code resend attempted
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post(
+  "/resend-verification-code",
+  resendVerificationLimiter,
+  resendVerificationValidation,
+  resendVerificationEmail,
+);
+/**
+ * @openapi
  * /auth/login:
  *   post:
  *     tags: [Auth]
@@ -112,6 +145,32 @@ router.post(
   forgotPasswordLimiter,
   forgetPasswordValidation,
   forgetPassword,
+);
+/**
+ * @openapi
+ * /auth/resend-reset-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Resend a password reset link
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPasswordRequest'
+ *           example:
+ *             email: student_test@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset resend attempted
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ */
+router.post(
+  "/resend-reset-password",
+  forgotPasswordLimiter,
+  forgetPasswordValidation,
+  resendPasswordReset,
 );
 /**
  * @openapi

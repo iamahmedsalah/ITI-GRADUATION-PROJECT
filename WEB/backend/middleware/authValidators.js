@@ -207,4 +207,6 @@ export const loginValidation = validateRequest(loginSchema);
 
 export const forgetPasswordValidation = validateRequest(forgetPasswordSchema);
 
+export const resendVerificationValidation = validateRequest(forgetPasswordSchema);
+
 export const resetPasswordValidation = validateRequest(resetPasswordSchema);

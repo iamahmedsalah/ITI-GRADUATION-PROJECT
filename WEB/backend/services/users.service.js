@@ -26,6 +26,54 @@ const generateVerificationToken = customAlphabet(
   8,
 );
 
+const buildFrontendUrl = (path) => {
+  const frontendBase = process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
+  return `${frontendBase}${path}`;
+};
+
+const buildResetPasswordUrl = (token, email) => {
+  const baseUrl = buildFrontendUrl(`/reset-password/${token}`);
+  return `${baseUrl}?email=${encodeURIComponent(email)}`;
+};
+
+const issueVerificationEmail = async (user) => {
+  const verificationToken = generateVerificationToken();
+
+  user.verificationToken = verificationToken;
+  user.verificationTokenExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+  await user.save();
+
+  await sendVerificationEmail(
+    user.email,
+    verificationToken,
+    `${user.Fname} ${user.Lname}`,
+  );
+
+  return verificationToken;
+};
+
+const issuePasswordResetEmail = async (user) => {
+  const resetToken = crypto.randomBytes(20).toString("hex");
+  const hashedResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.resetPasswordToken = hashedResetToken;
+  user.resetPasswordExpireAt = Date.now() + 60 * 60 * 1000;
+  await user.save();
+
+  const resetURL = buildResetPasswordUrl(resetToken, user.email);
+
+  await sendPasswordResetEmail(
+    user.email,
+    resetURL,
+    `${user.Fname} ${user.Lname}`,
+  );
+
+  return resetToken;
+};
+
 const buildSignupConflictResponse = (field) => ({
   success: false,
   message: "Validation failed.",
@@ -83,25 +131,17 @@ export const signup = async (req, res) => {
       return res.status(409).json(buildSignupConflictResponse(field));
     }
 
-    const verificationToken = generateVerificationToken();
-
     const newUser = await User.create({
       username: normalizedUsername,
       Fname: normalizedFname,
       Lname: normalizedLname,
       email: normalizedEmail,
       password,
-      verificationToken,
-      verificationTokenExpireAt: Date.now() + 24 * 60 * 60 * 1000,
     });
 
     generateTokenSetCookie(res, newUser._id);
 
-    await sendVerificationEmail(
-      newUser.email,
-      verificationToken,
-      `${newUser.Fname} ${newUser.Lname}`,
-    );
+    await issueVerificationEmail(newUser);
 
     return res.status(201).json({
       success: true,
@@ -187,6 +227,7 @@ export const login = async (req, res) => {
       return res.status(423).json({
         success: false,
         message: `Account locked until ${unlockTime} due to multiple failed login attempts.`,
+        lockUntil: user.lockUntil,
       });
     }
 
@@ -194,9 +235,9 @@ export const login = async (req, res) => {
 
     if (!isMatch) {
       // Increment failed attempts and set lock if threshold reached
-      const MAX_FAILED = parseInt(process.env.MAX_FAILED_LOGIN, 10) || 5;
+      const MAX_FAILED = parseInt(process.env.MAX_FAILED_LOGIN, 10) || 8;
       const LOCK_TIME =
-        parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 60 * 60 * 1000; // 1 hour
+        parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 30 * 60 * 1000; // 30 minutes
 
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= MAX_FAILED) {
@@ -290,6 +331,34 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
+// POST - Resend Verify Email Code
+export const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    const user = await User.findOne({ email: String(email).trim().toLowerCase() });
+
+    if (user && user.isVerified !== true) {
+      await issueVerificationEmail(user);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "If an account with that email exists, a new verification code has been sent.",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // POST - Logout
 export const logout = (req, res) => {
   res.clearCookie("token", getAuthCookieOptions());
@@ -311,30 +380,41 @@ export const forgetPassword = async (req, res) => {
 
     const user = await User.findOne({ email: String(email).toLowerCase() });
     if (user) {
-      const resetToken = crypto.randomBytes(20).toString("hex");
-      const hashedResetToken = crypto
-        .createHash("sha256")
-        .update(resetToken)
-        .digest("hex");
-      user.resetPasswordToken = hashedResetToken;
-      user.resetPasswordExpireAt = Date.now() + 60 * 60 * 1000;
-      await user.save();
-
-      const frontendBase =
-        process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
-      const resetURL = `${frontendBase}/reset-password/${resetToken}`;
-
-      await sendPasswordResetEmail(
-        user.email,
-        resetURL,
-        `${user.Fname} ${user.Lname}`,
-      );
+      await issuePasswordResetEmail(user);
     }
 
     return res.status(200).json({
       success: true,
       message:
         "If an account with that email exists, a password reset link has been sent.",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST - Resend Password Reset Email
+export const resendPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    const user = await User.findOne({ email: String(email).trim().toLowerCase() });
+
+    if (user) {
+      await issuePasswordResetEmail(user);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "If an account with that email exists, a new password reset link has been sent.",
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -436,9 +516,11 @@ export const checkAuth = (req, res) => {
 export default {
   signup,
   verifyEmail,
+  resendVerificationEmail,
   login,
   logout,
   forgetPassword,
+  resendPasswordReset,
   resetPassword,
   checkAuth,
 };

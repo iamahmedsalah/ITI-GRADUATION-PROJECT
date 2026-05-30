@@ -1,0 +1,231 @@
+{
+  "siteTitle": "Ilma - AI-Powered Recommendation Learning",
+  "title": "Hello World",
+  "description": "Description",
+  "logo": "ILMA",
+  "subtitle": "Localization is ready with English and Arabic.",
+  "language": "Language",
+  "english": "English",
+  "arabic": "Arabic",
+  "navbar": {
+    "logo": "ILMA",
+    "login": "Login",
+    "signup": "Sign Up",
+    "roadmap": "Roadmap",
+    "ai": "AI Create",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
+  },
+  "layout": {
+    "footerDescription": "A localized learning platform with Arabic and English support, theme switching, and a shared layout system.",
+    "explore": "Explore",
+    "dashboard": "Dashboard",
+    "preferences": "Preferences",
+    "preferencesDescription": "Language and theme toggles live in the header so they stay consistent across the whole site."
+  },
+  "auth": {
+    "loginFailed": "Login failed.",
+    "loginSuccess": "Login successful.",
+    "verifyEmailRequired": "Please verify your email address first.",
+    "accountLocked": "Your account is locked until {{time}} due to multiple failed login attempts.",
+    "tooManyRequests": "Too many requests. Please try again later.",
+    "validationFailed": "Validation failed.",
+    "signupFailed": "Signup failed.",
+    "signupSuccess": "Account created successfully.",
+    "logoutFailed": "Logout failed.",
+    "logoutSuccess": "Logged out successfully.",
+    "verifyFailed": "Verification failed.",
+    "verifySuccess": "Email verified successfully."
+  },
+  "login": {
+    "badge": "Welcome back",
+    "title": "Login",
+    "subtitle": "Sign in to continue in the {{language}} locale.",
+    "organizeTitle": "Organized login",
+    "helper": "Use your verified account credentials to access your dashboard and continue your learning path.",
+    "credentialsSection": "Credentials",
+    "identifier": "Email or username",
+    "identifierPlaceholder": "Enter your email or unique username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "submit": "Sign in",
+    "adminLogin": "Admin login",
+    "forgotPassword": "Forgot password?",
+    "needAccount": "Need an account?",
+    "createOne": "Create one"
+  },
+  "signup": {
+    "badge": "Create account",
+    "title": "Sign up",
+    "subtitle": "Create a new account for the {{language}} experience.",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your unique username",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email address",
+    "firstName": "First name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last name",
+    "lastNamePlaceholder": "Enter your last name",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "securitySection": "Security setup",
+    "organizeTitle": "Organized signup",
+    "socialDivider": "Or continue with",
+    "socialSoon": "{{provider}} signup is coming soon.",
+    "social": {
+      "google": "Sign up with Google",
+      "facebook": "Sign up with Facebook"
+    },
+    "submit": "Create account",
+    "backToLogin": "Back to login",
+    "helper": "After signup, the backend sends a verification email and the account moves to the verification step.",
+    "haveAccount": "Already have an account?",
+    "loginCta": "Log in"
+  },
+  "verify": {
+    "badge": "Verify account",
+    "title": "Verify email",
+    "subtitle": "Enter the 8-character verification code sent to {{email}}.",
+    "organizeTitle": "Verification step",
+    "sectionTitle": "Code confirmation",
+    "defaultEmail": "your email address",
+    "code": "Verification code",
+    "placeholder": "A1B2C3D4",
+    "submit": "Verify account",
+    "backToLogin": "Back to login",
+    "helper": "The verification code is sent right after signup and confirms your account before dashboard access.",
+    "noCode": "Didn't get the code? Go back to",
+    "signupCta": "sign up",
+    "period": ".",
+    "resendTitle": "Send another code",
+    "resendButton": "Resend code",
+    "resendPrompt": "A new verification code can be sent now.",
+    "resendWait": "You can resend again in {{time}}.",
+    "resendSuccess": "A new verification code has been sent.",
+    "resendFailed": "Couldn't resend the verification code.",
+    "missingEmail": "We need the account email to resend the verification code."
+  },
+  "forgot": {
+    "badge": "Recover access",
+    "title": "Forgot password",
+    "subtitle": "Enter your account email and we will send a reset link.",
+    "organizeTitle": "Secure recovery",
+    "helper": "If the email exists, a reset link will be sent immediately.",
+    "sectionTitle": "Recovery email",
+    "email": "Email address",
+    "emailPlaceholder": "student@example.com",
+    "submit": "Send reset link",
+    "backToLogin": "Back to login",
+    "success": "Reset instructions sent.",
+    "failed": "Couldn't send reset instructions.",
+    "requestAnother": "Request another reset link"
+  },
+  "reset": {
+    "badge": "Set new password",
+    "title": "Reset password",
+    "subtitle": "Create a new secure password for your account.",
+    "organizeTitle": "Password update",
+    "helper": "Use at least 8 characters including uppercase, lowercase, number, and symbol.",
+    "strengthHint": "Check the strength meter before confirming your new password.",
+    "sectionTitle": "New credentials",
+    "password": "New password",
+    "passwordPlaceholder": "NewPassword@123",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat NewPassword@123",
+    "submit": "Update password",
+    "backToLogin": "Back to login",
+    "requestAnother": "Request another reset link",
+    "invalidToken": "Reset link token is missing.",
+    "success": "Password updated successfully.",
+    "failed": "Couldn't reset password.",
+    "resendTitle": "Send another reset link",
+    "resendButton": "Resend link",
+    "resendPrompt": "A new password reset link can be sent now.",
+    "resendWait": "You can resend again in {{time}}.",
+    "resendSuccess": "A new password reset link has been sent.",
+    "resendFailed": "Couldn't resend the password reset link.",
+    "missingEmail": "We need the account email to resend the password reset link.",
+    "missingEmailHint": "Open this reset page from the link in your email so we can resend it."
+  },
+  "passwordStrength": {
+    "title": "Password Strength",
+    "levels": {
+      "veryWeak": "Very Weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong",
+      "veryStrong": "Very Strong"
+    },
+    "criteria": {
+      "min": "Minimum {{min}} Characters",
+      "upper": "Contains Uppercase Letter",
+      "lower": "Contains Lowercase Letter",
+      "number": "Contains Number",
+      "special": "Contains Special Character"
+    }
+  },
+  "passwordToggle": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
+  "passwordTools": {
+    "generate": "Generate",
+    "copy": "Copy",
+    "generateAria": "Generate a strong password",
+    "copyAria": "Copy password",
+    "generated": "Strong password generated.",
+    "copied": "Password copied to clipboard.",
+    "copiedState": "Copied",
+    "empty": "Generate or enter a password first.",
+    "copyFailed": "Couldn't copy the password."
+  },
+  "formInput": {
+    "valid": "Looks good."
+  },
+  "errors": {
+    "label": "Unexpected error",
+    "title": "Something went wrong",
+    "description": "We couldn't finish this request.",
+    "generic": "Unknown error",
+    "home": "Go to home",
+    "login": "Go to login"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you requested does not exist or has been moved.",
+    "home": "Back home",
+    "dashboard": "Open dashboard"
+  },
+  "validation": {
+    "password": {
+      "min": "Password must be at least 8 characters long.",
+      "uppercase": "Password must include at least one uppercase letter.",
+      "lowercase": "Password must include at least one lowercase letter.",
+      "number": "Password must include at least one number.",
+      "symbol": "Password must include at least one symbol.",
+      "confirmMatch": "Passwords do not match."
+    },
+    "username": {
+      "min": "Username must be at least 3 characters long.",
+      "max": "Username must be at most 24 characters long.",
+      "pattern": "Username can only contain letters, numbers, dots, underscores, and hyphens."
+    },
+    "firstName": {
+      "required": "First name is required."
+    },
+    "lastName": {
+      "required": "Last name is required."
+    },
+    "email": {
+      "invalid": "Enter a valid email address.",
+      "domain": "Use a supported email domain (gmail.com, outlook.com, hotmail.com, or test.com)."
+    },
+    "identifier": {
+      "min": "Enter your email or username."
+    },
+    "verifyCode": {
+      "length": "Verification code must be 8 characters long.",
+      "pattern": "Verification code can only contain letters and numbers."
+    }
+  }
+}

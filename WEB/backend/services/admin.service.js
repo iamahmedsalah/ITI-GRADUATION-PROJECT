@@ -134,7 +134,7 @@ export const adminLogin = async (req, res) => {
     if (!isMatch) {
       const MAX_FAILED = parseInt(process.env.MAX_FAILED_LOGIN, 10) || 5;
       const LOCK_TIME =
-        parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 60 * 60 * 1000;
+        parseInt(process.env.ACCOUNT_LOCK_TIME_MS, 10) || 30 * 60 * 1000;
 
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= MAX_FAILED) {
