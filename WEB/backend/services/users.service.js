@@ -1,5 +1,6 @@
 import User from "../models/user/userAccountModel.js";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import { customAlphabet } from "nanoid";
 import {
   sendVerificationEmail,
@@ -8,8 +9,13 @@ import {
   sendResetSuccessEmail,
 } from "../mails/emails.js";
 import generateTokenSetCookie, {
-  getAuthCookieOptions,
+  clearAuthCookies,
+  hashRefreshToken,
+  issueAccessToken,
+  issueRefreshToken,
 } from "../utils/generateTokenSetCookie.js";
+
+const REFRESH_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const generateSocialSuffix = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 6);
 
@@ -27,7 +33,7 @@ const SOCIAL_PROVIDER_CONFIG = {
 
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
-const FRONTEND_ORIGIN = process.env.CLIENT_URL || process.env.PRODUCTION_URL || "http://localhost:5173";
+const FRONTEND_ORIGIN =  process.env.PRODUCTION_URL
 const DEFAULT_SOCIAL_INTENT = "signup";
 
 const toPublicUser = (user) => ({
@@ -211,7 +217,9 @@ const handleSocialAuthSuccess = async (res, user) => {
   user.failedLoginAttempts = 0;
   user.lockUntil = undefined;
 
-  generateTokenSetCookie(res, user._id);
+  const { refreshToken } = generateTokenSetCookie(res, user._id);
+  user.refreshTokenHash = hashRefreshToken(refreshToken);
+  user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
   await user.save();
 
   return user;
@@ -320,7 +328,10 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     const { user, requiresVerification } = await createOrLinkSocialUser(provider, profile, intent);
 
     if (intent === "signup") {
-      generateTokenSetCookie(res, user._id);
+      const { refreshToken } = generateTokenSetCookie(res, user._id);
+      user.refreshTokenHash = hashRefreshToken(refreshToken);
+      user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
+      await user.save();
       await issueVerificationEmail(user);
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
       const redirectUrl = new URL(buildFrontendUrl(redirectPath));
@@ -331,7 +342,10 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     }
 
     if (requiresVerification) {
-      generateTokenSetCookie(res, user._id);
+      const { refreshToken } = generateTokenSetCookie(res, user._id);
+      user.refreshTokenHash = hashRefreshToken(refreshToken);
+      user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
+      await user.save();
       await issueVerificationEmail(user);
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
       const redirectUrl = new URL(buildFrontendUrl(redirectPath));
@@ -466,13 +480,17 @@ export const signup = async (req, res) => {
       password,
     });
 
-    generateTokenSetCookie(res, newUser._id);
+    const { accessToken, refreshToken } = generateTokenSetCookie(res, newUser._id);
+    newUser.refreshTokenHash = hashRefreshToken(refreshToken);
+    newUser.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
+    await newUser.save();
 
     await issueVerificationEmail(newUser);
 
     return res.status(201).json({
       success: true,
       message: "User created successfully",
+      accessToken,
       user: toPublicUser(newUser),
     });
   } catch (error) {
@@ -590,7 +608,9 @@ export const login = async (req, res) => {
     user.failedLoginAttempts = 0;
     user.lockUntil = undefined;
 
-    generateTokenSetCookie(res, user._id);
+    const { accessToken, refreshToken } = generateTokenSetCookie(res, user._id);
+    user.refreshTokenHash = hashRefreshToken(refreshToken);
+    user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
 
     user.lastLogin = Date.now();
     await user.save();
@@ -598,6 +618,7 @@ export const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Login successful.",
+      accessToken,
       user: toPublicUser(user),
     });
   } catch (error) {
@@ -688,10 +709,119 @@ export const resendVerificationEmail = async (req, res) => {
 
 // POST - Logout
 export const logout = (req, res) => {
-  res.clearCookie("token", getAuthCookieOptions());
+  if (req.user) {
+    req.user.refreshTokenHash = undefined;
+    req.user.refreshTokenExpiresAt = undefined;
+    void req.user.save();
+  }
+
+  clearAuthCookies(res);
   return res
     .status(200)
     .json({ success: true, message: "Logged out successfully." });
+};
+
+// POST - Refresh Access Token
+export const refreshAuth = async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token missing. Please log in again.",
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("+refreshTokenHash +password");
+
+    if (!user || !user.refreshTokenHash) {
+      clearAuthCookies(res);
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token invalid. Please log in again.",
+      });
+    }
+
+    if (user.isActive === false) {
+      clearAuthCookies(res);
+      return res.status(403).json({
+        success: false,
+        message: "This account is deactivated. Please contact support.",
+      });
+    }
+
+    if (user.refreshTokenExpiresAt && user.refreshTokenExpiresAt < Date.now()) {
+      user.refreshTokenHash = undefined;
+      user.refreshTokenExpiresAt = undefined;
+      await user.save();
+      clearAuthCookies(res);
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token expired. Please log in again.",
+      });
+    }
+
+    if (hashRefreshToken(refreshToken) !== user.refreshTokenHash) {
+      clearAuthCookies(res);
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token mismatch. Please log in again.",
+      });
+    }
+
+    if (user.passwordChangedAt) {
+      const pwdChangedTs = parseInt(new Date(user.passwordChangedAt).getTime() / 1000, 10);
+      if (decoded.iat < pwdChangedTs) {
+        clearAuthCookies(res);
+        return res.status(401).json({
+          success: false,
+          message: "User recently changed password. Please log in again.",
+        });
+      }
+    }
+
+    const accessToken = issueAccessToken(user._id);
+    const nextRefreshToken = issueRefreshToken(user._id);
+
+    user.refreshTokenHash = hashRefreshToken(nextRefreshToken);
+    user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
+    await user.save();
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", nextRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS,
+    });
+
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      accessToken,
+      user: toPublicUser(user),
+    });
+  } catch (error) {
+    clearAuthCookies(res);
+    return res.status(401).json({
+      success: false,
+      message: "Session expired. Please log in again.",
+    });
+  }
 };
 
 // POST - Forget Password
@@ -846,6 +976,7 @@ export default {
   resendVerificationEmail,
   login,
   logout,
+  refreshAuth,
   forgetPassword,
   resendPasswordReset,
   resetPassword,

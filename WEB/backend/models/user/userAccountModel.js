@@ -80,6 +80,11 @@ const userSchema = new mongoose.Schema(
     verificationToken: { type: String, select: false },
     verificationTokenExpireAt: Date,
     passwordChangedAt: Date,
+    refreshTokenHash: {
+      type: String,
+      select: false,
+    },
+    refreshTokenExpiresAt: Date,
     currentRoadmap: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserRoadmap",

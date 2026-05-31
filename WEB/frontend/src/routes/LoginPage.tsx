@@ -8,18 +8,20 @@ import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { GoogleIcon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../context/LanguageContext'
+import { queryClient, authQueryKey, fetchCurrentUser } from '../libs/react-query'
+import type { AuthUser } from '../utils/route-utils'
 import {
   authFormFieldItemVariants,
   authFormSectionVariants,
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl, readJsonSafe } from '../utils/api'
+import { apiPost, buildApiUrl } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { loginSchema } from '../types/validationSchemas'
 import { z } from 'zod'
 import PasswordVisibilityToggle from '../components/ui/passwordVisibilityToggle'
-import FormInput from '../components/ui/form-input'
+import FormInput from '../components/ui/Input'
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -53,16 +55,11 @@ function LoginPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(buildApiUrl('/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(values),
-      })
-
-      const data = await readJsonSafe<BackendResponseError>(response, {})
+      const { response, data } = await apiPost<BackendResponseError>(
+        '/auth/login',
+        {},
+        { json: values, authRetry: false },
+      )
 
       if (!response.ok) {
 
@@ -86,6 +83,22 @@ function LoginPage() {
       }
 
       toast.info(t('auth.loginSuccess'))
+      // If the login response included the user, prime the auth cache immediately
+      try {
+        const maybeUser = (data as unknown as { user?: AuthUser })?.user
+
+        if (maybeUser) {
+          queryClient.setQueryData(authQueryKey, maybeUser)
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        await queryClient.fetchQuery({ queryKey: authQueryKey, queryFn: fetchCurrentUser })
+      } catch {
+        // ignore - fetchCurrentUser will return null if not authenticated yet
+      }
+
       navigate(`/${language}/dashboard`, { replace: true })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('auth.loginFailed'))

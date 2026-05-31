@@ -1,18 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
-import NotFound from './routes/NotFound'
-import HomePage from './routes/HomePage'
-import LoginPage from './routes/LoginPage'
-import ForgotPasswordPage from './routes/ForgotPasswordPage'
-import ResetPasswordPage from './routes/ResetPasswordPage'
-import AdminLoginPage from './routes/AdminLoginPage'
-import AdminDashboardPage from './routes/AdminDashboardPage'
-import SignupPage from './routes/SignupPage'
-import VerifyEmailPage from './routes/VerifyEmailPage'
-import DashboardPage from './routes/DashboardPage'
-import RoadmapPage from './routes/RoadmapPage'
 import RouteErrorPage from './routes/RouteErrorPage'
-import { dashboardLoader, landingLoader, languageAction, languageLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
+import { adminAuthPageLoader, authPageLoader, dashboardLoader, landingLoader, languageAction, languageLoader, profileLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
 import { AdminLayout, ClientLayout, LanguageLayout, RootLayout } from './routes/layouts'
+import { AdminDashboardPage, AdminLoginPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
 
 export const appRouter = createBrowserRouter([
   {
@@ -42,6 +32,7 @@ export const appRouter = createBrowserRouter([
               },
               {
                 path: 'login',
+                loader: authPageLoader,
                 element: <LoginPage />,
               },
               {
@@ -50,6 +41,7 @@ export const appRouter = createBrowserRouter([
               },
               {
                 path: 'signup',
+                loader: authPageLoader,
                 element: <SignupPage />,
               },
               {
@@ -64,6 +56,11 @@ export const appRouter = createBrowserRouter([
                 path: 'dashboard',
                 loader: dashboardLoader,
                 element: <DashboardPage />,
+              },
+              {
+                path: 'profile',
+                loader: profileLoader,
+                element: <ProfilePage />,
               },
               {
                 path: 'roadmaps/:slug',
@@ -83,6 +80,7 @@ export const appRouter = createBrowserRouter([
               },
               {
                 path: 'login',
+                loader: adminAuthPageLoader,
                 element: <AdminLoginPage />,
               },
             ],

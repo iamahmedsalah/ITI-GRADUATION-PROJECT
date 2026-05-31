@@ -12,12 +12,12 @@ import {
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl, readJsonSafe } from '../utils/api'
+import { apiPost } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { verifyEmailSchema } from '../types/validationSchemas'
 import { useResendCooldown } from '../hooks/useResendCooldown'
 import { z } from 'zod'
-import FormInput from '../components/ui/form-input'
+import FormInput from '../components/ui/Input'
 
 type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
@@ -86,16 +86,11 @@ function VerifyEmailPage() {
     setIsResending(true)
 
     try {
-      const response = await fetch(buildApiUrl('/auth/resend-verification-code'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email: resendEmail }),
-      })
-
-      const data = await readJsonSafe<BackendResponseError>(response, {})
+      const { response, data } = await apiPost<BackendResponseError>(
+        '/auth/resend-verification-code',
+        {},
+        { json: { email: resendEmail }, authRetry: false },
+      )
 
       if (!response.ok) {
         toast.error(
@@ -121,16 +116,11 @@ function VerifyEmailPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(buildApiUrl('/auth/verify-email'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ code: code.toUpperCase().trim() }),
-      })
-
-      const data = await readJsonSafe<BackendResponseError>(response, {})
+      const { response, data } = await apiPost<BackendResponseError>(
+        '/auth/verify-email',
+        {},
+        { json: { code: code.toUpperCase().trim() }, authRetry: false },
+      )
 
       if (!response.ok) {
         toast.error(

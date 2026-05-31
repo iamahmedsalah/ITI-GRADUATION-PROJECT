@@ -12,11 +12,11 @@ import {
   authFormVariants,
   createPageVariants,
 } from '../libs/motionVariants'
-import { buildApiUrl, readJsonSafe } from '../utils/api'
+import { apiPost } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { forgotPasswordSchema } from '../types/validationSchemas'
 import { z } from 'zod'
-import FormInput from '../components/ui/form-input'
+import FormInput from '../components/ui/Input'
 
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
@@ -47,16 +47,11 @@ function ForgotPasswordPage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(buildApiUrl('/auth/forgot-password'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(values),
-      })
-
-      const data = await readJsonSafe<BackendResponseError>(response, {})
+      const { response, data } = await apiPost<BackendResponseError>(
+        '/auth/forgot-password',
+        {},
+        { json: values, authRetry: false },
+      )
 
       if (!response.ok) {
         toast.error(

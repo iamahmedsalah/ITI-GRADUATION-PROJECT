@@ -15,14 +15,14 @@ import {
   authFormVariants,
   createPageVariants,
 } from "../libs/motionVariants";
-import { buildApiUrl, readJsonSafe } from "../utils/api";
+import { apiPost, buildApiUrl } from "../utils/api";
 import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
 import { signupSchema } from "../types/validationSchemas";
 import { z } from "zod";
 import PasswordStrengthSubmit from "../components/ui/passwordStrength";
 import PasswordVisibilityToggle from "../components/ui/passwordVisibilityToggle";
 import PasswordActions from "../components/ui/passwordActions";
-import FormInput from "../components/ui/form-input";
+import FormInput from "../components/ui/Input";
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
@@ -60,16 +60,11 @@ function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(buildApiUrl("/auth/signup"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(values),
-      });
-
-      const data = await readJsonSafe<BackendResponseError>(response, {});
+      const { response, data } = await apiPost<BackendResponseError>(
+        "/auth/signup",
+        {},
+        { json: values, authRetry: false },
+      );
 
       if (!response.ok) {
         toast.error(

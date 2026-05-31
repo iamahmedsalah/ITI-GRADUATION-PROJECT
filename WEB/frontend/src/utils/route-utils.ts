@@ -1,6 +1,6 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router-dom'
 import type { LanguagePref } from '../context/LanguageContext'
-import { buildApiUrl, readJsonSafe } from './api'
+import { adminAuthQueryKey, authQueryKey, fetchAdminCurrentUser, fetchCurrentUser, queryClient } from '../libs/react-query'
 
 export type RouteLanguageData = {
   language: LanguagePref
@@ -25,6 +25,8 @@ export type DashboardLoaderData = {
   language: LanguagePref
   user: AuthUser
 }
+
+export type ProfileLoaderData = DashboardLoaderData
 
 export function normalizeLanguage(language?: string): LanguagePref {
   return language?.startsWith('ar') ? 'ar' : 'en'
@@ -94,41 +96,115 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
     return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
   }
 
-  let response: Response
   try {
-    response = await fetch(buildApiUrl('/auth/check-auth'), {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-      },
+    const user = await queryClient.fetchQuery({
+      queryKey: authQueryKey,
+      queryFn: fetchCurrentUser,
     })
+
+    if (!user) {
+      return redirect(`/${language}/login`)
+    }
+
+    if (!user.isVerified) {
+      const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(user.email)}`
+
+      return redirect(verifyPath)
+    }
+
+    return {
+      language,
+      user,
+    }
   } catch {
     return redirect(`/${language}/login`)
   }
+}
 
-  if (!response.ok) {
+export async function profileLoader({ request, params }: LoaderFunctionArgs): Promise<ProfileLoaderData | Response> {
+  const language = normalizeLanguage(params.language)
+
+  if (params.language !== language) {
+    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
+
+    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  }
+
+  try {
+    const user = await queryClient.fetchQuery({
+      queryKey: authQueryKey,
+      queryFn: fetchCurrentUser,
+    })
+
+    if (!user) {
+      return redirect(`/${language}/login`)
+    }
+
+    if (!user.isVerified) {
+      const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(user.email)}`
+
+      return redirect(verifyPath)
+    }
+
+    return {
+      language,
+      user,
+    }
+  } catch {
     return redirect(`/${language}/login`)
   }
+}
 
-  const data = await readJsonSafe<{
-    success?: boolean
-    authenticated?: boolean
-    user?: AuthUser
-  }>(response, {})
+export async function authPageLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
+  const language = normalizeLanguage(params.language)
 
-  if (!data.authenticated || !data.user) {
-    return redirect(`/${language}/login`)
+  if (params.language !== language) {
+    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
+
+    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
   }
 
-  if (!data.user.isVerified) {
-    const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(data.user.email)}`
+  try {
+    const user = await queryClient.fetchQuery({
+      queryKey: authQueryKey,
+      queryFn: fetchCurrentUser,
+    })
 
-    return redirect(verifyPath)
+    if (user) {
+      if (!user.isVerified) {
+        return redirect(`/${language}/verify-email?email=${encodeURIComponent(user.email)}`)
+      }
+
+      return redirect(`/${language}/dashboard`)
+    }
+  } catch {
+    return null
   }
 
-  return {
-    language,
-    user: data.user,
+  return null
+}
+
+export async function adminAuthPageLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
+  const language = normalizeLanguage(params.language)
+
+  if (params.language !== language) {
+    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
+
+    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
   }
+
+  try {
+    const isAdminAuthenticated = await queryClient.fetchQuery({
+      queryKey: adminAuthQueryKey,
+      queryFn: fetchAdminCurrentUser,
+    })
+
+    if (isAdminAuthenticated) {
+      return redirect(`/${language}/admin`)
+    }
+  } catch {
+    return null
+  }
+
+  return null
 }

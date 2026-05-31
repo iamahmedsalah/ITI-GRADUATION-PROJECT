@@ -13,6 +13,12 @@
     "signup": "Sign Up",
     "roadmap": "Roadmap",
     "ai": "AI Create",
+    "account": "Account",
+    "accountMenu": "Open account menu",
+    "signedInAs": "Signed in as",
+    "myProfile": "My Profile",
+    "roadmaps": "Roadmaps",
+    "logout": "Logout",
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu"
   },
@@ -23,9 +29,27 @@
     "preferences": "Preferences",
     "preferencesDescription": "Language and theme toggles live in the header so they stay consistent across the whole site."
   },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Your profile is loaded from the backend auth check and reflects the signed-in account.",
+    "backendCheck": "Backend check",
+    "backendCheckDescription": "This screen uses `/auth/check-auth` to verify the session before showing account details.",
+    "identity": "Identity",
+    "status": "Status",
+    "username": "Username",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "verified": "Verified",
+    "verifiedYes": "Yes",
+    "verifiedNo": "No",
+    "lastLogin": "Last login",
+    "never": "Never"
+  },
   "auth": {
     "loginFailed": "Login failed.",
     "loginSuccess": "Login successful.",
+    "sessionExpired": "Your session has expired. Please log in again.",
     "verifyEmailRequired": "Please verify your email address first.",
     "accountLocked": "Your account is locked until {{time}} due to multiple failed login attempts.",
     "tooManyRequests": "Too many requests. Please try again later.",
@@ -237,6 +261,9 @@
   },
   "formInput": {
     "valid": "Looks good."
+  },
+  "fallback": {
+    "loading": "Loading…"
   },
   "errors": {
     "label": "Unexpected error",

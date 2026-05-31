@@ -17,7 +17,8 @@ import {
   sendResetSuccessEmail,
 } from "../mails/emails.js";
 import generateTokenSetCookie, {
-  getAuthCookieOptions,
+  clearAuthCookies,
+  hashRefreshToken,
 } from "../utils/generateTokenSetCookie.js";
 import {
   updateRoadmapTemplateCore,
@@ -25,6 +26,8 @@ import {
   publishRoadmapTemplateCore,
   unpublishRoadmapTemplateCore,
 } from "./roadmaps.service.js";
+
+const REFRESH_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const parseBooleanQuery = (value) => {
   if (value === undefined) return undefined;
@@ -159,12 +162,15 @@ export const adminLogin = async (req, res) => {
     user.lockUntil = undefined;
     user.lastLogin = Date.now();
 
-    generateTokenSetCookie(res, user._id);
+    const { accessToken, refreshToken } = generateTokenSetCookie(res, user._id);
+    user.refreshTokenHash = hashRefreshToken(refreshToken);
+    user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
     await user.save();
 
     return res.status(200).json({
       success: true,
       message: "Admin login successful.",
+      accessToken,
       user: toPublicAdmin(user),
     });
   } catch (error) {
@@ -344,8 +350,14 @@ export const adminResetPassword = async (req, res) => {
   }
 };
 
-export const adminLogout = (_req, res) => {
-  res.clearCookie("token", getAuthCookieOptions());
+export const adminLogout = (req, res) => {
+  if (req.user) {
+    req.user.refreshTokenHash = undefined;
+    req.user.refreshTokenExpiresAt = undefined;
+    void req.user.save();
+  }
+
+  clearAuthCookies(res);
   return res.status(200).json({
     success: true,
     message: "Admin logged out successfully.",

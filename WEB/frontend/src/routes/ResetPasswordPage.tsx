@@ -17,7 +17,7 @@ import {
   authFormVariants,
   createPageVariants,
 } from "../libs/motionVariants";
-import { buildApiUrl, readJsonSafe } from "../utils/api";
+import { apiPost } from "../utils/api";
 import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
 import { resetPasswordSchema } from "../types/validationSchemas";
 import { useResendCooldown } from "../hooks/useResendCooldown";
@@ -25,7 +25,7 @@ import { z } from "zod";
 import PasswordVisibilityToggle from "../components/ui/passwordVisibilityToggle";
 import PasswordStrength from "../components/ui/passwordStrength";
 import PasswordActions from "../components/ui/passwordActions";
-import FormInput from "../components/ui/form-input";
+import FormInput from "../components/ui/Input";
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
@@ -139,16 +139,11 @@ function ResetPasswordPage() {
     setIsResending(true);
 
     try {
-      const response = await fetch(buildApiUrl("/auth/resend-reset-password"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await readJsonSafe<BackendResponseError>(response, {});
+      const { response, data } = await apiPost<BackendResponseError>(
+        "/auth/resend-reset-password",
+        {},
+        { json: { email }, authRetry: false },
+      );
 
       if (!response.ok) {
         toast.error(
@@ -181,19 +176,11 @@ function ResetPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        buildApiUrl(`/auth/reset-password/${token}`),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ password: values.password }),
-        },
+      const { response, data } = await apiPost<BackendResponseError>(
+        `/auth/reset-password/${token}`,
+        {},
+        { json: { password: values.password }, authRetry: false },
       );
-
-      const data = await readJsonSafe<BackendResponseError>(response, {});
 
       if (!response.ok) {
         toast.error(

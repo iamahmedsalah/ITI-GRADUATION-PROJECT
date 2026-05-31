@@ -25,6 +25,7 @@ import {
   resendPasswordReset,
   resetPassword,
   checkAuth,
+  refreshAuth,
   startSocialAuth,
   handleSocialAuthCallback,
 } from "../services/users.service.js";
@@ -124,6 +125,19 @@ router.post(
  *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/login", loginLimiter, loginValidation, login);
+/**
+ * @openapi
+ * /auth/refresh:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Refresh the access token using the refresh cookie
+ *     responses:
+ *       200:
+ *         description: Access token refreshed
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+router.post("/refresh", refreshAuth);
 /**
  * @openapi
  * /auth/forgot-password:
