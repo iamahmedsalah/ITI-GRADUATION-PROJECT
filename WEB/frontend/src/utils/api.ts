@@ -1,13 +1,9 @@
-import { toast } from 'sonner'
-import i18n from '../libs/i18n'
-
 const DEFAULT_DEV_API_BASE = 'http://localhost:5000/api'
 const DEFAULT_ACCEPT_HEADERS = {
   Accept: 'application/json',
 } as const
 
 let accessToken: string | null = null
-let sessionExpiredNotified = false
 
 type ApiRequestInit = RequestInit & {
   json?: unknown
@@ -18,12 +14,24 @@ type AuthTokenResponse = {
   accessToken?: string
 }
 
+type AuthErrorResponse = {
+  code?: string
+  message?: string
+}
+
+const REFRESH_SESSION_ERROR_CODES = new Set([
+  'REFRESH_MISSING',
+  'REFRESH_INVALID',
+  'REFRESH_MISMATCH',
+  'REFRESH_PASSWORD_CHANGED',
+  'REFRESH_EXPIRED',
+  'REFRESH_SESSION_EXPIRED',
+])
+
+let lastAuthFailureCode: string | null = null
+
 export function setAccessToken(nextToken: string | null) {
   accessToken = nextToken && nextToken.trim() ? nextToken : null
-
-  if (accessToken) {
-    sessionExpiredNotified = false
-  }
 }
 
 export function clearAccessToken() {
@@ -32,6 +40,16 @@ export function clearAccessToken() {
 
 export function getAccessToken() {
   return accessToken
+}
+
+export function setLastAuthFailureCode(code: string | null) {
+  lastAuthFailureCode = code && code.trim() ? code : null
+}
+
+export function consumeLastAuthFailureCode() {
+  const code = lastAuthFailureCode
+  lastAuthFailureCode = null
+  return code
 }
 
 export function getApiBaseUrl() {
@@ -100,15 +118,6 @@ function attachAccessToken(headers: Headers) {
   }
 }
 
-function notifySessionExpired() {
-  if (sessionExpiredNotified) {
-    return
-  }
-
-  sessionExpiredNotified = true
-  toast.error(i18n.t('auth.sessionExpired'))
-}
-
 async function refreshAccessToken() {
   const response = await fetch(buildApiUrl('/auth/refresh'), {
     method: 'POST',
@@ -123,8 +132,13 @@ async function refreshAccessToken() {
     return true
   }
 
+  const authError = data as AuthErrorResponse
+
+  if (response.status === 401 && REFRESH_SESSION_ERROR_CODES.has(authError.code ?? '')) {
+    setLastAuthFailureCode(authError.code ?? null)
+  }
+
   clearAccessToken()
-  notifySessionExpired()
   return false
 }
 
@@ -184,7 +198,6 @@ export async function apiRequest<T>(
     }
 
     clearAccessToken()
-    notifySessionExpired()
   }
 
   if (response.status === 401 && pathname !== '/auth/refresh') {

@@ -1,6 +1,7 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router-dom'
 import type { LanguagePref } from '../context/LanguageContext'
 import { adminAuthQueryKey, authQueryKey, fetchAdminCurrentUser, fetchCurrentUser, queryClient } from '../libs/react-query'
+import { consumeLastAuthFailureCode } from './api'
 
 export type RouteLanguageData = {
   language: LanguagePref
@@ -27,6 +28,11 @@ export type DashboardLoaderData = {
 }
 
 export type ProfileLoaderData = DashboardLoaderData
+
+function redirectToLogin(language: LanguagePref, reason?: string | null) {
+  const query = reason ? `?reason=${encodeURIComponent(reason)}` : ''
+  return redirect(`/${language}/login${query}`)
+}
 
 export function normalizeLanguage(language?: string): LanguagePref {
   return language?.startsWith('ar') ? 'ar' : 'en'
@@ -103,7 +109,7 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
     })
 
     if (!user) {
-      return redirect(`/${language}/login`)
+      return redirectToLogin(language, consumeLastAuthFailureCode())
     }
 
     if (!user.isVerified) {
@@ -117,7 +123,7 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
       user,
     }
   } catch {
-    return redirect(`/${language}/login`)
+    return redirectToLogin(language, consumeLastAuthFailureCode())
   }
 }
 
@@ -137,7 +143,7 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs): Pr
     })
 
     if (!user) {
-      return redirect(`/${language}/login`)
+      return redirectToLogin(language, consumeLastAuthFailureCode())
     }
 
     if (!user.isVerified) {
@@ -151,7 +157,7 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs): Pr
       user,
     }
   } catch {
-    return redirect(`/${language}/login`)
+    return redirectToLogin(language, consumeLastAuthFailureCode())
   }
 }
 

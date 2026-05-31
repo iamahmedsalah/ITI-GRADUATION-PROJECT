@@ -33,7 +33,6 @@ const SOCIAL_PROVIDER_CONFIG = {
 
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
-const FRONTEND_ORIGIN =  process.env.PRODUCTION_URL
 const DEFAULT_SOCIAL_INTENT = "signup";
 
 const toPublicUser = (user) => ({
@@ -51,8 +50,25 @@ const generateVerificationToken = customAlphabet(
   8,
 );
 
-const buildFrontendUrl = (path) => {
-  return new URL(path, FRONTEND_ORIGIN).toString();
+const getFrontendOrigin = (req = null) => {
+  const configuredOrigin =
+    process.env.FRONTEND_URL ||
+    process.env.CLIENT_URL ||
+    process.env.PRODUCTION_URL;
+
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
+  if (process.env.NODE_ENV !== "production" || !req) {
+    return "http://localhost:5173";
+  }
+
+  return buildBackendOrigin(req);
+};
+
+const buildFrontendUrl = (req, path) => {
+  return new URL(path, getFrontendOrigin(req)).toString();
 };
 
 const normalizeLanguage = (language) => (String(language).toLowerCase().startsWith("ar") ? "ar" : "en");
@@ -226,13 +242,13 @@ const handleSocialAuthSuccess = async (res, user) => {
 };
 
 const redirectToDashboard = (res, language) => {
-  const redirectUrl = new URL(buildFrontendUrl(`/${normalizeLanguage(language)}/dashboard`));
+  const redirectUrl = new URL(buildFrontendUrl(res.req, `/${normalizeLanguage(language)}/dashboard`));
   return res.redirect(302, redirectUrl.toString());
 };
 
 const redirectWithSocialError = (res, language, message) => {
   const normalizedLanguage = normalizeLanguage(language);
-  const redirectUrl = new URL(`/${normalizedLanguage}/login`, FRONTEND_ORIGIN);
+  const redirectUrl = new URL(`/${normalizedLanguage}/login`, getFrontendOrigin(res.req));
   redirectUrl.searchParams.set(SOCIAL_CALLBACK_ERROR, message);
   return res.redirect(302, redirectUrl.toString());
 };
@@ -334,7 +350,7 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
       await user.save();
       await issueVerificationEmail(user);
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
-      const redirectUrl = new URL(buildFrontendUrl(redirectPath));
+      const redirectUrl = new URL(buildFrontendUrl(req, redirectPath));
       redirectUrl.searchParams.set("email", profile.email);
       redirectUrl.searchParams.set("provider", provider);
 
@@ -348,7 +364,7 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
       await user.save();
       await issueVerificationEmail(user);
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
-      const redirectUrl = new URL(buildFrontendUrl(redirectPath));
+      const redirectUrl = new URL(buildFrontendUrl(req, redirectPath));
       redirectUrl.searchParams.set("email", profile.email);
       redirectUrl.searchParams.set("provider", provider);
 
@@ -373,7 +389,7 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
 };
 
 const buildResetPasswordUrl = (token, email) => {
-  const baseUrl = buildFrontendUrl(`/reset-password/${token}`);
+  const baseUrl = buildFrontendUrl(null, `/reset-password/${token}`);
   return `${baseUrl}?email=${encodeURIComponent(email)}`;
 };
 
@@ -728,6 +744,7 @@ export const refreshAuth = async (req, res) => {
   if (!refreshToken) {
     return res.status(401).json({
       success: false,
+      code: "REFRESH_MISSING",
       message: "Refresh token missing. Please log in again.",
     });
   }
@@ -740,6 +757,7 @@ export const refreshAuth = async (req, res) => {
       clearAuthCookies(res);
       return res.status(401).json({
         success: false,
+        code: "REFRESH_INVALID",
         message: "Refresh token invalid. Please log in again.",
       });
     }
@@ -759,6 +777,7 @@ export const refreshAuth = async (req, res) => {
       clearAuthCookies(res);
       return res.status(401).json({
         success: false,
+        code: "REFRESH_EXPIRED",
         message: "Refresh token expired. Please log in again.",
       });
     }
@@ -767,6 +786,7 @@ export const refreshAuth = async (req, res) => {
       clearAuthCookies(res);
       return res.status(401).json({
         success: false,
+        code: "REFRESH_MISMATCH",
         message: "Refresh token mismatch. Please log in again.",
       });
     }
@@ -777,6 +797,7 @@ export const refreshAuth = async (req, res) => {
         clearAuthCookies(res);
         return res.status(401).json({
           success: false,
+          code: "REFRESH_PASSWORD_CHANGED",
           message: "User recently changed password. Please log in again.",
         });
       }
@@ -819,6 +840,7 @@ export const refreshAuth = async (req, res) => {
     clearAuthCookies(res);
     return res.status(401).json({
       success: false,
+      code: "REFRESH_SESSION_EXPIRED",
       message: "Session expired. Please log in again.",
     });
   }

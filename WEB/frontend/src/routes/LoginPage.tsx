@@ -25,6 +25,8 @@ import FormInput from '../components/ui/Input'
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
+const shownAuthToastReasons = new Set<string>()
+
 function LoginPage() {
   const { language, direction } = useLanguage()
   const { t } = useTranslation()
@@ -133,6 +135,19 @@ function LoginPage() {
   }
 
   useEffect(() => {
+    const reason = searchParams.get('reason')
+    const toastKey = reason ?? ''
+
+    if (reason === 'session-expired' || reason?.startsWith('REFRESH_')) {
+      if (!shownAuthToastReasons.has(toastKey)) {
+        shownAuthToastReasons.add(toastKey)
+        toast.error(t('auth.sessionExpired'))
+      }
+
+      setSearchParams({}, { replace: true })
+      return
+    }
+
     const oauthError = searchParams.get('oauth_error')
 
     if (!oauthError) {
