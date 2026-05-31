@@ -65,7 +65,12 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // CORS
-const configuredOrigins = `${process.env.CLIENT_URL || ""},${process.env.PRODUCTION_URL || ""}`
+const configuredOrigins = [
+  process.env.FRONTEND_URL || "",
+  process.env.CLIENT_URL || "",
+  process.env.PRODUCTION_URL || "",
+]
+  .join(",")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
