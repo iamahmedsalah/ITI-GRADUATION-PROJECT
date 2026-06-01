@@ -1,8 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom'
-import RouteErrorPage from './routes/RouteErrorPage'
-import { adminAuthPageLoader, authPageLoader, dashboardLoader, landingLoader, languageAction, languageLoader, profileLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
-import { AdminLayout, ClientLayout, LanguageLayout, RootLayout } from './routes/layouts'
-import { AdminDashboardPage, AdminLoginPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
+import RouteErrorPage from './routes/common/RouteErrorPage'
+import { adminAuthPageLoader, adminProtectedLoader, authPageLoader, dashboardLoader, landingLoader, languageAction, languageLoader, profileLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
+import { AdminLayout, ClientLayout, LanguageLayout, RootLayout } from './routes/common/layouts'
+import { AdminCoursesPage, AdminDashboardPage, AdminForgotPasswordPage, AdminLoginPage, AdminResetPasswordPage, AdminRoadmapsPage, AdminUsersPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
 
 export const appRouter = createBrowserRouter([
   {
@@ -76,12 +76,36 @@ export const appRouter = createBrowserRouter([
             children: [
               {
                 index: true,
+                loader: adminProtectedLoader,
                 element: <AdminDashboardPage />,
+              },
+              {
+                path: 'users',
+                loader: adminProtectedLoader,
+                element: <AdminUsersPage />,
+              },
+              {
+                path: 'roadmaps',
+                loader: adminProtectedLoader,
+                element: <AdminRoadmapsPage />,
+              },
+              {
+                path: 'courses',
+                loader: adminProtectedLoader,
+                element: <AdminCoursesPage />,
               },
               {
                 path: 'login',
                 loader: adminAuthPageLoader,
                 element: <AdminLoginPage />,
+              },
+              {
+                path: 'forgot-password',
+                element: <AdminForgotPasswordPage />,
+              },
+              {
+                path: 'reset-password/:token',
+                element: <AdminResetPasswordPage />,
               },
             ],
           },

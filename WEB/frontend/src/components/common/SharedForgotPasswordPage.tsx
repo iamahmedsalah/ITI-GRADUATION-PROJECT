@@ -5,22 +5,56 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useLanguage } from '../context/LanguageContext'
+import { z } from 'zod'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   authFormFieldItemVariants,
   authFormSectionVariants,
   authFormVariants,
   createPageVariants,
-} from '../libs/motionVariants'
-import { apiPost } from '../utils/api'
-import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
-import { forgotPasswordSchema } from '../types/validationSchemas'
-import { z } from 'zod'
-import FormInput from '../components/ui/Input'
+} from '../../libs/motionVariants'
+import { apiPost } from '../../utils/api'
+import { getBackendResponseMessage, type BackendResponseError } from '../../utils/backendResponseMessage'
+import { forgotPasswordSchema } from '../../types/validationSchemas'
+import FormInput from '../ui/Input'
 
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
-function ForgotPasswordPage() {
+type SharedForgotPasswordPageProps = {
+  requestPath: string
+  badgeKey: string
+  titleKey: string
+  subtitleKey: string
+  backToLoginLabelKey: string
+  successRedirectPath: (language: string) => string
+  backToLoginPath: (language: string) => string
+  helperTitleKey?: string
+  helperTextKey?: string
+  sectionTitleKey?: string
+  emailLabelKey?: string
+  emailPlaceholderKey?: string
+  submitLabelKey?: string
+  successMessageKey?: string
+  failedMessageKey?: string
+}
+
+export default function SharedForgotPasswordPage({
+  requestPath,
+  badgeKey,
+  titleKey,
+  subtitleKey,
+  backToLoginLabelKey,
+  successRedirectPath,
+  backToLoginPath,
+  helperTitleKey,
+  helperTextKey,
+  sectionTitleKey = 'forgot.sectionTitle',
+  emailLabelKey = 'forgot.email',
+  emailPlaceholderKey = 'forgot.emailPlaceholder',
+  submitLabelKey = 'forgot.submit',
+  successMessageKey = 'forgot.success',
+  failedMessageKey = 'forgot.failed',
+}: SharedForgotPasswordPageProps) {
   const { language, direction } = useLanguage()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -48,7 +82,7 @@ function ForgotPasswordPage() {
 
     try {
       const { response, data } = await apiPost<BackendResponseError>(
-        '/auth/forgot-password',
+        requestPath,
         {},
         { json: values, authRetry: false },
       )
@@ -56,7 +90,7 @@ function ForgotPasswordPage() {
       if (!response.ok) {
         toast.error(
           getBackendResponseMessage(response, data, {
-            fallbackKey: 'forgot.failed',
+            fallbackKey: failedMessageKey,
             translate: t,
             locale: language === 'ar' ? 'ar-EG' : 'en-US',
           }),
@@ -64,10 +98,10 @@ function ForgotPasswordPage() {
         return
       }
 
-      toast.success(t('forgot.success'))
-      navigate(`/${language}/login`, { replace: true })
+      toast.success(t(successMessageKey))
+      navigate(successRedirectPath(language), { replace: true })
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('forgot.failed'))
+      toast.error(error instanceof Error ? error.message : t(failedMessageKey))
     } finally {
       setIsSubmitting(false)
     }
@@ -103,30 +137,30 @@ function ForgotPasswordPage() {
         animate="visible"
         variants={containerVariants}
       >
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
-        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
+        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-squircle bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
+        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-squircle bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
 
         <div className="relative grid lg:grid-cols-[0.92fr_1.08fr]">
           <motion.section
             className={`border-b border-(--border) px-6 py-8 sm:px-8 lg:border-b-0 ${isRtl ? 'lg:border-l' : 'lg:border-r'}`}
             variants={itemVariants}
           >
-            <div className="mb-4 inline-flex rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
-              {t('forgot.badge')}
+            <div className="mb-4 inline-flex rounded-squircle border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
+              {t(badgeKey)}
             </div>
             <h1 className="bg-linear-to-r from-(--gd-primary) to-(--gd-secondary) bg-clip-text text-4xl font-bold text-transparent sm:text-5xl">
-              {t('forgot.title')}
+              {t(titleKey)}
             </h1>
             <p className="mt-4 max-w-md text-sm leading-6 text-(--text)">
-              {t('forgot.subtitle')}
+              {t(subtitleKey)}
             </p>
 
-            <div className="mt-7 grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text)">{t('forgot.organizeTitle')}</p>
-              <p className="text-sm leading-6 text-(--text)">{t('forgot.helper')}</p>
-            </div>
-
-
+            {helperTitleKey && helperTextKey ? (
+              <div className="mt-7 grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--text)">{t(helperTitleKey)}</p>
+                <p className="text-sm leading-6 text-(--text)">{t(helperTextKey)}</p>
+              </div>
+            ) : null}
           </motion.section>
 
           <motion.form
@@ -140,15 +174,15 @@ function ForgotPasswordPage() {
               variants={authFormSectionVariants}
             >
               <motion.h2 variants={authFormFieldItemVariants} className="text-sm font-semibold uppercase tracking-[0.14em] text-(--text)">
-                {t('forgot.sectionTitle')}
+                {t(sectionTitleKey)}
               </motion.h2>
 
               <motion.div variants={authFormFieldItemVariants}>
                 <FormInput
                   {...register('email')}
                   type="email"
-                  label={t('forgot.email')}
-                  placeholder={t('forgot.emailPlaceholder')}
+                  label={t(emailLabelKey)}
+                  placeholder={t(emailPlaceholderKey)}
                   autoComplete="email"
                   error={errors.email ? t(errors.email.message ?? '') : undefined}
                   success={Boolean(touchedFields.email && !errors.email && emailValue.trim().length > 0)}
@@ -162,14 +196,15 @@ function ForgotPasswordPage() {
                   disabled={isSubmitting}
                   className="inline-flex cursor-pointer flex-1 items-center justify-center rounded-2xl bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(29,185,84,0.2)] transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : t('forgot.submit')}
+                  {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : t(submitLabelKey)}
                 </button>
               </motion.div>
-                          <div className="mt-4 rounded-2xl border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text)">
-              <Link to={`/${language}/login`} className="font-semibold text-(--gd-primary) hover:underline">
-                {t('forgot.backToLogin')}
-              </Link>
-            </div>
+
+              <div className="mt-4 rounded-2xl border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text)">
+                <Link to={backToLoginPath(language)} className="font-semibold text-(--gd-primary) hover:underline">
+                  {t(backToLoginLabelKey)}
+                </Link>
+              </div>
             </motion.section>
           </motion.form>
         </div>
@@ -177,5 +212,3 @@ function ForgotPasswordPage() {
     </motion.main>
   )
 }
-
-export default ForgotPasswordPage

@@ -1,13 +1,17 @@
 import { useEffect, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useLoaderData, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LanguageProvider, useLanguage } from '../context/LanguageContext'
-import { ThemeProvider, useTheme } from '../context/ThemeContext'
-import LangToggleButton from '../components/common/lang-toggle'
-import ThemeToggleButton from '../components/common/theme-toggle'
-import Navbar from '../components/ui/navbar'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { LanguageProvider, useLanguage } from '../../context/LanguageContext'
+import { ThemeProvider, useTheme } from '../../context/ThemeContext'
+import LangToggleButton from '../../components/common/lang-toggle'
+import ThemeToggleButton from '../../components/common/theme-toggle'
+import Navbar from '../../components/ui/navbar'
 import { Toaster } from 'sonner'
-import type { RouteLanguageData } from '../utils/route-utils'
+import type { RouteLanguageData } from '../../utils/route-utils'
+import { fetchAdminOverview } from '../../libs/admin-api'
+import { adminAuthQueryKey, logoutAdminUser } from '../../libs/react-query'
 
 type RootLayoutProps = {
   children?: ReactNode
@@ -17,6 +21,7 @@ type NavItem = {
   label: string
   to: string
   exact?: boolean
+  count?: number
 }
 
 function localizedPath(language: string, pathname: string) {
@@ -29,8 +34,10 @@ function localizedPath(language: string, pathname: string) {
 
 function navClassName({ isActive }: { isActive: boolean }) {
   return [
-    'rounded-full px-4 py-2 text-sm font-medium transition-colors',
-    isActive ? 'bg-(--gd-primary) text-white' : 'text-(--text-h) hover:bg-(--surface-soft-hover)',
+    'flex items-center justify-between rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-200',
+    isActive
+      ? 'bg-(--gd-primary) text-white'
+      : 'text-(--text-h) hover:scale-[1.03] hover:bg-(--surface-soft-hover)',
   ].join(' ')
 }
 
@@ -127,53 +134,97 @@ export function ClientLayout() {
 
 export function AdminLayout() {
   const { language } = useLanguage()
+  const { t } = useTranslation()
   const location = useLocation()
-  const isLoginRoute = location.pathname.endsWith('/login')
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const isAuthRoute =
+    location.pathname.endsWith('/login') ||
+    location.pathname.endsWith('/forgot-password') ||
+    location.pathname.includes('/reset-password/')
+
+  const { data: overview } = useQuery({
+    queryKey: ['admin', 'overview'],
+    queryFn: fetchAdminOverview,
+    staleTime: 60_000,
+    enabled: !isAuthRoute,
+  })
+
   const sidebarItems: NavItem[] = [
-    { label: 'Dashboard', to: localizedPath(language, '/admin'), exact: true },
-    { label: 'Login', to: localizedPath(language, '/admin/login') },
+    { label: t('adminUi.nav.dashboard'), to: localizedPath(language, '/admin'), exact: true },
+    { label: t('adminUi.nav.users'), to: localizedPath(language, '/admin/users'), count: overview?.users.total ?? 0 },
+    { label: t('adminUi.nav.roadmaps'), to: localizedPath(language, '/admin/roadmaps'), count: overview?.roadmaps.templatesTotal ?? 0 },
+    { label: t('adminUi.nav.courses'), to: localizedPath(language, '/admin/courses'), count: overview?.courses.total ?? 0 },
   ]
+
+  const handleAdminLogout = async () => {
+    try {
+      await logoutAdminUser()
+      queryClient.setQueryData(adminAuthQueryKey, null)
+      void queryClient.invalidateQueries({ queryKey: ['admin'] })
+      toast.success(t('adminUi.logout.success'))
+      navigate(`/${language}/admin/login`, { replace: true })
+    } catch {
+      toast.error(t('adminUi.logout.error'))
+    }
+  }
 
   return (
     <div className="relative flex min-h-screen text-(--text-h)">
       <ShellGradient />
 
-      {!isLoginRoute ? (
-        <aside className="hidden w-72 border-r border-(--border) bg-(--surface)/90 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
+      {!isAuthRoute ? (
+        <aside className="hidden w-72 bg-black px-5 py-6 lg:flex lg:flex-col">
           <Link to={localizedPath(language, '/admin')} className="flex items-center gap-3 text-xl font-semibold text-(--text-h)">
-            <span className="grid size-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--gd-primary),var(--gd-secondary))] text-white shadow-lg shadow-[rgba(29,185,84,0.25)]">
+            <span className="grid size-11 place-items-center rounded-2xl bg-(--gd-primary) text-white shadow-lg shadow-[rgba(29,185,84,0.35)]">
               A
             </span>
-            <span>Admin</span>
+            <span>{t('adminUi.nav.console')}</span>
           </Link>
 
           <nav className="mt-10 flex flex-col gap-2">
             {sidebarItems.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.exact ?? false} className={navClassName}>
-                {item.label}
+                <span>{item.label}</span>
+                {typeof item.count === 'number' ? (
+                  <span className="rounded-full bg-(--surface-2) px-2 py-0.5 text-xs text-(--text)">
+                    {item.count}
+                  </span>
+                ) : null}
               </NavLink>
             ))}
           </nav>
 
-          <div className="mt-auto rounded-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--text)">
-            Admin sidebar is ready for future management sections.
+          <div className="mt-auto grid gap-3">
+            <p className="rounded-2xl bg-(--surface) p-4 text-sm text-(--text)">
+              {t('adminUi.nav.hint')}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleAdminLogout()}
+              className="cursor-pointer rounded-full border border-(--border) bg-transparent px-4 py-2.5 text-sm font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+            >
+              {t('adminUi.logout.cta')}
+            </button>
           </div>
         </aside>
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b border-(--border) bg-(--surface)/90 backdrop-blur-xl">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-(--text)">Admin area</p>
-              <h1 className="text-lg font-semibold text-(--text-h)">Management console</h1>
+        {!isAuthRoute ? (
+          <header className="border-b border-(--border) bg-(--surface)/90 backdrop-blur-xl">
+            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-(--text)">{t('adminUi.header.overline')}</p>
+                <h1 className="text-lg font-semibold text-(--text-h)">{t('adminUi.header.title')}</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <LangToggleButton />
+                <ThemeToggleButton />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <LangToggleButton />
-              <ThemeToggleButton />
-            </div>
-          </div>
-        </header>
+          </header>
+        ) : null}
 
         <main className="flex-1">
           <Outlet />
@@ -182,3 +233,5 @@ export function AdminLayout() {
     </div>
   )
 }
+
+

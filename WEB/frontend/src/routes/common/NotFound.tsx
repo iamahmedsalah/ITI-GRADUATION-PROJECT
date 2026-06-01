@@ -17,10 +17,10 @@ export default function NotFound() {
         <h1 className="mt-3 text-3xl font-semibold text-(--text-h)">{t('notFound.title')}</h1>
         <p className="mt-3 text-sm leading-6 text-(--text)">{t('notFound.description')}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link to={`/${language}`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             {t('notFound.home')}
           </Link>
-          <Link to={`/${language}/dashboard`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}/dashboard`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             {t('notFound.dashboard')}
           </Link>
         </div>

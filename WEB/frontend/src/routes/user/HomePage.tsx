@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   createCardVariants,
   createHeroLineVariants,
@@ -10,9 +10,9 @@ import {
   createPageVariants,
   createStaggerContainerVariants,
   getCardHoverShift,
-} from '../libs/motionVariants'
-import LangToggleButton from '../components/common/lang-toggle'
-import ThemeToggleButton from '../components/common/theme-toggle'
+} from '../../libs/motionVariants'
+import LangToggleButton from '../../components/common/lang-toggle'
+import ThemeToggleButton from '../../components/common/theme-toggle'
 
 function HomePage() {
   const { t } = useTranslation()
@@ -40,7 +40,7 @@ function HomePage() {
         animate={{ opacity: 1 }}
       >
         <motion.div
-          className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(29,185,84,0.45)_0%,rgba(29,185,84,0.16)_35%,rgba(29,185,84,0)_70%)] blur-3xl"
+          className="absolute -top-24 -right-24 h-72 w-72 rounded-squircle bg-[radial-gradient(circle,rgba(29,185,84,0.45)_0%,rgba(29,185,84,0.16)_35%,rgba(29,185,84,0)_70%)] blur-3xl"
           animate={{
             x: [0, direction === 'rtl' ? -18 : 18, 0],
             y: [0, -14, 0],
@@ -50,7 +50,7 @@ function HomePage() {
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute -left-20 top-32 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.08)_30%,rgba(var(--glow-neutral-rgb),0)_70%)] blur-3xl"
+          className="absolute -left-20 top-32 h-80 w-80 rounded-squircle bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.08)_30%,rgba(var(--glow-neutral-rgb),0)_70%)] blur-3xl"
           animate={{
             x: [0, direction === 'rtl' ? 16 : -16, 0],
             y: [0, 18, 0],
@@ -132,19 +132,19 @@ function HomePage() {
         <motion.div variants={heroLineVariants} className="pt-2">
           <Link
             to={roadmapPath}
-            className="inline-flex items-center rounded-full border border-(--border) bg-(--surface) px-4 py-2 text-sm font-medium text-(--text-h) transition-transform duration-200 hover:-translate-y-0.5"
+            className="inline-flex items-center rounded-squircle border border-(--border) bg-(--surface) px-4 py-2 text-sm font-medium text-(--text-h) transition-transform duration-200 hover:-translate-y-0.5"
           >
             Open sample roadmap
           </Link>
         </motion.div>
         <motion.div variants={heroLineVariants} className="flex flex-wrap gap-3 pt-2">
-          <Link to={`/${language}/login`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}/login`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             User login
           </Link>
-          <Link to={`/${language}/signup`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}/signup`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             Sign up
           </Link>
-          <Link to={`/${language}/admin/login`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}/admin/login`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             Admin login
           </Link>
         </motion.div>
@@ -154,3 +154,6 @@ function HomePage() {
 }
 
 export default HomePage
+
+
+

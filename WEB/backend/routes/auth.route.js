@@ -230,7 +230,7 @@ router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
  *     security:
  *       - bearerAuth: []
  */
-router.post("/logout", protect, logout);
+router.post("/logout", logout);
 /**
  * @openapi
  * /auth/check-auth:

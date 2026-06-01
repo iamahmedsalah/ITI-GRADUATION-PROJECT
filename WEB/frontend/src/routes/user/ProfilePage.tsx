@@ -3,15 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useLanguage } from '../context/LanguageContext'
-import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../libs/motionVariants'
-import { clearAccessToken } from '../utils/api'
-import type { ProfileLoaderData } from '../utils/route-utils'
-import { authQueryKey, logoutCurrentUser } from '../libs/react-query'
+import { useLanguage } from '../../context/LanguageContext'
+import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
+import { clearAccessToken } from '../../utils/api'
+import type { ProfileLoaderData } from '../../utils/route-utils'
+import { authQueryKey, logoutCurrentUser } from '../../libs/react-query'
 
-import PageHeader from '../components/ui/PageHeader'
-import ProfileIdentityCard from '../components/ui/ProfileIdentityCard'
-import ProfileStatusCard from '../components/ui/ProfileStatusCard'
+import PageHeader from '../../components/ui/PageHeader'
+import ProfileIdentityCard from '../../components/ui/ProfileIdentityCard'
+import ProfileStatusCard from '../../components/ui/ProfileStatusCard'
 
 function ProfilePage() {
   const { language, direction } = useLanguage()
@@ -48,9 +48,9 @@ function ProfilePage() {
           variants={heroLineVariants}
           actions={(
             <>
-              <Link to={`/${language}/dashboard`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('layout.dashboard')}</Link>
-              <Link to={`/${language}/roadmaps/frontend`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('navbar.roadmaps')}</Link>
-              <button type="button" onClick={() => logoutMutation.mutate()} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('navbar.logout')}</button>
+              <Link to={`/${language}/dashboard`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('layout.dashboard')}</Link>
+              <Link to={`/${language}/roadmaps/frontend`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('navbar.roadmaps')}</Link>
+              <button type="button" onClick={() => logoutMutation.mutate()} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">{t('navbar.logout')}</button>
             </>
           )}
         />
@@ -70,3 +70,6 @@ function ProfilePage() {
 }
 
 export default ProfilePage
+
+
+

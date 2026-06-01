@@ -74,7 +74,7 @@ export default function PasswordStrength({
         {[...Array(4)].map((_, index) => (
           <span
             key={index}
-            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+            className={`h-1.5 flex-1 rounded-squircle transition-colors duration-300 ${
               index < strength ? strengthBarClass(strength) : 'bg-(--surface-3)'
             }`}
           />

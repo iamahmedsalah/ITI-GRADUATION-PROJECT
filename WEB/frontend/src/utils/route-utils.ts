@@ -106,6 +106,7 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
     const user = await queryClient.fetchQuery({
       queryKey: authQueryKey,
       queryFn: fetchCurrentUser,
+      staleTime: 0,
     })
 
     if (!user) {
@@ -140,6 +141,7 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs): Pr
     const user = await queryClient.fetchQuery({
       queryKey: authQueryKey,
       queryFn: fetchCurrentUser,
+      staleTime: 0,
     })
 
     if (!user) {
@@ -174,6 +176,7 @@ export async function authPageLoader({ request, params }: LoaderFunctionArgs): P
     const user = await queryClient.fetchQuery({
       queryKey: authQueryKey,
       queryFn: fetchCurrentUser,
+      staleTime: 0,
     })
 
     if (user) {
@@ -203,6 +206,7 @@ export async function adminAuthPageLoader({ request, params }: LoaderFunctionArg
     const isAdminAuthenticated = await queryClient.fetchQuery({
       queryKey: adminAuthQueryKey,
       queryFn: fetchAdminCurrentUser,
+      staleTime: 0,
     })
 
     if (isAdminAuthenticated) {
@@ -213,4 +217,30 @@ export async function adminAuthPageLoader({ request, params }: LoaderFunctionArg
   }
 
   return null
+}
+
+export async function adminProtectedLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
+  const language = normalizeLanguage(params.language)
+
+  if (params.language !== language) {
+    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
+
+    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  }
+
+  try {
+    const user = await queryClient.fetchQuery({
+      queryKey: adminAuthQueryKey,
+      queryFn: fetchAdminCurrentUser,
+      staleTime: 0,
+    })
+
+    if (!user) {
+      return redirect(`/${language}/admin/login`)
+    }
+
+    return null
+  } catch {
+    return redirect(`/${language}/admin/login`)
+  }
 }

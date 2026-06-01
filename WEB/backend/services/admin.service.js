@@ -253,7 +253,8 @@ export const adminForgetPassword = async (req, res) => {
 
       const frontendBase =
         process.env.CLIENT_URL || process.env.PRODUCTION_URL || "";
-      const resetURL = `${frontendBase}/reset-password/${resetToken}`;
+      const adminResetPath = `/en/admin/reset-password/${resetToken}`;
+      const resetURL = `${frontendBase}${adminResetPath}`;
 
       await sendPasswordResetEmail(
         user.email,

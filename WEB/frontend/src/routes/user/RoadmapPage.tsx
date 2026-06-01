@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
 import { useLoaderData } from 'react-router-dom'
-import { useLanguage } from '../context/LanguageContext'
-import { createHeroLineVariants, createPageVariants } from '../libs/motionVariants'
-import type { RoadmapLoaderData } from '../utils/route-utils'
+import { useLanguage } from '../../context/LanguageContext'
+import { createHeroLineVariants, createPageVariants } from '../../libs/motionVariants'
+import type { RoadmapLoaderData } from '../../utils/route-utils'
 
 function RoadmapPage() {
   const { language: routeLanguage, slug } = useLoaderData() as RoadmapLoaderData
@@ -25,3 +25,6 @@ function RoadmapPage() {
 }
 
 export default RoadmapPage
+
+
+

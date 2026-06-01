@@ -26,7 +26,7 @@ export function LangToggleButton() {
         onClick={toggleLanguage}
         aria-label={`Language: ${language}`}
         aria-pressed={language === 'ar'}
-        className="grid size-11 place-items-center rounded-full border border-(--border) bg-transparent text-(--text-h) cursor-pointer"
+        className="grid size-11 place-items-center rounded-squircle border border-(--border) bg-transparent text-(--text-h) cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span

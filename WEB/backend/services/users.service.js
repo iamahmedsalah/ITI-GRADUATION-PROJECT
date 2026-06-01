@@ -255,6 +255,7 @@ const redirectWithSocialError = (res, language, message) => {
 
 const createOrLinkSocialUser = async (provider, profile, intent) => {
   const email = String(profile.email || "").trim().toLowerCase();
+  const providerVerifiedEmail = profile.emailVerified !== false;
 
   if (!email) {
     throw new Error(`${provider} account did not return an email address`);
@@ -269,8 +270,10 @@ const createOrLinkSocialUser = async (provider, profile, intent) => {
       throw error;
     }
 
-    if (!existingUser.isVerified) {
+    if (!existingUser.isVerified && providerVerifiedEmail) {
       existingUser.isVerified = true;
+      existingUser.verificationToken = undefined;
+      existingUser.verificationTokenExpireAt = undefined;
     }
 
     const { firstName, lastName } = parseSocialName(profile);
@@ -279,7 +282,7 @@ const createOrLinkSocialUser = async (provider, profile, intent) => {
 
     return {
       user: existingUser,
-      requiresVerification: false,
+      requiresVerification: existingUser.isVerified !== true,
     };
   }
 
@@ -298,18 +301,19 @@ const createOrLinkSocialUser = async (provider, profile, intent) => {
     Lname: lastName,
     email,
     password: crypto.randomBytes(32).toString("hex"),
-    isVerified: false,
+    isVerified: providerVerifiedEmail,
   });
 
   return {
     user: createdUser,
-    requiresVerification: true,
+    requiresVerification: createdUser.isVerified !== true,
   };
 };
 
 export const startSocialAuth = (provider, intent = DEFAULT_SOCIAL_INTENT) => (req, res) => {
   try {
     const { language = "en" } = req.query ?? {};
+    clearAuthCookies(res);
     const redirectUrl = buildSocialStartUrl(req, provider, language, intent);
     return res.redirect(302, redirectUrl);
   } catch (error) {
@@ -328,40 +332,26 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     const language = parsedState.language;
 
     if (error) {
+      clearAuthCookies(res);
       return redirectWithSocialError(res, language, String(error));
     }
 
     if (!code) {
+      clearAuthCookies(res);
       return redirectWithSocialError(res, language, "Missing OAuth code");
     }
 
     const profile = await exchangeCodeForSocialProfile(req, provider, String(code));
 
     if (!profile.email) {
+      clearAuthCookies(res);
       return redirectWithSocialError(res, language, `${provider} account did not provide an email address`);
     }
 
     const { user, requiresVerification } = await createOrLinkSocialUser(provider, profile, intent);
 
-    if (intent === "signup") {
-      const { refreshToken } = generateTokenSetCookie(res, user._id);
-      user.refreshTokenHash = hashRefreshToken(refreshToken);
-      user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
-      await user.save();
-      await issueVerificationEmail(user);
-      const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
-      const redirectUrl = new URL(buildFrontendUrl(req, redirectPath));
-      redirectUrl.searchParams.set("email", profile.email);
-      redirectUrl.searchParams.set("provider", provider);
-
-      return res.redirect(302, redirectUrl.toString());
-    }
-
     if (requiresVerification) {
-      const { refreshToken } = generateTokenSetCookie(res, user._id);
-      user.refreshTokenHash = hashRefreshToken(refreshToken);
-      user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
-      await user.save();
+      clearAuthCookies(res);
       await issueVerificationEmail(user);
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
       const redirectUrl = new URL(buildFrontendUrl(req, redirectPath));
@@ -375,6 +365,7 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     return redirectToDashboard(res, language);
   } catch (error) {
     const { language } = parseSocialState(req.query?.state || req.query?.language || "en");
+    clearAuthCookies(res);
     if (error?.statusCode === 403) {
       return redirectWithSocialError(res, language, error.message);
     }

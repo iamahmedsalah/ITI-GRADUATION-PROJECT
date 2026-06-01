@@ -31,13 +31,13 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchAdminCurrentUser() {
-  const { response } = await apiGet('/admin/auth/check-auth', {})
+  const { response, data } = await apiGet<{ authenticated?: boolean; user?: AuthUser }>('/admin/auth/check-auth', {})
 
-  if (!response.ok) {
+  if (!response.ok || !data.authenticated || !data.user) {
     return null
   }
 
-  return true
+  return data.user
 }
 
 export async function logoutCurrentUser() {
@@ -45,6 +45,17 @@ export async function logoutCurrentUser() {
 
   if (!response.ok) {
     throw new Error('Logout failed')
+  }
+
+  clearAccessToken()
+  return true
+}
+
+export async function logoutAdminUser() {
+  const { response } = await apiPost('/admin/auth/logout', {}, { authRetry: false })
+
+  if (!response.ok) {
+    throw new Error('Admin logout failed')
   }
 
   clearAccessToken()

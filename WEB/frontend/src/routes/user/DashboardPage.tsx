@@ -3,11 +3,11 @@ import { Link, useLoaderData, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { useLanguage } from '../context/LanguageContext'
-import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../libs/motionVariants'
-import { clearAccessToken } from '../utils/api'
-import type { DashboardLoaderData } from '../utils/route-utils'
-import { authQueryKey, logoutCurrentUser } from '../libs/react-query'
+import { useLanguage } from '../../context/LanguageContext'
+import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
+import { clearAccessToken } from '../../utils/api'
+import type { DashboardLoaderData } from '../../utils/route-utils'
+import { authQueryKey, logoutCurrentUser } from '../../libs/react-query'
 
 function DashboardPage() {
   const { language, direction } = useLanguage()
@@ -45,16 +45,16 @@ function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link to={`/${language}`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+            <Link to={`/${language}`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
               Home
             </Link>
-            <Link to={`/${language}/verify-email`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+            <Link to={`/${language}/verify-email`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
               Verify email
             </Link>
             <button
               type="button"
               onClick={() => logoutMutation.mutate()}
-              className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)"
+              className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)"
             >
               Logout
             </button>
@@ -82,7 +82,7 @@ function DashboardPage() {
             <p className="mt-2 text-sm leading-6 text-(--text)">
               Your dashboard is available, but verification is still required to unlock the full account flow.
             </p>
-            <Link to={`/${language}/verify-email`} className="mt-4 inline-flex rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+            <Link to={`/${language}/verify-email`} className="mt-4 inline-flex rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
               Open verification page
             </Link>
           </motion.div>
@@ -93,3 +93,6 @@ function DashboardPage() {
 }
 
 export default DashboardPage
+
+
+

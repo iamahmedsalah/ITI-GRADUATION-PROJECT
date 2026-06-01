@@ -50,6 +50,7 @@
     "loginFailed": "Login failed.",
     "loginSuccess": "Login successful.",
     "sessionExpired": "Your session has expired. Please log in again.",
+    "signInReset": "Your sign-in was cancelled.",
     "verifyEmailRequired": "Please verify your email address first.",
     "accountLocked": "Your account is locked until {{time}} due to multiple failed login attempts.",
     "tooManyRequests": "Too many requests. Please try again later.",
@@ -106,6 +107,217 @@
       "slugPattern": "Slug must contain only lowercase letters, numbers, and hyphens.",
       "durationNumber": "Duration must be a number.",
       "imageInput": "Image must be a valid URL or base64 data URI."
+    }
+  },
+  "adminUi": {
+    "header": {
+      "overline": "Admin area",
+      "title": "Management console"
+    },
+    "common": {
+      "refreshing": "Refreshing...",
+      "creating": "Creating...",
+      "noData": "No data",
+      "any": "Any",
+      "notAvailable": "N/A"
+    },
+    "roles": {
+      "student": "Student",
+      "instructor": "Instructor",
+      "admin": "Admin",
+      "jobSeeker": "Job Seeker",
+      "careerSwitcher": "Career Switcher"
+    },
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "status": {
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "nav": {
+      "console": "Admin Console",
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "roadmaps": "Roadmaps",
+      "courses": "Courses",
+      "hint": "Manage users, roadmap templates, and courses from one place."
+    },
+    "logout": {
+      "cta": "Logout",
+      "success": "Admin logged out successfully.",
+      "error": "Admin logout failed."
+    },
+    "login": {
+      "badge": "Admin access",
+      "title": "Sign in to admin",
+      "subtitle": "Manage users, roadmap templates, and courses from the admin console.",
+      "secureTitle": "Secure area",
+      "secureHint": "This portal is restricted to verified admin accounts.",
+      "credentials": "Admin credentials",
+      "identifier": "Admin email or username",
+      "identifierPlaceholder": "Enter your email or unique username",
+      "password": "Password",
+      "passwordPlaceholder": "Your password",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign in",
+      "backHome": "Back home"
+    },
+    "reset": {
+      "badge": "Admin security",
+      "title": "Reset admin password",
+      "subtitle": "Set a new secure password for your admin account.",
+      "forgotTitle": "Recover admin access",
+      "forgotSubtitle": "Enter your admin email to receive a password reset link.",
+      "emailPlaceholder": "admin@example.com",
+      "backToAdminLogin": "Back to admin login"
+    },
+    "dashboard": {
+      "overline": "Admin dashboard",
+      "title": "Overview",
+      "subtitle": "Central control for users, roadmap templates, and courses.",
+      "loading": "Loading overview...",
+      "live": "Live admin data",
+      "panelUsers": "Users status",
+      "panelUsersHint": "{{active}} active accounts, {{verified}} verified users.",
+      "panelLearning": "Learning assets",
+      "panelLearningHint": "{{published}} published courses and {{activeRoadmaps}} active roadmap templates."
+    },
+    "tabs": {
+      "users": "Users",
+      "usersHint": "Manage accounts, roles, and verification.",
+      "roadmaps": "Roadmaps",
+      "roadmapsHint": "Control templates and publication state.",
+      "courses": "Courses",
+      "coursesHint": "Track publishing, featuring, and ownership."
+    },
+    "users": {
+      "overline": "Admin management",
+      "title": "Users",
+      "subtitle": "Search, inspect, and manage platform accounts.",
+      "total": "{{count}} users",
+      "searchPlaceholder": "Search users",
+      "loading": "Loading users...",
+      "empty": "No users found.",
+      "updateFailed": "Failed to update user.",
+      "filters": {
+        "allRoles": "All roles",
+        "allVerification": "All verification",
+        "allStatus": "All status"
+      },
+      "table": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "lastLogin": "Last login",
+        "actions": "Actions"
+      },
+      "actions": {
+        "saveRole": "Save role",
+        "verify": "Verify",
+        "unverify": "Unverify",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "deactivationPrompt": "Optional deactivation reason"
+      }
+    },
+    "roadmaps": {
+      "overline": "Admin management",
+      "title": "Roadmaps",
+      "subtitle": "Create, update, publish, and delete roadmap templates.",
+      "total": "{{count}} templates",
+      "searchPlaceholder": "Search roadmaps",
+      "loading": "Loading roadmaps...",
+      "empty": "No roadmap templates found.",
+      "createFailed": "Failed to create roadmap.",
+      "updateFailed": "Failed to update roadmap.",
+      "publishFailed": "Failed to update publish state.",
+      "deleteFailed": "Failed to delete roadmap.",
+      "filters": {
+        "allRoles": "All roles",
+        "allLevels": "All levels",
+        "allStatus": "All status"
+      },
+      "table": {
+        "template": "Template",
+        "target": "Target",
+        "status": "Status",
+        "assigned": "Assigned users",
+        "actions": "Actions"
+      },
+      "form": {
+        "title": "Roadmap title",
+        "slug": "roadmap-slug",
+        "goal": "Roadmap goal (at least 10 chars)",
+        "description": "Description (optional)",
+        "invalid": "Please complete title, slug, goal, and markdown steps.",
+        "create": "Create roadmap template"
+      },
+      "actions": {
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "rename": "Rename",
+        "renamePrompt": "Update roadmap title",
+        "delete": "Delete",
+        "deleteConfirm": "Delete roadmap \"{{title}}\"?"
+      }
+    },
+    "courses": {
+      "overline": "Admin management",
+      "title": "Courses",
+      "subtitle": "Create, update, publish, feature, and delete courses.",
+      "total": "{{count}} courses",
+      "searchPlaceholder": "Search courses",
+      "loading": "Loading courses...",
+      "empty": "No courses found.",
+      "uncategorized": "Uncategorized",
+      "unknownOwner": "Unknown",
+      "createFailed": "Failed to create course.",
+      "updateFailed": "Failed to update course.",
+      "deleteFailed": "Failed to delete course.",
+      "filters": {
+        "allLevels": "All levels",
+        "allPublish": "All publish states",
+        "allFeatured": "All featured states"
+      },
+      "table": {
+        "course": "Course",
+        "level": "Level",
+        "status": "Status",
+        "owner": "Owner",
+        "actions": "Actions"
+      },
+      "status": {
+        "published": "Published",
+        "unpublished": "Draft",
+        "featured": "Featured",
+        "notFeatured": "Standard"
+      },
+      "form": {
+        "title": "Course title",
+        "slug": "course-slug",
+        "description": "Description (at least 10 chars)",
+        "shortDescription": "Short description (optional)",
+        "category": "Category (optional)",
+        "published": "Published",
+        "featured": "Featured",
+        "invalid": "Please complete title, slug, and description.",
+        "create": "Create course"
+      },
+      "actions": {
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "feature": "Feature",
+        "unfeature": "Unfeature",
+        "rename": "Rename",
+        "renamePrompt": "Update course title",
+        "delete": "Delete",
+        "deleteConfirm": "Delete course \"{{title}}\"?"
+      }
     }
   },
   "login": {

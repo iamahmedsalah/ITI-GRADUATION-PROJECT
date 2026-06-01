@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -37,7 +37,7 @@ type AuthState = {
 
 function navClassName({ isActive }: { isActive: boolean }) {
   return [
-    'inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-colors',
+    'inline-flex items-center gap-1 rounded-squircle px-4 py-2 text-sm font-medium transition-colors',
     isActive ? 'bg-(--surface-3) text-(--text-h) cursor-pointer' : 'text-(--text-secondary) hover:bg-(--surface-soft-hover) hover:text-(--text-h) cursor-pointer',
   ].join(' ')
 }
@@ -50,17 +50,17 @@ function MenuToggleIcon({ open }: { open: boolean }) {
   return (
     <span className="relative flex size-4 flex-col items-stretch justify-center">
       <motion.span
-        className="absolute left-0 top-0.5 h-0.5 w-full rounded-full bg-current"
+        className="absolute left-0 top-0.5 h-0.5 w-full rounded-squircle bg-current"
         animate={open ? { rotate: 45, y: 5 } : { rotate: 0, y: 0 }}
         transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       />
       <motion.span
-        className="absolute left-0 top-1.5 h-0.5 w-full rounded-full bg-current"
+        className="absolute left-0 top-1.5 h-0.5 w-full rounded-squircle bg-current"
         animate={open ? { opacity: 0, scaleX: 0.25 } : { opacity: 1, scaleX: 1 }}
         transition={{ duration: 0.14 }}
       />
       <motion.span
-        className="absolute left-0 top-2.5 h-0.5 w-full rounded-full bg-current"
+        className="absolute left-0 top-2.5 h-0.5 w-full rounded-squircle bg-current"
         animate={open ? { rotate: -45, y: -5 } : { rotate: 0, y: 0 }}
         transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       />
@@ -79,7 +79,33 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
   const { data: authUser, isLoading } = useQuery({
     queryKey: authQueryKey,
     queryFn: fetchCurrentUser,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   })
+
+  useEffect(() => {
+    const refreshAuthState = () => {
+      void queryClient.invalidateQueries({ queryKey: authQueryKey })
+      void queryClient.refetchQueries({ queryKey: authQueryKey, type: 'active' })
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAuthState()
+      }
+    }
+
+    window.addEventListener('pageshow', refreshAuthState)
+    window.addEventListener('focus', refreshAuthState)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('pageshow', refreshAuthState)
+      window.removeEventListener('focus', refreshAuthState)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [queryClient])
 
   const authState: AuthState = isLoading
     ? { status: 'loading' }
@@ -158,12 +184,12 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
             </button>
 
             <div className="hidden items-center gap-2 lg:flex">
-              <Link to={`/${language}/login`} className="rounded-full px-3 py-2 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft-hover) hover:text-(--text-h)">
+              <Link to={`/${language}/login`} className="rounded-squircle px-3 py-2 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft-hover) hover:text-(--text-h)">
                 {t('navbar.login')}
               </Link>
               <Link
                 to={`/${language}/signup`}
-                className="inline-flex items-center rounded-full bg-(--gd-primary) px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.24)] transition-transform hover:-translate-y-0.5 hover:bg-(--gd-primary-hover)"
+                className="inline-flex items-center rounded-squircle bg-(--gd-primary) px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.24)] transition-transform hover:-translate-y-0.5 hover:bg-(--gd-primary-hover)"
               >
                 {t('navbar.signup')}
               </Link>

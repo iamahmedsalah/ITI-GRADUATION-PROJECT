@@ -5,19 +5,19 @@ import { motion } from 'framer-motion'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   authFormFieldItemVariants,
   authFormSectionVariants,
   authFormVariants,
   createPageVariants,
-} from '../libs/motionVariants'
-import { apiPost } from '../utils/api'
-import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
-import { verifyEmailSchema } from '../types/validationSchemas'
-import { useResendCooldown } from '../hooks/useResendCooldown'
+} from '../../libs/motionVariants'
+import { apiPost } from '../../utils/api'
+import { getBackendResponseMessage, type BackendResponseError } from '../../utils/backendResponseMessage'
+import { verifyEmailSchema } from '../../types/validationSchemas'
+import { useResendCooldown } from '../../hooks/useResendCooldown'
 import { z } from 'zod'
-import FormInput from '../components/ui/Input'
+import FormInput from '../../components/ui/Input'
 
 type VerifyEmailFormValues = z.infer<typeof verifyEmailSchema>
 
@@ -167,12 +167,12 @@ function VerifyEmailPage() {
   return (
     <motion.main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8 sm:px-6 sm:py-10" variants={pageVariants} initial="hidden" animate="show">
       <motion.div className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-(--border) bg-(--surface) shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-sm" initial="hidden" animate="visible" variants={containerVariants}>
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
-        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
+        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-squircle bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
+        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-squircle bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
 
         <div className="relative grid lg:grid-cols-[0.92fr_1.08fr]">
           <motion.section className={`border-b border-(--border) px-6 py-8 sm:px-8 lg:border-b-0 ${isRtl ? 'lg:border-l' : 'lg:border-r'}`} variants={itemVariants}>
-            <div className="mb-4 inline-flex rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
+            <div className="mb-4 inline-flex rounded-squircle border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
               {t('verify.badge')}
             </div>
             <h1 className="bg-linear-to-r from-(--gd-primary) to-(--gd-secondary) bg-clip-text text-2xl font-bold text-transparent sm:text-3xl">
@@ -280,3 +280,6 @@ function VerifyEmailPage() {
 }
 
 export default VerifyEmailPage
+
+
+

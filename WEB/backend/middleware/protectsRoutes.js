@@ -2,6 +2,13 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/user/userAccountModel.js";
 
+const ALLOW_UNVERIFIED_PATHS = new Set([
+    "/api/auth/check-auth",
+    "/api/auth/logout",
+    "/api/admin/auth/check-auth",
+    "/api/admin/auth/logout",
+]);
+
 // JWT Auth Guard
 export const protect = async (req, res, next) => {
     try {
@@ -40,6 +47,17 @@ export const protect = async (req, res, next) => {
             return res.status(403).json({
                 success: false,
                 message: "This account is deactivated. Please contact support.",
+            });
+        }
+
+        const requestPath = req.path
+            ? `/api${req.path}`
+            : req.originalUrl?.split("?")[0];
+
+        if (user.isVerified === false && !ALLOW_UNVERIFIED_PATHS.has(requestPath)) {
+            return res.status(403).json({
+                success: false,
+                message: "Email not verified.",
             });
         }
 

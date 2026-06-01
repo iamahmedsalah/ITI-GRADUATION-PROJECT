@@ -50,6 +50,7 @@
     "loginFailed": "فشل تسجيل الدخول.",
     "loginSuccess": "تم تسجيل الدخول بنجاح.",
     "sessionExpired": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+    "signInReset": "تم إلغاء تسجيل الدخول. .",
     "verifyEmailRequired": "يرجى تأكيد البريد الإلكتروني أولا.",
     "accountLocked": "حسابك مقفل حتى {{time}} بسبب محاولات تسجيل دخول فاشلة متعددة.",
     "tooManyRequests": "طلبات كثيرة جدا. حاول مرة أخرى لاحقا.",
@@ -106,6 +107,217 @@
       "slugPattern": "يجب أن يحتوي الرابط المختصر على أحرف صغيرة وأرقام وشرطات فقط.",
       "durationNumber": "يجب أن تكون المدة رقما.",
       "imageInput": "يجب أن تكون الصورة رابطا صالحا أو بيانات base64 صحيحة."
+    }
+  },
+  "adminUi": {
+    "header": {
+      "overline": "منطقة الإدارة",
+      "title": "لوحة الإدارة"
+    },
+    "common": {
+      "refreshing": "جارٍ التحديث...",
+      "creating": "جارٍ الإنشاء...",
+      "noData": "لا توجد بيانات",
+      "any": "أي",
+      "notAvailable": "غير متاح"
+    },
+    "roles": {
+      "student": "طالب",
+      "instructor": "مدرب",
+      "admin": "مدير",
+      "jobSeeker": "باحث عن عمل",
+      "careerSwitcher": "مغير مسار مهني"
+    },
+    "levels": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "status": {
+      "verified": "مؤكد",
+      "unverified": "غير مؤكد",
+      "active": "نشط",
+      "inactive": "غير نشط"
+    },
+    "nav": {
+      "console": "وحدة الإدارة",
+      "dashboard": "نظرة عامة",
+      "users": "المستخدمون",
+      "roadmaps": "خرائط الطريق",
+      "courses": "الدورات",
+      "hint": "إدارة المستخدمين وخرائط الطريق والدورات من مكان واحد."
+    },
+    "logout": {
+      "cta": "تسجيل الخروج",
+      "success": "تم تسجيل خروج المدير بنجاح.",
+      "error": "فشل تسجيل خروج المدير."
+    },
+    "login": {
+      "badge": "وصول المدير",
+      "title": "تسجيل دخول المدير",
+      "subtitle": "إدارة المستخدمين وخرائط الطريق والدورات من لوحة المدير.",
+      "secureTitle": "منطقة آمنة",
+      "secureHint": "هذه البوابة مخصصة لحسابات المدير المؤكدة فقط.",
+      "credentials": "بيانات المدير",
+      "identifier": "بريد المدير أو اسم المستخدم",
+      "identifierPlaceholder": "ادخل البريد الإلكتروني أو اسم المستخدم",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "كلمة المرور",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "signIn": "تسجيل الدخول",
+      "backHome": "العودة للرئيسية"
+    },
+    "reset": {
+      "badge": "أمان المدير",
+      "title": "إعادة تعيين كلمة مرور المدير",
+      "subtitle": "قم بتعيين كلمة مرور جديدة وآمنة لحساب المدير.",
+      "forgotTitle": "استعادة وصول المدير",
+      "forgotSubtitle": "أدخل بريد المدير لإرسال رابط إعادة التعيين.",
+      "emailPlaceholder": "admin@example.com",
+      "backToAdminLogin": "العودة لتسجيل دخول المدير"
+    },
+    "dashboard": {
+      "overline": "لوحة المدير",
+      "title": "نظرة عامة",
+      "subtitle": "تحكم مركزي في المستخدمين وخرائط الطريق والدورات.",
+      "loading": "جار تحميل البيانات...",
+      "live": "بيانات مباشرة",
+      "panelUsers": "حالة المستخدمين",
+      "panelUsersHint": "{{active}} حسابًا نشطًا، و{{verified}} مستخدمًا مؤكدًا.",
+      "panelLearning": "محتوى التعلّم",
+      "panelLearningHint": "{{published}} دورة منشورة و{{activeRoadmaps}} قالب خريطة نشط."
+    },
+    "tabs": {
+      "users": "المستخدمون",
+      "usersHint": "إدارة الحسابات والأدوار والتحقق.",
+      "roadmaps": "خرائط الطريق",
+      "roadmapsHint": "التحكم في القوالب وحالة النشر.",
+      "courses": "الدورات",
+      "coursesHint": "متابعة النشر والتمييز والملكية."
+    },
+    "users": {
+      "overline": "إدارة المدير",
+      "title": "المستخدمون",
+      "subtitle": "ابحث وراجع وأدر حسابات المنصة.",
+      "total": "{{count}} مستخدم",
+      "searchPlaceholder": "ابحث عن المستخدمين",
+      "loading": "جارٍ تحميل المستخدمين...",
+      "empty": "لا يوجد مستخدمون.",
+      "updateFailed": "فشل تحديث المستخدم.",
+      "filters": {
+        "allRoles": "كل الأدوار",
+        "allVerification": "كل حالات التحقق",
+        "allStatus": "كل الحالات"
+      },
+      "table": {
+        "user": "المستخدم",
+        "role": "الدور",
+        "status": "الحالة",
+        "lastLogin": "آخر تسجيل دخول",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "saveRole": "حفظ الدور",
+        "verify": "تأكيد",
+        "unverify": "إلغاء التأكيد",
+        "activate": "تفعيل",
+        "deactivate": "تعطيل",
+        "deactivationPrompt": "سبب التعطيل (اختياري)"
+      }
+    },
+    "roadmaps": {
+      "overline": "إدارة المدير",
+      "title": "خرائط الطريق",
+      "subtitle": "إنشاء وتحديث ونشر وحذف قوالب خرائط الطريق.",
+      "total": "{{count}} قالب",
+      "searchPlaceholder": "ابحث في خرائط الطريق",
+      "loading": "جارٍ تحميل خرائط الطريق...",
+      "empty": "لا توجد قوالب خرائط طريق.",
+      "createFailed": "فشل إنشاء خريطة الطريق.",
+      "updateFailed": "فشل تحديث خريطة الطريق.",
+      "publishFailed": "فشل تحديث حالة النشر.",
+      "deleteFailed": "فشل حذف خريطة الطريق.",
+      "filters": {
+        "allRoles": "كل الأدوار",
+        "allLevels": "كل المستويات",
+        "allStatus": "كل الحالات"
+      },
+      "table": {
+        "template": "القالب",
+        "target": "الفئة المستهدفة",
+        "status": "الحالة",
+        "assigned": "المستخدمون المعيّنون",
+        "actions": "الإجراءات"
+      },
+      "form": {
+        "title": "عنوان خريطة الطريق",
+        "slug": "slug-الخريطة",
+        "goal": "هدف خريطة الطريق (10 أحرف على الأقل)",
+        "description": "الوصف (اختياري)",
+        "invalid": "يرجى إدخال العنوان والـ slug والهدف وخطوات markdown.",
+        "create": "إنشاء قالب خريطة طريق"
+      },
+      "actions": {
+        "publish": "نشر",
+        "unpublish": "إلغاء النشر",
+        "rename": "إعادة تسمية",
+        "renamePrompt": "تحديث عنوان خريطة الطريق",
+        "delete": "حذف",
+        "deleteConfirm": "حذف خريطة الطريق \"{{title}}\"؟"
+      }
+    },
+    "courses": {
+      "overline": "إدارة المدير",
+      "title": "الدورات",
+      "subtitle": "إنشاء وتحديث ونشر وتمييز وحذف الدورات.",
+      "total": "{{count}} دورة",
+      "searchPlaceholder": "ابحث في الدورات",
+      "loading": "جارٍ تحميل الدورات...",
+      "empty": "لا توجد دورات.",
+      "uncategorized": "بدون تصنيف",
+      "unknownOwner": "غير معروف",
+      "createFailed": "فشل إنشاء الدورة.",
+      "updateFailed": "فشل تحديث الدورة.",
+      "deleteFailed": "فشل حذف الدورة.",
+      "filters": {
+        "allLevels": "كل المستويات",
+        "allPublish": "كل حالات النشر",
+        "allFeatured": "كل حالات التمييز"
+      },
+      "table": {
+        "course": "الدورة",
+        "level": "المستوى",
+        "status": "الحالة",
+        "owner": "المالك",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "published": "منشور",
+        "unpublished": "مسودة",
+        "featured": "مميزة",
+        "notFeatured": "عادية"
+      },
+      "form": {
+        "title": "عنوان الدورة",
+        "slug": "slug-الدورة",
+        "description": "الوصف (10 أحرف على الأقل)",
+        "shortDescription": "وصف قصير (اختياري)",
+        "category": "التصنيف (اختياري)",
+        "published": "منشورة",
+        "featured": "مميزة",
+        "invalid": "يرجى إدخال العنوان والـ slug والوصف.",
+        "create": "إنشاء دورة"
+      },
+      "actions": {
+        "publish": "نشر",
+        "unpublish": "إلغاء النشر",
+        "feature": "تمييز",
+        "unfeature": "إلغاء التمييز",
+        "rename": "إعادة تسمية",
+        "renamePrompt": "تحديث عنوان الدورة",
+        "delete": "حذف",
+        "deleteConfirm": "حذف الدورة \"{{title}}\"؟"
+      }
     }
   },
   "login": {

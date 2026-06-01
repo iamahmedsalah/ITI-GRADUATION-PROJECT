@@ -7,22 +7,23 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GoogleIcon } from "@hugeicons/core-free-icons";
-import { useLanguage } from "../context/LanguageContext";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   authFormFieldGridVariants,
   authFormFieldItemVariants,
   authFormSectionVariants,
   authFormVariants,
   createPageVariants,
-} from "../libs/motionVariants";
-import { apiPost, buildApiUrl } from "../utils/api";
-import { getBackendResponseMessage, type BackendResponseError } from "../utils/backendResponseMessage";
-import { signupSchema } from "../types/validationSchemas";
+} from "../../libs/motionVariants";
+import { apiPost, buildApiUrl, clearAccessToken } from "../../utils/api";
+import { getBackendResponseMessage, type BackendResponseError } from "../../utils/backendResponseMessage";
+import { signupSchema } from "../../types/validationSchemas";
 import { z } from "zod";
-import PasswordStrengthSubmit from "../components/ui/passwordStrength";
-import PasswordVisibilityToggle from "../components/ui/passwordVisibilityToggle";
-import PasswordActions from "../components/ui/passwordActions";
-import FormInput from "../components/ui/Input";
+import PasswordStrengthSubmit from "../../components/ui/passwordStrength";
+import PasswordVisibilityToggle from "../../components/ui/passwordVisibilityToggle";
+import PasswordActions from "../../components/ui/passwordActions";
+import FormInput from "../../components/ui/Input";
+import { authQueryKey, logoutCurrentUser, queryClient } from "../../libs/react-query";
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
@@ -189,7 +190,15 @@ function SignupPage() {
     };
   }, []);
 
-  const handleSocialSignup = () => {
+  const handleSocialSignup = async () => {
+    try {
+      await logoutCurrentUser();
+    } catch {
+      // Ignore logout failures; continue clearing local auth state.
+    }
+
+    clearAccessToken();
+    queryClient.setQueryData(authQueryKey, null);
     const socialAuthUrl = buildApiUrl(`/auth/oauth/signup/google?language=${language}`)
     window.location.assign(socialAuthUrl);
   };
@@ -207,15 +216,15 @@ function SignupPage() {
         animate="visible"
         variants={containerVariants}
       >
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
-        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
+        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-squircle bg-[radial-gradient(circle,rgba(29,185,84,0.42)_0%,rgba(29,185,84,0.16)_40%,rgba(29,185,84,0)_72%)] blur-3xl" />
+        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-squircle bg-[radial-gradient(circle,rgba(var(--glow-neutral-rgb),0.18)_0%,rgba(var(--glow-neutral-rgb),0.06)_45%,rgba(var(--glow-neutral-rgb),0)_78%)] blur-3xl" />
 
         <div className="relative grid lg:grid-cols-[0.92fr_1.08fr]">
           <motion.section
             className={`border-b border-(--border) px-6 py-8 sm:px-8 lg:border-b-0 ${isRtl ? "lg:border-l" : "lg:border-r"}`}
             variants={itemVariants}
           >
-            <div className="mb-4 inline-flex rounded-full border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
+            <div className="mb-4 inline-flex rounded-squircle border border-(--border) bg-(--surface-soft) px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-(--text)">
               {t("signup.badge")}
             </div>
             <h1 className="bg-linear-to-r from-(--gd-primary) to-(--gd-secondary) bg-clip-text text-4xl font-bold text-transparent sm:text-5xl">
@@ -243,7 +252,7 @@ function SignupPage() {
               <div className="grid gap-3 sm:grid-cols-1">
                 <button
                   type="button"
-                  onClick={handleSocialSignup}
+                  onClick={() => void handleSocialSignup()}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
                 >
                   <HugeiconsIcon icon={GoogleIcon} size={18} />
@@ -432,3 +441,4 @@ function SignupPage() {
 }
 
 export default SignupPage;
+

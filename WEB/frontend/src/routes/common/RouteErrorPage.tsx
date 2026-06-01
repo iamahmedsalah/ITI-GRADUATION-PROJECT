@@ -24,10 +24,10 @@ export default function RouteErrorPage() {
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link to={`/${language}`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             {t('errors.home')}
           </Link>
-          <Link to={`/${language}/login`} className="rounded-full border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+          <Link to={`/${language}/login`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
             {t('errors.login')}
           </Link>
         </div>

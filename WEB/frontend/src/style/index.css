@@ -269,24 +269,22 @@ textarea {
   color: #ffffff;
 }
 
-/* Squircle corners: prefer the new `corner-shape` spec when available, with sensible fallbacks.
-   Applies to Tailwind `rounded-*` utilities; keep `.rounded-full` circular.
-*/
+/* Squircle corners: opt-in utility so Tailwind rounded/full classes keep default behavior. */
 :root {
   --sq-radius: 12px; 
 }
 
-/* Progressive enhancement: native `corner-shape` if supported */
-[class*="rounded-"],
-.rounded {
-  corner-shape: squircle;
+/* Apply squircle only when this class is used. */
+.rounded-squircle {
   /* fallback for current browsers */
   border-radius: var(--sq-radius);
   overflow: hidden;
 }
 
-/* Keep full avatars / pills circular */
-.rounded-full {
-  corner-shape: circle;
-  border-radius: 9999px;
+/* Progressive enhancement: native squircle where supported. */
+@supports (corner-shape: squircle) {
+  .rounded-squircle {
+    corner-shape: squircle;
+    border-radius: 9999px;
+  }
 }
