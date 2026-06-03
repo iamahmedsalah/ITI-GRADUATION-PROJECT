@@ -10,26 +10,36 @@ type PasswordStrengthProps = {
 }
 
 function getStrength(password: string, minLength: number) {
-  let score = 0
-  if (password.length >= minLength) score += 1
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1
-  if (/[0-9]/.test(password)) score += 1
-  if (/[^A-Za-z0-9]/.test(password)) score += 1
-  return score
+  const criteria = [
+    password.length >= minLength,
+    /[A-Z]/.test(password),
+    /[a-z]/.test(password),
+    /[0-9]/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ]
+  const metCount = criteria.filter(Boolean).length
+  const isValid = criteria.every(Boolean)
+
+  return {
+    bars: isValid ? 4 : Math.min(Math.floor((metCount / criteria.length) * 4), 3),
+    isValid,
+  }
 }
 
-function strengthBarClass(score: number) {
-  switch (score) {
+function strengthBarClass(bars: number, isValid: boolean) {
+  if (isValid) {
+    return 'bg-green-500/80'
+  }
+
+  switch (bars) {
     case 0:
       return 'bg-red-500/80'
     case 1:
       return 'bg-orange-500/80'
     case 2:
       return 'bg-yellow-500/80'
-    case 3:
-      return 'bg-lime-500/80'
     default:
-      return 'bg-green-500/80'
+      return 'bg-yellow-500/80'
   }
 }
 
@@ -53,13 +63,13 @@ export default function PasswordStrength({
   // ]
 
   const levelKey =
-    strength === 0
+    strength.bars === 0
       ? 'veryWeak'
-      : strength === 1
+      : strength.bars === 1
         ? 'weak'
-        : strength === 2
+        : strength.bars === 2 || !strength.isValid
           ? 'fair'
-          : strength === 3
+          : strength.bars === 3
             ? 'strong'
             : 'veryStrong'
 
@@ -75,7 +85,7 @@ export default function PasswordStrength({
           <span
             key={index}
             className={`h-1.5 flex-1 rounded-squircle transition-colors duration-300 ${
-              index < strength ? strengthBarClass(strength) : 'bg-(--surface-3)'
+              index < strength.bars ? strengthBarClass(strength.bars, strength.isValid) : 'bg-(--surface-3)'
             }`}
           />
         ))}

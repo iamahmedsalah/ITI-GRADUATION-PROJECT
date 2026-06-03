@@ -7,6 +7,36 @@ const formatZodErrors = (issues) =>
     message: issue.message,
   }));
 
+const emailLocalPartHasLetter = (value) => {
+  const localPart = String(value).split("@")[0] ?? "";
+  return /[A-Za-z]/.test(localPart);
+};
+
+const usernameHasLetter = /[A-Za-z]/;
+const usernamePattern = /^[A-Za-z0-9._-]+$/;
+const passwordRequirementsPattern =
+  /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]).{8,}/;
+const passwordRequirementsMessage =
+  "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+
+const getUsernameValidationMessage = (value) => {
+  const username = String(value).trim();
+
+  if (username.length < 3 || username.length > 20) {
+    return "Username must be between 3 and 20 characters.";
+  }
+
+  if (!usernameHasLetter.test(username)) {
+    return "Username must include at least one letter.";
+  }
+
+  if (!usernamePattern.test(username)) {
+    return "Username can only contain letters, numbers, dots, underscores, and hyphens.";
+  }
+
+  return null;
+};
+
 const validateRequest = (schema) => async (req, res, next) => {
   const result = await schema.safeParseAsync({
     body: req.body ?? {},
@@ -32,28 +62,37 @@ const bodySchema = {
     .trim()
     .min(3, "Username must be between 3 and 20 characters.")
     .max(20, "Username must be between 3 and 20 characters.")
+    .regex(usernameHasLetter, "Username must include at least one letter.")
+    .regex(
+      usernamePattern,
+      "Username can only contain letters, numbers, dots, underscores, and hyphens."
+    )
     .transform((value) => value.toLowerCase()),
   Fname: z
     .string({ error: "First name is required." })
     .trim()
-    .min(2, "First name must be between 2 and 20 characters.")
-    .max(20, "First name must be between 2 and 20 characters."),
+    .min(2, "First name must be at least 2 characters.")
+    .max(24, "First name must be at most 24 characters."),
   Lname: z
     .string({ error: "Last name is required." })
     .trim()
-    .min(2, "Last name must be between 2 and 20 characters.")
-    .max(20, "Last name must be between 2 and 20 characters."),
+    .min(2, "Last name must be at least 2 characters.")
+    .max(24, "Last name must be at most 24 characters."),
   email: z
     .string({ error: "Email is required." })
     .trim()
     .email("Please provide a valid email address.")
+    .refine(
+      emailLocalPartHasLetter,
+      "Email address before @ must include at least one letter."
+    )
     .transform((value) => value.toLowerCase()),
   password: z
     .string({ error: "Password must be a string." })
     .min(8, "Password must be at least 8 characters.")
     .regex(
-      /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]).{8,}/,
-      "Password must include uppercase, lowercase, number and symbol."
+      passwordRequirementsPattern,
+      passwordRequirementsMessage
     ),
 };
 
@@ -80,7 +119,11 @@ const loginSchema = z.object({
     username: z.string().trim().optional(),
     password: z
       .string({ error: "Please enter your password." })
-      .min(1, "Please enter your password."),
+      .min(8, "Password must be at least 8 characters.")
+      .regex(
+        passwordRequirementsPattern,
+        passwordRequirementsMessage
+      ),
   }),
   params: z.object({}).passthrough(),
 }).superRefine((data, ctx) => {
@@ -92,6 +135,19 @@ const loginSchema = z.object({
       path: ["body", "identifier"],
       message: "Please enter your email address or username.",
     });
+    return;
+  }
+
+  if (!String(identifier).includes("@")) {
+    const usernameMessage = getUsernameValidationMessage(identifier);
+
+    if (usernameMessage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["body", "identifier"],
+        message: usernameMessage,
+      });
+    }
   }
 }).transform(({ body, params }) => ({
   body: {
@@ -120,8 +176,8 @@ const resetPasswordSchema = z.object({
       .string({ error: "Please enter a new password." })
       .min(8, "New password must be at least 8 characters long.")
       .regex(
-        /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]).{8,}/,
-        "Password must include uppercase, lowercase, number and symbol."
+        passwordRequirementsPattern,
+        passwordRequirementsMessage
       ),
   }),
   params: z.object({
@@ -188,8 +244,8 @@ export const signupUniquenessValidation = async (req, res, next) => {
             field: conflictField,
             message:
               conflictField === "email"
-                ? "Email is already registered."
-                : "Username is already taken.",
+                ? "An account already exists with this email."
+                : "An account already exists with this username.",
           },
         ],
       });

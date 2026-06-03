@@ -6,10 +6,12 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   DashboardSquare03Icon,
+  Login02Icon,
   Login03Icon,
   Route03Icon,
+  UserAdd01Icon,
   UserEdit01Icon,
-} from '@hugeicons/core-free-icons'
+} from '@hugeicons/core-free-icons';
 import type { LanguagePref } from '../../context/LanguageContext'
 import LangToggleButton from '../common/lang-toggle'
 import ThemeToggleButton from '../common/theme-toggle'
@@ -184,14 +186,16 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
             </button>
 
             <div className="hidden items-center gap-2 lg:flex">
-              <Link to={`/${language}/login`} className="rounded-squircle px-3 py-2 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft-hover) hover:text-(--text-h)">
-                {t('navbar.login')}
+              <Link to={`/${language}/login`} className="rounded-squircle inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft-hover) hover:text-(--text-h)">
+                {t('navbar.login')} 
+                <HugeiconsIcon icon={Login02Icon} size={20} />
               </Link>
               <Link
                 to={`/${language}/signup`}
-                className="inline-flex items-center rounded-squircle bg-(--gd-primary) px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.24)] transition-transform hover:-translate-y-0.5 hover:bg-(--gd-primary-hover)"
+                className="inline-flex items-center rounded-squircle gap-2 bg-(--gd-primary) px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.24)] transition-transform hover:-translate-y-0.5 hover:bg-(--gd-primary-hover)"
               >
                 {t('navbar.signup')}
+                <HugeiconsIcon icon={UserAdd01Icon} size={20} />
               </Link>
             </div>
           </>
@@ -281,17 +285,19 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Link
                 to={`/${language}/login`}
-                className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-center text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
+                className="rounded-squircle flex items-center justify-center gap-1.5 border border-(--border) bg-(--surface) px-4 py-3 text-center text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('navbar.login')}
+                <HugeiconsIcon icon={Login02Icon} size={20} />
               </Link>
               <Link
                 to={`/${language}/signup`}
-                className="rounded-2xl bg-[linear-gradient(135deg,#33ab6a_0%,#36e28a_60%,#9fd95b_100%)] px-4 py-3 text-center text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.18)]"
+                className="rounded-squircle flex items-center justify-center gap-1.5 border border-(--border) bg-[linear-gradient(135deg,#33ab6a_0%,#36e28a_60%,#9fd95b_100%)] px-4 py-3 text-center text-sm font-semibold text-white shadow-[0_12px_24px_rgba(29,185,84,0.18)]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t('navbar.signup')}
+                <HugeiconsIcon icon={UserAdd01Icon} size={20} />
               </Link>
             </div>
           )}

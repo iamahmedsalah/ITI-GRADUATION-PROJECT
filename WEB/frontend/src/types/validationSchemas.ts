@@ -2,27 +2,35 @@ import { z } from 'zod'
 
 const passwordSchema = z
   .string()
-  .min(8, 'validation.password.min')
-  .regex(/[A-Z]/, 'validation.password.uppercase')
-  .regex(/[a-z]/, 'validation.password.lowercase')
-  .regex(/[0-9]/, 'validation.password.number')
-  .regex(/[^A-Za-z0-9]/, 'validation.password.symbol')
+  .regex(
+    /(?=.{8,})(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9])/,
+    'validation.password.requirements',
+  )
+
+const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, 'validation.username.min')
+  .max(20, 'validation.username.max')
+  .regex(/[A-Za-z]/, 'validation.username.letter')
+  .regex(/^[A-Za-z0-9._-]+$/, 'validation.username.pattern')
 
 const allowedEmailDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'test.com']
 
+const emailLocalPartHasLetter = (value: string) => {
+  const localPart = value.split('@')[0] ?? ''
+  return /[A-Za-z]/.test(localPart)
+}
+
 export const signupSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, 'validation.username.min')
-    .max(24, 'validation.username.max')
-    .regex(/^[A-Za-z0-9._-]+$/, 'validation.username.pattern'),
-  Fname: z.string().trim().min(2, 'validation.firstName.required'),
-  Lname: z.string().trim().min(2, 'validation.lastName.required'),
+  username: usernameSchema,
+  Fname: z.string().trim().min(2, 'validation.firstName.required').max(24, 'validation.firstName.max'),
+  Lname: z.string().trim().min(2, 'validation.lastName.required').max(24, 'validation.lastName.max'),
   email: z
     .string()
     .trim()
     .email('validation.email.invalid')
+    .refine(emailLocalPartHasLetter, 'validation.email.localPartLetter')
     .refine((value) => {
       const domain = value.split('@')[1]?.toLowerCase() ?? ''
       return allowedEmailDomains.includes(domain)
@@ -34,10 +42,21 @@ export const loginSchema = z.object({
   identifier: z
     .string()
     .trim()
-    .min(3, 'validation.identifier.min'),
-  password: z
-    .string()
-    .min(8, 'validation.password.min'),
+    .min(3, 'validation.identifier.min')
+    .superRefine((value, ctx) => {
+      if (value.includes('@')) {
+        return
+      }
+
+      const usernameResult = usernameSchema.safeParse(value)
+      if (!usernameResult.success) {
+        ctx.addIssue({
+          code: 'custom',
+          message: usernameResult.error.issues[0]?.message ?? 'validation.username.pattern',
+        })
+      }
+    }),
+  password: passwordSchema,
 })
 
 export const verifyEmailSchema = z.object({

@@ -22,6 +22,7 @@ type NavItem = {
   to: string
   exact?: boolean
   count?: number
+  icon?: React.ReactNode
 }
 
 function localizedPath(language: string, pathname: string) {

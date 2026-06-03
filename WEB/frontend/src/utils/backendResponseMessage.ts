@@ -41,15 +41,23 @@ export function getBackendResponseMessage(
       'username is required.': 'validation.username.required',
       'username must be between 3 and 20 characters.': 'validation.username.range',
       'username must be between 3 and 24 characters.': 'validation.username.range',
+      'username must include at least one letter.': 'validation.username.letter',
+      'username can only contain letters, numbers, dots, underscores, and hyphens.': 'validation.username.pattern',
       'first name is required.': 'validation.firstName.required',
+      'first name must be at least 2 characters.': 'validation.firstName.required',
+      'first name must be at most 24 characters.': 'validation.firstName.max',
       'last name is required.': 'validation.lastName.required',
+      'last name must be at least 2 characters.': 'validation.lastName.required',
+      'last name must be at most 24 characters.': 'validation.lastName.max',
       'email is required.': 'validation.email.required',
       'please provide a valid email address.': 'validation.email.invalid',
       'please enter a valid email address.': 'validation.email.invalid',
+      'email address before @ must include at least one letter.': 'validation.email.localPartLetter',
       'password must be a string.': 'validation.password.required',
       'password must be at least 8 characters.': 'validation.password.min',
       'new password must be at least 8 characters long.': 'validation.password.min',
       'password must include uppercase, lowercase, number and symbol.': 'validation.password.requirements',
+      'password must be at least 8 characters and include uppercase, lowercase, number, and special character.': 'validation.password.requirements',
       'verification code is required.': 'validation.verifyCode.required',
       'verification code must be 8 letters/numbers.': 'validation.verifyCode.pattern',
       'verification code must be 8 characters long.': 'validation.verifyCode.length',
@@ -57,6 +65,8 @@ export function getBackendResponseMessage(
       'please enter your email address or username.': 'validation.identifier.min',
       'email is already registered.': 'auth.emailAlreadyRegistered',
       'username is already taken.': 'auth.usernameTaken',
+      'an account already exists with this email.': 'auth.emailAlreadyRegistered',
+      'an account already exists with this username.': 'auth.usernameTaken',
       'an account with this email or username exists but is deactivated. please contact support to reactivate it.': 'auth.accountDeactivated',
       'invalid email/username or password.': 'auth.invalidCredentials',
       'this account is deactivated. please contact support.': 'auth.accountDeactivated',
@@ -119,7 +129,7 @@ export function getBackendResponseMessage(
     return translate('auth.tooManyRequests')
   }
 
-  if (response.status === 400) {
+  if (response.status === 400 || response.status === 409) {
     const validationMessage = translateBackendMessage(data.errors?.[0]?.message)
 
     if (validationMessage) {

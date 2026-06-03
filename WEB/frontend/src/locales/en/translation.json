@@ -57,8 +57,8 @@
     "validationFailed": "Validation failed.",
     "invalidCredentials": "Invalid email, username, or password.",
     "accountDeactivated": "This account is deactivated. Please contact support.",
-    "emailAlreadyRegistered": "Email is already registered.",
-    "usernameTaken": "Username is already taken.",
+    "emailAlreadyRegistered": "An account already exists with this email.",
+    "usernameTaken": "An account already exists with this username.",
     "invalidVerificationCode": "Invalid verification code.",
     "serverAuthConfigError": "Server auth configuration error.",
     "signupFailed": "Signup failed.",
@@ -154,7 +154,7 @@
     },
     "login": {
       "badge": "Admin access",
-      "title": "Sign in to admin",
+      "title": "login  to admin",
       "subtitle": "Manage users, roadmap templates, and courses from the admin console.",
       "secureTitle": "Secure area",
       "secureHint": "This portal is restricted to verified admin accounts.",
@@ -164,7 +164,7 @@
       "password": "Password",
       "passwordPlaceholder": "Your password",
       "forgotPassword": "Forgot password?",
-      "signIn": "Sign in",
+      "signIn": "login ",
       "backHome": "Back home"
     },
     "reset": {
@@ -323,7 +323,7 @@
   "login": {
     "badge": "Welcome back",
     "title": "Login",
-    "subtitle": "Sign in to continue in the {{language}} locale.",
+    "subtitle": "Login to continue in the {{language}} locale.",
     "organizeTitle": "Organized login",
     "helper": "Use your verified account credentials to access your dashboard and continue your learning path.",
     "credentialsSection": "Credentials",
@@ -331,13 +331,13 @@
     "identifierPlaceholder": "Enter your email or unique username",
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
-    "submit": "Sign in",
+    "submit": "Login",
     "adminLogin": "Admin login",
     "forgotPassword": "Forgot password?",
-    "socialDivider": "Or sign in with",
-    "socialHint": "Or use Google to sign in if you created your account that way.",
+    "socialDivider": "Or login with",
+    "socialHint": "Or use Google to login if you created your account that way.",
     "social": {
-      "google": "Sign in with Google"
+      "google": "Login with Google"
     },
     "needAccount": "Need an account?",
     "createOne": "Create one"
@@ -356,6 +356,8 @@
     "lastNamePlaceholder": "Enter your last name",
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
+    "accountSection": " Account details",
+    "profileSection": "Profile details",
     "securitySection": "Security setup",
     "organizeTitle": "Organized signup",
     "socialDivider": "Or continue with",
@@ -417,7 +419,7 @@
     "title": "Reset password",
     "subtitle": "Create a new secure password for your account.",
     "organizeTitle": "Password update",
-    "helper": "Use at least 8 characters including uppercase, lowercase, number, and symbol.",
+    "helper": "Use at least 8 characters including uppercase, lowercase, number, and special character .",
     "strengthHint": "Check the strength meter before confirming your new password.",
     "sectionTitle": "New credentials",
     "password": "New password",
@@ -498,26 +500,30 @@
       "uppercase": "Password must include at least one uppercase letter.",
       "lowercase": "Password must include at least one lowercase letter.",
       "number": "Password must include at least one number.",
-      "requirements": "Password must include uppercase, lowercase, number and symbol.",
-      "symbol": "Password must include at least one symbol.",
+      "requirements": "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+      "symbol": "Password must include at least one and special character.",
       "confirmMatch": "Passwords do not match."
     },
     "username": {
       "required": "Username is required.",
       "min": "Username must be at least 3 characters long.",
-      "range": "Username must be between 3 and 24 characters long.",
-      "max": "Username must be at most 24 characters long.",
+      "range": "Username must be between 3 and 20 characters long.",
+      "max": "Username must be at most 20 characters long.",
+      "letter": "Username must include at least one letter.",
       "pattern": "Username can only contain letters, numbers, dots, underscores, and hyphens."
     },
     "firstName": {
-      "required": "First name is required."
+      "required": "First name is required.",
+      "max": "First name must be at most 24 characters long."
     },
     "lastName": {
-      "required": "Last name is required."
+      "required": "Last name is required.",
+      "max": "Last name must be at most 24 characters long."
     },
     "email": {
       "required": "Email is required.",
       "invalid": "Enter a valid email address.",
+      "localPartLetter": "Email address before @ must include at least one letter.",
       "domain": "Use a supported email domain (gmail.com, outlook.com, hotmail.com, or test.com)."
     },
     "identifier": {

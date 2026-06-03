@@ -5,8 +5,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { GoogleIcon } from "@hugeicons/core-free-icons";
+import GoogleIcon from '../common/GoogleIcon'
 import { useLanguage } from "../../context/LanguageContext";
 import {
   authFormFieldGridVariants,
@@ -255,7 +254,7 @@ function SignupPage() {
                   onClick={() => void handleSocialSignup()}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-sm font-medium text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
                 >
-                  <HugeiconsIcon icon={GoogleIcon} size={18} />
+                  <GoogleIcon />
                   <span>{t("signup.social.google")}</span>
                 </button>
               </div>
