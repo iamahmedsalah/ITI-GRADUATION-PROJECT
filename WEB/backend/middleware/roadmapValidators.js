@@ -244,6 +244,11 @@ const createRoadmapTemplateSchema = z.object({
         error: "Invalid target level.",
       })
       .optional(),
+    templateType: z
+      .enum(["roleBased", "skillBased"], {
+        error: "Invalid roadmap type.",
+      })
+      .optional(),
     tags: z.array(z.string().trim().toLowerCase()).optional(),
     steps: z
       .array(roadmapStepSchema)
@@ -320,6 +325,9 @@ const updateRoadmapTemplateSchema = z.object({
       .optional(),
     targetLevel: z
       .enum(["beginner", "intermediate", "advanced"])
+      .optional(),
+    templateType: z
+      .enum(["roleBased", "skillBased"])
       .optional(),
     tags: z.array(z.string().trim().toLowerCase()).optional(),
     steps: z.array(roadmapStepSchema).optional(),

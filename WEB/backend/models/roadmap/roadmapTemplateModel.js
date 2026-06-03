@@ -92,6 +92,12 @@ const roadmapTemplateSchema = new mongoose.Schema(
       default: "beginner",
       index: true,
     },
+    templateType: {
+      type: String,
+      enum: ["roleBased", "skillBased"],
+      default: "roleBased",
+      index: true,
+    },
     tags: [
       {
         type: String,

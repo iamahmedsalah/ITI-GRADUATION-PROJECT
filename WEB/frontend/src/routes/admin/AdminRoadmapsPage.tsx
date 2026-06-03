@@ -15,6 +15,7 @@ import {
 
 type RoleOption = 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
 type LevelOption = 'beginner' | 'intermediate' | 'advanced'
+type TemplateTypeOption = 'roleBased' | 'skillBased'
 
 export default function AdminRoadmapsPage() {
   const { direction } = useLanguage()
@@ -24,6 +25,7 @@ export default function AdminRoadmapsPage() {
   const [search, setSearch] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [targetLevel, setTargetLevel] = useState('')
+  const [templateType, setTemplateType] = useState('')
   const [isActive, setIsActive] = useState('')
 
   const [newTitle, setNewTitle] = useState('')
@@ -32,11 +34,12 @@ export default function AdminRoadmapsPage() {
   const [newDescription, setNewDescription] = useState('')
   const [newTargetRole, setNewTargetRole] = useState<RoleOption>('student')
   const [newTargetLevel, setNewTargetLevel] = useState<LevelOption>('beginner')
+  const [newTemplateType, setNewTemplateType] = useState<TemplateTypeOption>('roleBased')
   const [newMarkdown, setNewMarkdown] = useState('## Step One\nDescribe the first milestone.\n\n## Step Two\nDescribe the second milestone.')
 
   const queryKey = useMemo(
-    () => ['admin', 'roadmaps', search, targetRole, targetLevel, isActive],
-    [search, targetRole, targetLevel, isActive],
+    () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, isActive],
+    [search, targetRole, targetLevel, templateType, isActive],
   )
 
   const { data, isLoading, isFetching } = useQuery({
@@ -46,6 +49,7 @@ export default function AdminRoadmapsPage() {
         q: search || undefined,
         targetRole: targetRole || undefined,
         targetLevel: targetLevel || undefined,
+        templateType: templateType || undefined,
         isActive: isActive || undefined,
       }),
     staleTime: 0,
@@ -69,6 +73,7 @@ export default function AdminRoadmapsPage() {
       setNewSlug('')
       setNewGoal('')
       setNewDescription('')
+      setNewTemplateType('roleBased')
       setNewMarkdown('## Step One\nDescribe the first milestone.\n\n## Step Two\nDescribe the second milestone.')
       refresh()
     },
@@ -88,6 +93,7 @@ export default function AdminRoadmapsPage() {
         description: string
         targetRole: RoleOption
         targetLevel: LevelOption
+        templateType: TemplateTypeOption
         isActive: boolean
       }>
     }) => updateAdminRoadmap(templateId, payload),
@@ -163,6 +169,10 @@ export default function AdminRoadmapsPage() {
             <option value="intermediate">{t('adminUi.levels.intermediate')}</option>
             <option value="advanced">{t('adminUi.levels.advanced')}</option>
           </select>
+          <select value={newTemplateType} onChange={(event) => setNewTemplateType(event.target.value as TemplateTypeOption)} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2">
+            <option value="roleBased">{t('adminUi.roadmapTypes.roleBased')}</option>
+            <option value="skillBased">{t('adminUi.roadmapTypes.skillBased')}</option>
+          </select>
           <textarea value={newMarkdown} onChange={(event) => setNewMarkdown(event.target.value)} rows={5} className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2" />
           <button
             type="button"
@@ -181,6 +191,7 @@ export default function AdminRoadmapsPage() {
                 description: newDescription.trim() || undefined,
                 targetRole: newTargetRole,
                 targetLevel: newTargetLevel,
+                templateType: newTemplateType,
                 contentFormat: 'markdown',
                 contentMarkdown: newMarkdown.trim(),
               })
@@ -190,7 +201,7 @@ export default function AdminRoadmapsPage() {
           </button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-5">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('adminUi.roadmaps.searchPlaceholder')} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none" />
           <select value={targetRole} onChange={(event) => setTargetRole(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
             <option value="">{t('adminUi.roadmaps.filters.allRoles')}</option>
@@ -206,6 +217,11 @@ export default function AdminRoadmapsPage() {
             <option value="intermediate">{t('adminUi.levels.intermediate')}</option>
             <option value="advanced">{t('adminUi.levels.advanced')}</option>
           </select>
+          <select value={templateType} onChange={(event) => setTemplateType(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
+            <option value="">{t('adminUi.roadmaps.filters.allTypes')}</option>
+            <option value="roleBased">{t('adminUi.roadmapTypes.roleBased')}</option>
+            <option value="skillBased">{t('adminUi.roadmapTypes.skillBased')}</option>
+          </select>
           <select value={isActive} onChange={(event) => setIsActive(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
             <option value="">{t('adminUi.roadmaps.filters.allStatus')}</option>
             <option value="true">{t('adminUi.status.active')}</option>
@@ -218,6 +234,7 @@ export default function AdminRoadmapsPage() {
             <thead className="bg-(--surface-soft)">
               <tr className="text-left text-(--text)">
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.template')}</th>
+                <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.type')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.target')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.status')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.assigned')}</th>
@@ -226,13 +243,14 @@ export default function AdminRoadmapsPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={5}>{t('adminUi.roadmaps.loading')}</td></tr>
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={6}>{t('adminUi.roadmaps.loading')}</td></tr>
               ) : data?.data.length ? data.data.map((roadmap) => (
                 <tr key={roadmap._id} className="border-t border-(--border)">
                   <td className="px-4 py-4">
                     <div className="font-semibold text-(--text-h)">{roadmap.title}</div>
                     <div className="text-xs text-(--text)">{roadmap.slug}</div>
                   </td>
+                  <td className="px-4 py-4 text-(--text)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.targetRole || t('adminUi.common.any')} | {roadmap.targetLevel || t('adminUi.common.any')}</td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.isActive ? t('adminUi.status.active') : t('adminUi.status.inactive')}</td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.assignedUsers ?? 0}</td>
@@ -282,7 +300,7 @@ export default function AdminRoadmapsPage() {
                   </td>
                 </tr>
               )) : (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={5}>{t('adminUi.roadmaps.empty')}</td></tr>
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={6}>{t('adminUi.roadmaps.empty')}</td></tr>
               )}
             </tbody>
           </table>

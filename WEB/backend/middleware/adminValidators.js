@@ -126,6 +126,7 @@ const roadmapsListSchema = z.object({
       .enum(["student", "instructor", "admin", "jobSeeker", "careerSwitcher"])
       .optional(),
     targetLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    templateType: z.enum(["roleBased", "skillBased"]).optional(),
     isActive: z.enum(["true", "false"]).optional(),
   }),
 });
@@ -196,6 +197,7 @@ const updateRoadmapSchema = z
         .enum(["student", "instructor", "admin", "jobSeeker", "careerSwitcher"])
         .optional(),
       targetLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+      templateType: z.enum(["roleBased", "skillBased"]).optional(),
       tags: z.array(z.string().trim().toLowerCase()).optional(),
       steps: z.array(adminRoadmapStepSchema).optional(),
       estimatedTotalMinutes: z

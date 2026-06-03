@@ -839,7 +839,7 @@ export const updateUserByAdmin = async (req, res) => {
 };
 
 export const getAdminRoadmaps = async (req, res) => {
-  const { q, targetRole, targetLevel, isActive, page, limit } = req.query;
+  const { q, targetRole, targetLevel, templateType, isActive, page, limit } = req.query;
 
   try {
     const { skip, ...pagination } = normalizePagination(page, limit);
@@ -847,6 +847,11 @@ export const getAdminRoadmaps = async (req, res) => {
 
     if (targetRole) query.targetRole = targetRole;
     if (targetLevel) query.targetLevel = targetLevel;
+    if (templateType === "roleBased") {
+      query.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+    } else if (templateType) {
+      query.templateType = templateType;
+    }
     if (isActive !== undefined) query.isActive = parseBooleanQuery(isActive);
 
     if (q) {

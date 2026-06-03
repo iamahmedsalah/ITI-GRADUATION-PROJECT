@@ -22,19 +22,22 @@ const emailLocalPartHasLetter = (value: string) => {
   return /[A-Za-z]/.test(localPart)
 }
 
+const baseEmailSchema = z
+  .string()
+  .trim()
+  .email('validation.email.invalid')
+  .refine(emailLocalPartHasLetter, 'validation.email.localPartLetter')
+
+const signupEmailSchema = baseEmailSchema.refine((value) => {
+  const domain = value.split('@')[1]?.toLowerCase() ?? ''
+  return allowedEmailDomains.includes(domain)
+}, 'validation.email.domain')
+
 export const signupSchema = z.object({
   username: usernameSchema,
   Fname: z.string().trim().min(2, 'validation.firstName.required').max(24, 'validation.firstName.max'),
   Lname: z.string().trim().min(2, 'validation.lastName.required').max(24, 'validation.lastName.max'),
-  email: z
-    .string()
-    .trim()
-    .email('validation.email.invalid')
-    .refine(emailLocalPartHasLetter, 'validation.email.localPartLetter')
-    .refine((value) => {
-      const domain = value.split('@')[1]?.toLowerCase() ?? ''
-      return allowedEmailDomains.includes(domain)
-    }, 'validation.email.domain'),
+  email: signupEmailSchema,
   password: passwordSchema,
 })
 
@@ -45,6 +48,13 @@ export const loginSchema = z.object({
     .min(3, 'validation.identifier.min')
     .superRefine((value, ctx) => {
       if (value.includes('@')) {
+        const emailResult = baseEmailSchema.safeParse(value)
+        if (!emailResult.success) {
+          ctx.addIssue({
+            code: 'custom',
+            message: emailResult.error.issues[0]?.message ?? 'validation.email.invalid',
+          })
+        }
         return
       }
 
@@ -68,10 +78,7 @@ export const verifyEmailSchema = z.object({
 })
 
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email('validation.email.invalid'),
+  email: baseEmailSchema,
 })
 
 export const resetPasswordSchema = z

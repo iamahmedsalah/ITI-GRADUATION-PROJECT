@@ -29,6 +29,80 @@
     "preferences": "التفضيلات",
     "preferencesDescription": "أزرار تبديل اللغة والوضع موجودة في الهيدر لتبقى التجربة موحدة في كامل الموقع."
   },
+  "landing": {
+    "badge": "مسارات التعلم",
+    "roadmapsTitle": "خرائط طريق المطورين",
+    "roadmapsSubtitle": "توفر إلما خرائط طريق منظمة ومسارات تعلم وموارد عملية تساعدك على اختيار مسارك والنمو بثقة.",
+    "searchLabel": "البحث في خرائط الطريق",
+    "searchPlaceholder": "ابحث عن خريطة طريق أو موضوع أو مهارة",
+    "searching": "جار البحث...",
+    "loadingRoadmaps": "جار تحميل خرائط الطريق",
+    "searchResults": "نتائج البحث",
+    "roleRoadmaps": "خرائط طريق حسب الدور",
+    "noRoadmaps": "لا توجد خرائط طريق تطابق بحثك حاليا.",
+    "templateSectionLabel": "القوالب",
+    "templateSectionTitle": "اعرض قوالب خرائط الطريق من الخادم",
+    "templateSectionText": "تقرأ هذه الصفحة قوالب خرائط الطريق النشطة من المسار العام في الخادم وتستخدم نتائج البحث أثناء الكتابة.",
+    "topicSectionLabel": "الموضوعات",
+    "topicSectionText": "ابحث عن مهارة أو موضوع لإظهار الموضوعات المطابقة من خرائط الطريق في الخادم.",
+    "levels": {
+      "roadmap": "خريطة طريق",
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "skillRoadmaps": "????? ???? ??? ???????"
+  },
+  "footer": {
+    "roadmaps": "خرائط الطريق",
+    "guides": "الأدلة",
+    "faqs": "الأسئلة الشائعة",
+    "youtube": "يوتيوب",
+    "by": "بواسطة",
+    "brandPrefix": "خريطة ",
+    "brandHighlight": "تعلم",
+    "brandSuffix": " بناء",
+    "description": "خرائط طريق وممارسات ومشاريع ومقالات وموارد تعليمية تساعدك على اختيار مسارك والنمو في حياتك المهنية.",
+    "copyright": "إلما ©",
+    "terms": "الشروط",
+    "privacy": "الخصوصية",
+    "partnerText": "مورد تعليمي منظم لخرائط الطريق والتطبيق العملي ومسارات التطوير الجاهزة لسوق العمل.",
+    "tags": {
+      "devops": "DevOps",
+      "kubernetes": "Kubernetes",
+      "cloudNative": "Cloud-Native"
+    }
+  },
+  "roadmapDetail": {
+    "backToRoadmaps": "العودة إلى كل خرائط الطريق",
+    "badge": "قالب خريطة الطريق",
+    "loading": "جار تحميل خريطة الطريق...",
+    "subtitleFallback": "دليل خطوة بخطوة لهذا المسار التعليمي.",
+    "selectedStep": "الخطوة المحددة",
+    "emptyDescription": "لم تتم إضافة وصف لهذه الخطوة بعد.",
+    "status": "الحالة",
+    "pending": "قيد الانتظار",
+    "inProgress": "قيد التنفيذ",
+    "done": "تم",
+    "skip": "تخطي",
+    "statusLabels": {
+      "notStarted": "قيد الانتظار",
+      "inProgress": "قيد التنفيذ",
+      "completed": "تم",
+      "skipped": "تم التخطي"
+    },
+    "progress": "التقدم",
+    "steps": "الخطوات",
+    "showPanel": "إظهار التفاصيل",
+    "hidePanel": "إخفاء التفاصيل",
+    "signInToTrack": "سجل الدخول لتتبع التقدم",
+    "loginRequired": "سجل الدخول أولا لبدء تتبع خريطة الطريق.",
+    "progressSaved": "تم حفظ تقدم خريطة الطريق.",
+    "progressFailed": "تعذر تحديث تقدم خريطة الطريق.",
+    "resources": "الموارد",
+    "emptyResources": "لم تتم إضافة موارد لهذه الخطوة بعد.",
+    "emptySteps": "لا تحتوي خريطة الطريق هذه على خطوات بعد."
+  },
   "profile": {
     "title": "ملفي الشخصي",
     "subtitle": "يتم تحميل ملفك من فحص المصادقة في الخادم ويعرض الحساب الحالي.",
@@ -44,7 +118,12 @@
     "verifiedYes": "نعم",
     "verifiedNo": "لا",
     "lastLogin": "آخر تسجيل دخول",
-    "never": "أبدا"
+    "never": "أبدا",
+    "roadmapsTitle": "خرائط الطريق الخاصة بي",
+    "roadmapsSubtitle": "تابع خرائط الطريق التي بدأتها واستكمل من آخر تقدم وصلت إليه.",
+    "roadmapsLoading": "جار تحميل خرائط الطريق الخاصة بك...",
+    "roadmapsEmpty": "لم تبدأ تتبع أي خريطة طريق بعد.",
+    "unknownRoadmap": "خريطة طريق"
   },
   "auth": {
     "loginFailed": "فشل تسجيل الدخول.",
@@ -240,14 +319,16 @@
       "filters": {
         "allRoles": "كل الأدوار",
         "allLevels": "كل المستويات",
-        "allStatus": "كل الحالات"
+        "allStatus": "كل الحالات",
+        "allTypes": "?? ????? ????? ??????"
       },
       "table": {
         "template": "القالب",
         "target": "الفئة المستهدفة",
         "status": "الحالة",
         "assigned": "المستخدمون المعيّنون",
-        "actions": "الإجراءات"
+        "actions": "الإجراءات",
+        "type": "?????"
       },
       "form": {
         "title": "عنوان خريطة الطريق",
@@ -255,7 +336,8 @@
         "goal": "هدف خريطة الطريق (10 أحرف على الأقل)",
         "description": "الوصف (اختياري)",
         "invalid": "يرجى إدخال العنوان والـ slug والهدف وخطوات markdown.",
-        "create": "إنشاء قالب خريطة طريق"
+        "create": "إنشاء قالب خريطة طريق",
+        "type": "??? ????? ??????"
       },
       "actions": {
         "publish": "نشر",
@@ -318,6 +400,10 @@
         "delete": "حذف",
         "deleteConfirm": "حذف الدورة \"{{title}}\"؟"
       }
+    },
+    "roadmapTypes": {
+      "roleBased": "????? ???? ??? ?????",
+      "skillBased": "????? ???? ??? ???????"
     }
   },
   "login": {

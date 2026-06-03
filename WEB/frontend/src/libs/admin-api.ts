@@ -71,6 +71,7 @@ export type AdminRoadmapRow = {
   description?: string
   targetRole?: string
   targetLevel?: string
+  templateType?: 'roleBased' | 'skillBased'
   isActive: boolean
   assignedUsers?: number
   createdAt?: string
@@ -192,6 +193,7 @@ export async function fetchAdminRoadmaps(params: {
   q?: string
   targetRole?: string
   targetLevel?: string
+  templateType?: string
   isActive?: string
   page?: number
   limit?: number
@@ -218,6 +220,7 @@ export async function createAdminRoadmap(payload: {
   description?: string
   targetRole?: 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
   targetLevel?: 'beginner' | 'intermediate' | 'advanced'
+  templateType?: 'roleBased' | 'skillBased'
   tags?: string[]
   contentFormat: 'markdown'
   contentMarkdown: string
@@ -244,6 +247,7 @@ export async function updateAdminRoadmap(
     description: string
     targetRole: 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
     targetLevel: 'beginner' | 'intermediate' | 'advanced'
+    templateType: 'roleBased' | 'skillBased'
     isActive: boolean
   }>,
 ) {

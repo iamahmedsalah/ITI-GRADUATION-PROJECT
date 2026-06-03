@@ -29,6 +29,80 @@
     "preferences": "Preferences",
     "preferencesDescription": "Language and theme toggles live in the header so they stay consistent across the whole site."
   },
+  "landing": {
+    "badge": "Learning paths",
+    "roadmapsTitle": "Developer Roadmaps",
+    "roadmapsSubtitle": "ILMA creates guided roadmaps, learning paths, and practical resources to help you choose a path and grow with confidence.",
+    "searchLabel": "Search roadmaps",
+    "searchPlaceholder": "Search roadmaps, topics, or skills",
+    "searching": "Searching...",
+    "loadingRoadmaps": "Loading roadmaps",
+    "searchResults": "Search Results",
+    "roleRoadmaps": "Role-based Roadmaps",
+    "noRoadmaps": "No roadmaps matched your search yet.",
+    "templateSectionLabel": "Templates",
+    "templateSectionTitle": "Build from backend roadmap templates",
+    "templateSectionText": "This landing page reads active roadmap templates from the public backend route and uses search results when you type.",
+    "topicSectionLabel": "Topics",
+    "topicSectionText": "Search for a skill or topic to reveal matching roadmap topics from the backend.",
+    "levels": {
+      "roadmap": "Roadmap",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "skillRoadmaps": "Skill-based Roadmaps"
+  },
+  "footer": {
+    "roadmaps": "Roadmaps",
+    "guides": "Guides",
+    "faqs": "FAQs",
+    "youtube": "YouTube",
+    "by": "by",
+    "brandPrefix": "MAP",
+    "brandHighlight": "LEARN",
+    "brandSuffix": "BUILD",
+    "description": "Community created roadmaps, best practices, projects, articles, resources and journeys to help you choose your path and grow in your career.",
+    "copyright": "© ILMA",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "partnerText": "The top learning resource for roadmaps, guided practice, and career-ready development paths.",
+    "tags": {
+      "devops": "DevOps",
+      "kubernetes": "Kubernetes",
+      "cloudNative": "Cloud-Native"
+    }
+  },
+  "roadmapDetail": {
+    "backToRoadmaps": "Back to all roadmaps",
+    "badge": "Roadmap template",
+    "loading": "Loading roadmap...",
+    "subtitleFallback": "Step by step guide for this learning path.",
+    "selectedStep": "Selected step",
+    "emptyDescription": "No description was added for this step yet.",
+    "status": "Status",
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "done": "Done",
+    "skip": "Skip",
+    "statusLabels": {
+      "notStarted": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Done",
+      "skipped": "Skipped"
+    },
+    "progress": "Progress",
+    "steps": "Steps",
+    "showPanel": "Show details",
+    "hidePanel": "Hide details",
+    "signInToTrack": "Sign in to track progress",
+    "loginRequired": "Sign in first to start tracking this roadmap.",
+    "progressSaved": "Roadmap progress saved.",
+    "progressFailed": "Could not update roadmap progress.",
+    "resources": "Resources",
+    "emptyResources": "No resources were added for this step yet.",
+    "emptySteps": "This roadmap does not have steps yet."
+  },
   "profile": {
     "title": "My profile",
     "subtitle": "Your profile is loaded from the backend auth check and reflects the signed-in account.",
@@ -44,7 +118,12 @@
     "verifiedYes": "Yes",
     "verifiedNo": "No",
     "lastLogin": "Last login",
-    "never": "Never"
+    "never": "Never",
+    "roadmapsTitle": "My roadmaps",
+    "roadmapsSubtitle": "Track the roadmaps you started and continue from your latest progress.",
+    "roadmapsLoading": "Loading your roadmaps...",
+    "roadmapsEmpty": "You have not started tracking any roadmap yet.",
+    "unknownRoadmap": "Roadmap"
   },
   "auth": {
     "loginFailed": "Login failed.",
@@ -240,14 +319,16 @@
       "filters": {
         "allRoles": "All roles",
         "allLevels": "All levels",
-        "allStatus": "All status"
+        "allStatus": "All status",
+        "allTypes": "All roadmap types"
       },
       "table": {
         "template": "Template",
         "target": "Target",
         "status": "Status",
         "assigned": "Assigned users",
-        "actions": "Actions"
+        "actions": "Actions",
+        "type": "Type"
       },
       "form": {
         "title": "Roadmap title",
@@ -255,7 +336,8 @@
         "goal": "Roadmap goal (at least 10 chars)",
         "description": "Description (optional)",
         "invalid": "Please complete title, slug, goal, and markdown steps.",
-        "create": "Create roadmap template"
+        "create": "Create roadmap template",
+        "type": "Roadmap type"
       },
       "actions": {
         "publish": "Publish",
@@ -318,6 +400,10 @@
         "delete": "Delete",
         "deleteConfirm": "Delete course \"{{title}}\"?"
       }
+    },
+    "roadmapTypes": {
+      "roleBased": "Role Based Roadmaps",
+      "skillBased": "Skill Based Roadmaps"
     }
   },
   "login": {

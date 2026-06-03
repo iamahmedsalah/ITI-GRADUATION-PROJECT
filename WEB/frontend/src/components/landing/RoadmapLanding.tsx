@@ -1,0 +1,244 @@
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Route03Icon } from '@hugeicons/core-free-icons'
+import { useTranslation } from 'react-i18next'
+import { useLanguage } from '../../context/LanguageContext'
+import { fetchRoadmapTemplates, searchRoadmaps, type RoadmapTemplate } from '../../libs/roadmaps-api'
+
+function uniqueBySlug(roadmaps: RoadmapTemplate[]) {
+  const seen = new Set<string>()
+
+  return roadmaps.filter((roadmap) => {
+    const key = roadmap.slug || roadmap._id
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+    return true
+  })
+}
+
+function formatLevel(level?: string) {
+  if (!level) {
+    return 'Roadmap'
+  }
+
+  return level.charAt(0).toUpperCase() + level.slice(1)
+}
+
+type RoadmapCardProps = {
+  roadmap: RoadmapTemplate
+}
+
+function RoadmapCard({ roadmap }: RoadmapCardProps) {
+  const { language } = useLanguage()
+  const { t } = useTranslation()
+  const tags = roadmap.tags?.slice(0, 2) ?? []
+
+  return (
+    <Link
+      to={`/${language}/roadmaps/${roadmap.slug}`}
+      className="group flex min-h-16 items-center justify-between gap-4 rounded-squircle border border-(--border) bg-(--surface) px-5 py-4 text-left text-(--text-h) shadow-(--shadow) transition duration-200 hover:-translate-y-1 hover:border-(--accent-border) hover:bg-(--surface-soft-hover)"
+    >
+      <span className="min-w-0">
+        <span className="block truncate text-lg font-medium text-(--text-h)">{roadmap.title}</span>
+        <span className="mt-1 flex flex-wrap gap-2 text-xs text-(--text)">
+          <span>{t(`landing.levels.${roadmap.targetLevel ?? 'roadmap'}`, { defaultValue: formatLevel(roadmap.targetLevel) })}</span>
+          {tags.map((tag) => (
+            <span key={tag}>#{tag}</span>
+          ))}
+        </span>
+      </span>
+      <span className="grid size-8 shrink-0 place-items-center rounded-squircle border border-(--border) text-(--text) transition group-hover:border-(--accent-border) group-hover:text-(--accent)">
+        <HugeiconsIcon icon={Route03Icon} size={17} />
+      </span>
+    </Link>
+  )
+}
+
+type RoadmapSectionProps = {
+  title: string
+  roadmaps: RoadmapTemplate[]
+}
+
+function RoadmapSection({ title, roadmaps }: RoadmapSectionProps) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="relative border-t border-(--border) pt-12">
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-squircle border border-(--border) bg-(--surface) px-5 py-2 text-base text-(--text-h) shadow-(--shadow)">
+        {title}
+      </div>
+
+      {roadmaps.length ? (
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {roadmaps.map((roadmap) => (
+            <RoadmapCard key={roadmap.slug || roadmap._id} roadmap={roadmap} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-squircle border border-(--border) bg-(--surface) px-5 py-8 text-center text-(--text)">
+          {t('landing.noRoadmaps')}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RoadmapListSkeleton() {
+  const { t } = useTranslation()
+
+  return (
+    <div
+      className="rounded-lg border border-(--border) bg-(--surface) p-4 shadow-(--shadow)"
+      role="status"
+      aria-live="polite"
+      aria-label={t('landing.loadingRoadmaps')}
+    >
+      <div className="mb-5 flex items-center gap-3 text-sm font-medium text-(--text-h)">
+        <span className="size-4 animate-spin rounded-full border-2 border-(--border) border-t-(--accent)" />
+        <span>{t('landing.loadingRoadmaps')}</span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <div
+            key={index}
+            className={[
+              'h-14 overflow-hidden rounded-squircle border border-(--border)',
+              'bg-[linear-gradient(135deg,var(--surface)_0%,var(--surface-2)_42%,var(--surface)_100%)]',
+              'relative before:absolute before:inset-0 before:-translate-x-full',
+              'before:animate-[shimmer_1.8s_infinite] before:bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]',
+            ].join(' ')}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function RoadmapLanding() {
+  const { t } = useTranslation()
+  const { direction, language } = useLanguage()
+  const [query, setQuery] = useState('')
+  const trimmedQuery = query.trim()
+
+  const templatesQuery = useQuery({
+    queryKey: ['roadmaps', 'templates', 50],
+    queryFn: () => fetchRoadmapTemplates(50),
+    staleTime: 60_000,
+  })
+
+  const searchQuery = useQuery({
+    queryKey: ['roadmaps', 'search', trimmedQuery],
+    queryFn: () => searchRoadmaps(trimmedQuery, 18),
+    enabled: trimmedQuery.length > 0,
+    staleTime: 30_000,
+  })
+
+  const searchRoadmapsList = useMemo(() => {
+    const roadmaps = trimmedQuery ? searchQuery.data?.roadmaps ?? [] : templatesQuery.data ?? []
+
+    return uniqueBySlug(roadmaps).slice(0, 18)
+  }, [searchQuery.data?.roadmaps, templatesQuery.data, trimmedQuery])
+  const groupedRoadmaps = useMemo(() => {
+    const templates = uniqueBySlug(templatesQuery.data ?? [])
+
+    return {
+      roleBased: templates.filter((roadmap) => (roadmap.templateType ?? 'roleBased') === 'roleBased').slice(0, 30),
+      skillBased: templates.filter((roadmap) => roadmap.templateType === 'skillBased').slice(0, 30),
+    }
+  }, [templatesQuery.data])
+  const topicResults = searchQuery.data?.topics?.slice(0, 6) ?? []
+  const isSearching = trimmedQuery.length > 0 && searchQuery.isFetching
+  const isRoadmapListLoading = trimmedQuery ? searchQuery.isLoading : templatesQuery.isLoading
+
+  return (
+    <section className="bg-(--bg) text-(--text-h)" dir={direction}>
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-6xl flex-col px-6 py-12 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.22em] text-(--accent)">
+            {t('landing.badge')}
+          </p>
+          <h1 className="text-5xl font-extrabold leading-tight text-(--text-h) sm:text-6xl lg:text-7xl">
+            {t('landing.roadmapsTitle')}
+          </h1>
+          <p className="mx-auto mt-6 max-w-5xl text-balance text-xl leading-9 text-(--text)">
+            {t('landing.roadmapsSubtitle')}
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 w-full max-w-3xl">
+          <label className="sr-only" htmlFor="roadmap-search">
+            {t('landing.searchLabel')}
+          </label>
+          <div className="flex items-center gap-3 rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 shadow-(--shadow)">
+            <span aria-hidden="true" className="relative size-4 rounded-full border-2 border-(--text) after:absolute after:-bottom-1 after:-right-1 after:h-2 after:w-0.5 after:-rotate-45 after:rounded-full after:bg-(--text)" />
+            <input
+              id="roadmap-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('landing.searchPlaceholder')}
+              className="min-w-0 flex-1 bg-transparent text-base text-(--text-h) outline-none placeholder:text-(--text)"
+            />
+            {isSearching ? <span className="text-xs text-(--text)">{t('landing.searching')}</span> : null}
+          </div>
+        </div>
+
+        <div className="mt-16">
+          {isRoadmapListLoading ? (
+            <RoadmapListSkeleton />
+          ) : trimmedQuery ? (
+            <RoadmapSection title={t('landing.searchResults')} roadmaps={searchRoadmapsList} />
+          ) : (
+            <div className="grid gap-16">
+              <RoadmapSection title={t('landing.roleRoadmaps')} roadmaps={groupedRoadmaps.roleBased} />
+              <RoadmapSection title={t('landing.skillRoadmaps')} roadmaps={groupedRoadmaps.skillBased} />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <section className="rounded-squircle border border-(--border) bg-(--surface) p-6 shadow-(--shadow)">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">
+              {t('landing.templateSectionLabel')}
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-(--text-h)">
+              {t('landing.templateSectionTitle')}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-(--text)">
+              {t('landing.templateSectionText')}
+            </p>
+          </section>
+
+          <section className="rounded-squircle border border-(--border) bg-(--surface) p-6 shadow-(--shadow)">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">
+              {t('landing.topicSectionLabel')}
+            </p>
+            <div className="mt-4 grid gap-3">
+              {topicResults.length ? (
+                topicResults.map((topic) => (
+                  <Link
+                    key={`${topic.templateSlug}-${topic.topic.stepKey}`}
+                    to={`/${language}/roadmaps/${topic.templateSlug}`}
+                    className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) transition hover:border-(--accent-border)"
+                  >
+                    <span className="block font-semibold text-(--text-h)">{topic.topic.title}</span>
+                    <span className="mt-1 block text-(--text)">{topic.templateTitle}</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-(--text)">
+                  {t('landing.topicSectionText')}
+                </p>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  )
+}

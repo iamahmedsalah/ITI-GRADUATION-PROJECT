@@ -62,6 +62,11 @@ const router = express.Router();
  *         schema:
  *           type: string
  *           enum: [student, instructor, admin, jobSeeker, careerSwitcher]
+ *       - in: query
+ *         name: templateType
+ *         schema:
+ *           type: string
+ *           enum: [roleBased, skillBased]
  */
 router.get("/search", searchRoadmapsAndTopics);
 /**
@@ -94,6 +99,11 @@ router.get("/search", searchRoadmapsAndTopics);
  *         schema:
  *           type: string
  *           enum: [student, instructor, admin, jobSeeker, careerSwitcher]
+ *       - in: query
+ *         name: templateType
+ *         schema:
+ *           type: string
+ *           enum: [roleBased, skillBased]
  */
 router.get("/templates", getAllRoadmapTemplates);
 /**
@@ -171,6 +181,7 @@ router.use(protect);
  *             description: Complete roadmap for mastering full-stack development
  *             targetRole: student
  *             targetLevel: beginner
+ *             templateType: roleBased
  *             tags: [web, fullstack]
  *             isActive: true
  *             contentFormat: json

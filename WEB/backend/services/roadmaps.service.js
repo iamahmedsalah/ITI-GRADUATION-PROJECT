@@ -354,6 +354,7 @@ export const createRoadmapTemplate = async (req, res) => {
     description,
     targetRole,
     targetLevel,
+    templateType,
     tags,
     steps,
     estimatedTotalMinutes,
@@ -397,6 +398,7 @@ export const createRoadmapTemplate = async (req, res) => {
       description,
       targetRole: targetRole || "student",
       targetLevel: targetLevel || "beginner",
+      templateType: templateType || "roleBased",
       tags: tags || [],
       steps: normalizedSteps,
       estimatedTotalMinutes:
@@ -555,13 +557,18 @@ export const getRoadmapTopic = async (req, res) => {
 };
 
 export const getAllRoadmapTemplates = async (req, res) => {
-  const { targetLevel, targetRole, page = 1, limit = 10 } = req.query;
+  const { targetLevel, targetRole, templateType, page = 1, limit = 10 } = req.query;
 
   try {
     const query = { isActive: true };
 
     if (targetLevel) query.targetLevel = targetLevel;
     if (targetRole) query.targetRole = targetRole;
+    if (templateType === "roleBased") {
+      query.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+    } else if (templateType) {
+      query.templateType = templateType;
+    }
 
     const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
     const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
@@ -601,7 +608,7 @@ export const getAllRoadmapTemplates = async (req, res) => {
 };
 
 export const searchRoadmapsAndTopics = async (req, res) => {
-  const { q = "", targetLevel, targetRole, limit = 10 } = req.query;
+  const { q = "", targetLevel, targetRole, templateType, limit = 10 } = req.query;
 
   try {
     const queryText = String(q).trim();
@@ -610,6 +617,11 @@ export const searchRoadmapsAndTopics = async (req, res) => {
 
     if (targetLevel) baseFilters.targetLevel = targetLevel;
     if (targetRole) baseFilters.targetRole = targetRole;
+    if (templateType === "roleBased") {
+      baseFilters.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+    } else if (templateType) {
+      baseFilters.templateType = templateType;
+    }
 
     const roadmapQuery = { ...baseFilters };
 
@@ -627,7 +639,7 @@ export const searchRoadmapsAndTopics = async (req, res) => {
 
     const roadmaps = await RoadmapTemplate.find(roadmapQuery)
       .select(
-        "title slug goal description targetRole targetLevel tags estimatedTotalMinutes steps isActive createdAt",
+        "title slug goal description targetRole targetLevel templateType tags estimatedTotalMinutes steps isActive createdAt",
       )
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
@@ -822,6 +834,7 @@ export const updateRoadmapTemplateCore = async ({ templateId, payload }) => {
     description,
     targetRole,
     targetLevel,
+    templateType,
     tags,
     steps,
     estimatedTotalMinutes,
@@ -846,6 +859,7 @@ export const updateRoadmapTemplateCore = async ({ templateId, payload }) => {
   if (description !== undefined) updateData.description = description;
   if (targetRole !== undefined) updateData.targetRole = targetRole;
   if (targetLevel !== undefined) updateData.targetLevel = targetLevel;
+  if (templateType !== undefined) updateData.templateType = templateType;
   if (tags !== undefined) updateData.tags = tags;
   if (isActive !== undefined) updateData.isActive = isActive;
   if (contentFormat !== undefined) updateData.contentFormat = contentFormat;

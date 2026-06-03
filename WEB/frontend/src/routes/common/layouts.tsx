@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from '../../context/ThemeContext'
 import LangToggleButton from '../../components/common/lang-toggle'
 import ThemeToggleButton from '../../components/common/theme-toggle'
 import Navbar from '../../components/ui/navbar'
+import SiteFooter from '../../components/ui/SiteFooter'
 import { Toaster } from 'sonner'
 import type { RouteLanguageData } from '../../utils/route-utils'
 import { fetchAdminOverview } from '../../libs/admin-api'
@@ -109,26 +110,7 @@ export function ClientLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-(--border) bg-(--surface)/80 backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-8 md:grid-cols-[1.5fr_1fr_1fr]">
-          <div>
-            <h2 className="text-lg font-semibold text-(--text-h)">ILMA</h2>
-            <p className="mt-3 max-w-md text-sm leading-6 text-(--text)">{t('layout.footerDescription')}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-(--text)">{t('layout.explore')}</h3>
-            <div className="mt-3 flex flex-col gap-2 text-sm text-(--text-h)">
-              <Link to={localizedPath(language, '/login')}>{t('navbar.login')}</Link>
-              <Link to={localizedPath(language, '/signup')}>{t('navbar.signup')}</Link>
-              <Link to={localizedPath(language, '/dashboard')}>{t('layout.dashboard')}</Link>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-(--text)">{t('layout.preferences')}</h3>
-            <p className="mt-3 text-sm leading-6 text-(--text)">{t('layout.preferencesDescription')}</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
@@ -234,5 +216,4 @@ export function AdminLayout() {
     </div>
   )
 }
-
 

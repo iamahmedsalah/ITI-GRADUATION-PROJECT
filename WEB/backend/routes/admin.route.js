@@ -330,6 +330,11 @@ router.patch(
  *           type: string
  *           enum: [beginner, intermediate, advanced]
  *       - in: query
+ *         name: templateType
+ *         schema:
+ *           type: string
+ *           enum: [roleBased, skillBased]
+ *       - in: query
  *         name: isActive
  *         schema:
  *           type: string
@@ -362,6 +367,7 @@ router.get(
  *             description: Complete roadmap for mastering full-stack development
  *             targetRole: student
  *             targetLevel: beginner
+ *             templateType: roleBased
  *             tags: [web, fullstack]
  *             isActive: true
  *             contentFormat: json

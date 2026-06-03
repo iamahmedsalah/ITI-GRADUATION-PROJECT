@@ -269,6 +269,12 @@ textarea {
   color: #ffffff;
 }
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Squircle corners: opt-in utility so Tailwind rounded/full classes keep default behavior. */
 :root {
   --sq-radius: 12px; 

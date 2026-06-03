@@ -226,6 +226,10 @@ const swaggerDefinition = {
             type: "string",
             enum: ["beginner", "intermediate", "advanced"],
           },
+          templateType: {
+            type: "string",
+            enum: ["roleBased", "skillBased"],
+          },
           tags: { type: "array", items: { type: "string" } },
           steps: {
             type: "array",
@@ -257,6 +261,10 @@ const swaggerDefinition = {
           targetLevel: {
             type: "string",
             enum: ["beginner", "intermediate", "advanced"],
+          },
+          templateType: {
+            type: "string",
+            enum: ["roleBased", "skillBased"],
           },
           tags: { type: "array", items: { type: "string" } },
           steps: {

@@ -8,10 +8,12 @@ import { createCardVariants, createHeroLineVariants, createPageVariants, createS
 import { clearAccessToken } from '../../utils/api'
 import type { ProfileLoaderData } from '../../utils/route-utils'
 import { authQueryKey, logoutCurrentUser } from '../../libs/react-query'
+import { useUserRoadmapProgress } from '../../hooks/useUserRoadmapProgress'
 
 import PageHeader from '../../components/ui/PageHeader'
 import ProfileIdentityCard from '../../components/ui/ProfileIdentityCard'
 import ProfileStatusCard from '../../components/ui/ProfileStatusCard'
+import RoadmapProgressList from '../../components/ui/RoadmapProgressList'
 
 function ProfilePage() {
   const { language, direction } = useLanguage()
@@ -23,6 +25,7 @@ function ProfilePage() {
   const heroLineVariants = createHeroLineVariants(direction)
   const staggerContainerVariants = createStaggerContainerVariants(direction)
   const cardVariants = createCardVariants(direction)
+  const roadmapsQuery = useUserRoadmapProgress()
 
   const logoutMutation = useMutation({
     mutationFn: logoutCurrentUser,
@@ -60,9 +63,18 @@ function ProfilePage() {
           <ProfileStatusCard user={user} t={(k) => t(k)} variants={cardVariants} />
         </motion.div>
 
-        <motion.div variants={heroLineVariants} className="rounded-2xl border border-(--border) bg-(--surface) p-5">
-          <h2 className="text-lg font-semibold text-(--text-h)">{t('profile.backendCheck')}</h2>
-          <p className="mt-2 text-sm leading-6 text-(--text)">{t('profile.backendCheckDescription')}</p>
+        <motion.div variants={heroLineVariants} className="rounded-lg border border-(--border) bg-(--surface) p-5">
+          <h2 className="text-lg font-semibold text-(--text-h)">{t('profile.roadmapsTitle')}</h2>
+          <p className="mt-2 text-sm leading-6 text-(--text)">{t('profile.roadmapsSubtitle')}</p>
+          <div className="mt-5">
+            {roadmapsQuery.isLoading ? (
+              <div className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">
+                {t('profile.roadmapsLoading')}
+              </div>
+            ) : (
+              <RoadmapProgressList roadmaps={roadmapsQuery.data ?? []} />
+            )}
+          </div>
         </motion.div>
       </motion.section>
     </motion.main>
