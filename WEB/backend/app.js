@@ -72,7 +72,7 @@ const configuredOrigins = [
 ]
   .join(",")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
 const staticAllowedOrigins = new Set(configuredOrigins);
@@ -80,19 +80,21 @@ const allowVercelPreviewOrigins =
   process.env.ALLOW_VERCEL_PREVIEW_ORIGINS === "true";
 
 const isAllowedOrigin = (origin) => {
-  if (staticAllowedOrigins.has(origin)) {
+  const normalizedOrigin = origin.replace(/\/$/, "");
+
+  if (staticAllowedOrigins.has(normalizedOrigin)) {
     return true;
   }
 
   if (
     allowVercelPreviewOrigins &&
-    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin)
   ) {
     return true;
   }
 
   if (process.env.NODE_ENV !== "production") {
-    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin);
   }
 
   return false;

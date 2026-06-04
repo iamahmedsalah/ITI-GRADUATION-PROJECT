@@ -1,4 +1,5 @@
 const DEFAULT_DEV_API_BASE = 'http://localhost:5000/api'
+const DEFAULT_PRODUCTION_API_BASE = 'https://ilma-backend-seven.vercel.app/api'
 const DEFAULT_ACCEPT_HEADERS = {
   Accept: 'application/json',
 } as const
@@ -54,7 +55,9 @@ export function consumeLastAuthFailureCode() {
 
 export function getApiBaseUrl() {
   const localApiBase = (import.meta.env.VITE_LOCAL_API_BASE_URL as string | undefined) ?? DEFAULT_DEV_API_BASE
-  const configuredBase = import.meta.env.VITE_API_BASE_URL as string | undefined
+  const configuredBase =
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+    (import.meta.env.VITE_PRODUCTION_API_BASE_URL as string | undefined)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
   const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1'
 
@@ -66,7 +69,7 @@ export function getApiBaseUrl() {
     return configuredBase.replace(/\/$/, '')
   }
 
-  return '/api'
+  return DEFAULT_PRODUCTION_API_BASE
 }
 
 export function buildApiUrl(pathname: string) {
