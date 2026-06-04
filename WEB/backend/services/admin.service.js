@@ -366,6 +366,8 @@ export const adminLogout = (req, res) => {
 };
 
 export const adminCheckAuth = async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+
   if (!req.user || req.user.role !== "admin") {
     return res.status(401).json({
       success: false,

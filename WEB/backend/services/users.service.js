@@ -50,21 +50,52 @@ const generateVerificationToken = customAlphabet(
   8,
 );
 
+const parseOrigins = (...values) =>
+  values
+    .filter(Boolean)
+    .join(",")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean)
+    .filter((origin) => {
+      try {
+        const parsedOrigin = new URL(origin);
+        return parsedOrigin.protocol === "http:" || parsedOrigin.protocol === "https:";
+      } catch {
+        return false;
+      }
+    });
+
+const isLocalOrigin = (origin) => {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+};
+
 const getFrontendOrigin = (req = null) => {
-  const configuredOrigin =
-    process.env.FRONTEND_URL ||
-    process.env.CLIENT_URL ||
-    process.env.PRODUCTION_URL;
+  const configuredOrigins = parseOrigins(
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+    process.env.PRODUCTION_URL,
+  );
 
-  if (configuredOrigin) {
-    return configuredOrigin;
+  if (process.env.NODE_ENV !== "production") {
+    return configuredOrigins.find(isLocalOrigin) || "http://localhost:5173";
   }
 
-  if (process.env.NODE_ENV !== "production" || !req) {
-    return "http://localhost:5173";
+  if (configuredOrigins.length > 0) {
+    const requestOrigin = req?.get?.("origin")?.replace(/\/$/, "");
+    if (requestOrigin && configuredOrigins.includes(requestOrigin)) {
+      return requestOrigin;
+    }
+
+    return configuredOrigins.find((origin) => !isLocalOrigin(origin)) || configuredOrigins[0];
   }
 
-  return buildBackendOrigin(req);
+  return req ? buildBackendOrigin(req) : "http://localhost:5173";
 };
 
 const buildFrontendUrl = (req, path) => {
@@ -968,6 +999,8 @@ export const resetPassword = async (req, res) => {
 };
 // GET - Check Auth
 export const checkAuth = (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+
   if (!req.user) {
     return res.status(401).json({
       success: false,

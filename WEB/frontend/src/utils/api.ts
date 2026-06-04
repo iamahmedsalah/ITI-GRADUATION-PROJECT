@@ -53,14 +53,17 @@ export function consumeLastAuthFailureCode() {
 }
 
 export function getApiBaseUrl() {
+  const localApiBase = (import.meta.env.VITE_LOCAL_API_BASE_URL as string | undefined) ?? DEFAULT_DEV_API_BASE
   const configuredBase = import.meta.env.VITE_API_BASE_URL as string | undefined
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
+  const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1'
+
+  if (isLocalHost) {
+    return localApiBase.replace(/\/$/, '')
+  }
 
   if (configuredBase && configuredBase.trim()) {
     return configuredBase.replace(/\/$/, '')
-  }
-
-  if (typeof window !== 'undefined' && window.location.port === '5173') {
-    return DEFAULT_DEV_API_BASE
   }
 
   return '/api'

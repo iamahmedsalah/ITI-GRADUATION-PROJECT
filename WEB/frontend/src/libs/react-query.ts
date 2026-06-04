@@ -21,7 +21,7 @@ type AuthCheckResponse = {
 }
 
 export async function fetchCurrentUser() {
-  const { response, data } = await apiGet<AuthCheckResponse>('/auth/check-auth', {})
+  const { response, data } = await apiGet<AuthCheckResponse>('/auth/check-auth', {}, { cache: 'no-store' })
 
   if (!response.ok || !data.authenticated || !data.user) {
     return null
@@ -31,7 +31,7 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchAdminCurrentUser() {
-  const { response, data } = await apiGet<{ authenticated?: boolean; user?: AuthUser }>('/admin/auth/check-auth', {})
+  const { response, data } = await apiGet<{ authenticated?: boolean; user?: AuthUser }>('/admin/auth/check-auth', {}, { cache: 'no-store' })
 
   if (!response.ok || !data.authenticated || !data.user) {
     return null
