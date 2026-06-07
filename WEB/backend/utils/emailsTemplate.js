@@ -1,22 +1,30 @@
-const LOGO_URL = 'https://res.cloudinary.com/dvepf4xdm/image/upload/q_auto/f_auto/v1780761755/logo_qnlxxo.png';
+const LOGO_URL = "https://res.cloudinary.com/dvepf4xdm/image/upload/q_auto/f_auto/v1780761755/logo_qnlxxo.png";
+const LOGO_LINK =
+  process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.PRODUCTION_URL || "http://localhost:5173";
+const EMAIL_THEME = ["light", "dark"].includes((process.env.EMAIL_THEME || "").toLowerCase())
+  ? process.env.EMAIL_THEME.toLowerCase()
+  : "auto";
+const EMAIL_THEME_CLASS = `theme-${EMAIL_THEME}`;
 
 const EMAIL_STYLE = `
   <style>
     :root {
       color-scheme: light dark;
+      supported-color-schemes: light dark;
     }
 
     body {
       margin: 0;
       padding: 0;
-      background-color: #f4f7fb;
-      color: #1f2937;
-      font-family: Arial, Helvetica, sans-serif;
+      background-color: #ffffff;
+      color: #6b6375;
+      font-family: "DM Sans", Arial, Helvetica, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     .email-body {
       width: 100%;
-      background-color: #f4f7fb;
+      background-color: #ffffff;
       padding: 24px 0;
     }
 
@@ -25,20 +33,27 @@ const EMAIL_STYLE = `
       max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
-      border-radius: 18px;
+      border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      border: 1px solid #e5e4e7;
+      box-shadow: 0 18px 42px rgba(8, 6, 13, 0.08);
     }
 
     .email-header {
-      padding: 28px 24px 20px;
+      padding: 30px 24px 24px;
       text-align: center;
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      background-color: #ffffff;
+      border-top: 5px solid #1DB954;
+      border-bottom: 1px solid #e5e4e7;
+    }
+
+    .logo-link {
+      display: inline-block;
+      text-decoration: none;
     }
 
     .logo {
-      width: 140px;
+      width: 118px;
       max-width: 180px;
       height: auto;
       display: block;
@@ -47,15 +62,15 @@ const EMAIL_STYLE = `
 
     .email-title {
       margin: 0;
-      color: #ffffff;
-      font-size: 24px;
+      color: #08060d;
+      font-size: 26px;
       font-weight: 700;
       line-height: 1.2;
     }
 
     .email-content {
       padding: 32px 28px;
-      color: #334155;
+      color: #6b6375;
       background-color: #ffffff;
     }
 
@@ -67,7 +82,8 @@ const EMAIL_STYLE = `
 
     .email-content p.lead {
       font-size: 16px;
-      color: #0f172a;
+      color: #08060d;
+      font-weight: 700;
     }
 
     .email-panel {
@@ -78,10 +94,10 @@ const EMAIL_STYLE = `
     .token-box {
       display: inline-block;
       padding: 16px 24px;
-      background-color: #eff6ff;
-      border: 1px solid #bfdbfe;
+      background-color: rgba(29, 185, 84, 0.08);
+      border: 1px solid rgba(29, 185, 84, 0.35);
       border-radius: 12px;
-      color: #1d4ed8;
+      color: #1DB954;
       font-size: 30px;
       letter-spacing: 6px;
       font-weight: 700;
@@ -90,19 +106,23 @@ const EMAIL_STYLE = `
     .info-card {
       margin: 24px 0;
       padding: 16px 18px;
-      background-color: #f9fafb;
-      border: 1px solid #e5e7eb;
+      background-color: #f6f4f8;
+      border: 1px solid #e5e4e7;
       border-radius: 12px;
-      color: #475569;
+      color: #6b6375;
+    }
+
+    .info-card p {
+      margin-bottom: 0;
     }
 
     .button {
       display: inline-block;
-      background-color: #dc2626;
+      background-color: #1DB954;
       color: #ffffff;
       text-decoration: none;
       padding: 13px 22px;
-      border-radius: 10px;
+      border-radius: 999px;
       font-size: 15px;
       font-weight: 700;
     }
@@ -110,9 +130,9 @@ const EMAIL_STYLE = `
     .footer {
       padding: 18px 24px;
       text-align: center;
-      background-color: #f9fafb;
-      border-top: 1px solid #e5e7eb;
-      color: #64748b;
+      background-color: #f6f4f8;
+      border-top: 1px solid #e5e4e7;
+      color: #6b6375;
       font-size: 12px;
     }
 
@@ -125,71 +145,135 @@ const EMAIL_STYLE = `
 
     .details-table td {
       padding: 10px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #e5e4e7;
+      color: #08060d;
     }
 
     .details-table td.label {
-      color: #64748b;
+      color: #6b6375;
       width: 38%;
     }
 
+    .section-title {
+      margin: 24px 0 12px;
+      color: #08060d;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .theme-dark,
+    .theme-dark .email-body {
+      background-color: #121212 !important;
+      color: #A7A7A7 !important;
+    }
+
+    .theme-dark .email-card {
+      background-color: #181818 !important;
+      border-color: #282828 !important;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .theme-dark .email-header {
+      background-color: #181818 !important;
+      border-bottom-color: #282828 !important;
+    }
+
+    .theme-dark .email-title,
+    .theme-dark .email-content p.lead,
+    .theme-dark .section-title,
+    .theme-dark .details-table td {
+      color: #FFFFFF !important;
+    }
+
+    .theme-dark .email-content {
+      background-color: #181818 !important;
+      color: #A7A7A7 !important;
+    }
+
+    .theme-dark .email-content p,
+    .theme-dark .info-card,
+    .theme-dark .details-table td.label {
+      color: #A7A7A7 !important;
+    }
+
+    .theme-dark .info-card,
+    .theme-dark .token-box {
+      background-color: #282828 !important;
+      border-color: rgba(29, 185, 84, 0.35) !important;
+    }
+
+    .theme-dark .footer {
+      background-color: #282828 !important;
+      border-top-color: #333333 !important;
+      color: #A7A7A7 !important;
+    }
+
     @media (prefers-color-scheme: dark) {
-      body {
-        background-color: #040617;
-        color: #d1d5db;
+      body,
+      .theme-auto {
+        background-color: #121212;
+        color: #A7A7A7;
       }
 
-      .email-body {
-        background-color: #040617;
+      .theme-auto .email-body {
+        background-color: #121212;
       }
 
-      .email-card {
-        background-color: #0f172a;
-        border-color: #334155;
+      .theme-auto .email-card {
+        background-color: #181818;
+        border-color: #282828;
         box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
       }
 
-      .email-header {
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      .theme-auto .email-header {
+        background-color: #181818;
+        border-bottom-color: #282828;
       }
 
-      .email-title {
-        color: #eef2ff;
+      .theme-auto .email-title,
+      .theme-auto .email-content p.lead,
+      .theme-auto .section-title,
+      .theme-auto .details-table td {
+        color: #FFFFFF;
       }
 
-      .email-content {
-        background-color: #111827;
-        color: #cbd5e1;
+      .theme-auto .email-content {
+        background-color: #181818;
+        color: #A7A7A7;
       }
 
-      .email-content p {
-        color: #cbd5e1;
+      .theme-auto .email-content p,
+      .theme-auto .info-card,
+      .theme-auto .details-table td.label {
+        color: #A7A7A7;
       }
 
-      .info-card {
-        background-color: #111827;
-        border-color: #334155;
-        color: #cbd5e1;
+      .theme-auto .info-card,
+      .theme-auto .token-box {
+        background-color: #282828;
+        border-color: rgba(29, 185, 84, 0.35);
       }
 
-      .footer {
-        background-color: #0b1220;
-        color: #94a3b8;
+      .theme-auto .footer {
+        background-color: #282828;
+        border-top-color: #333333;
+        color: #A7A7A7;
       }
 
-      .details-table td {
-        border-color: #334155;
-        color: #e2e8f0;
+      .theme-auto .details-table td {
+        border-color: #333333;
       }
 
-      .token-box {
-        background-color: #1e293b;
-        border-color: #334155;
-        color: #93c5fd;
+      .theme-light,
+      .theme-light .email-body {
+        background-color: #ffffff;
+        color: #6b6375;
       }
 
-      .button {
-        background-color: #ef4444;
+      .theme-light .email-card,
+      .theme-light .email-header,
+      .theme-light .email-content {
+        background-color: #ffffff;
       }
     }
   </style>
@@ -201,17 +285,21 @@ export const VERIFICATION_EMAIL_TEMPLATE = `
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>Verify your ILMA account</title>
   ${EMAIL_STYLE}
 </head>
-<body class="email-body">
-  <table width="100%" cellpadding="0" cellspacing="0" class="email-body">
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
           <tr>
             <td class="email-header">
-              <img src="https://res.cloudinary.com/dvepf4xdm/image/upload/q_auto/f_auto/v1780761755/logo_qnlxxo.png" alt="ILMA logo" class="logo" />
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
               <h1 class="email-title">Verify your ILMA account</h1>
             </td>
           </tr>
@@ -248,17 +336,21 @@ export const WELCOME_EMAIL_TEMPLATE = `
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>Welcome to ILMA</title>
   ${EMAIL_STYLE}
 </head>
-<body class="email-body">
-  <table width="100%" cellpadding="0" cellspacing="0" class="email-body">
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
           <tr>
             <td class="email-header">
-              <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
               <h1 class="email-title">Welcome to ILMA</h1>
             </td>
           </tr>
@@ -294,17 +386,21 @@ export const PASSWORD_RESET_REQUEST_TEMPLATE = `
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>Reset your ILMA password</title>
   ${EMAIL_STYLE}
 </head>
-<body class="email-body">
-  <table width="100%" cellpadding="0" cellspacing="0" class="email-body">
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
           <tr>
             <td class="email-header">
-              <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
               <h1 class="email-title">Reset your password</h1>
             </td>
           </tr>
@@ -342,17 +438,21 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>Your ILMA password was reset</title>
   ${EMAIL_STYLE}
 </head>
-<body class="email-body">
-  <table width="100%" cellpadding="0" cellspacing="0" class="email-body">
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
           <tr>
             <td class="email-header">
-              <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
               <h1 class="email-title">Password reset successful</h1>
             </td>
           </tr>
@@ -364,7 +464,7 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
               <div class="info-card">
                 <p>If this was you, no further action is needed.</p>
               </div>
-              <h3 style="font-size:16px; margin:24px 0 12px; color:#111827;">Reset details</h3>
+              <h3 class="section-title">Reset details</h3>
               <table class="details-table">
                 <tr>
                   <td class="label">Password changed at</td>
