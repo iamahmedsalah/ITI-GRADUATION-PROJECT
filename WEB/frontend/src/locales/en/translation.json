@@ -101,7 +101,21 @@
     "progressFailed": "Could not update roadmap progress.",
     "resources": "Resources",
     "emptyResources": "No resources were added for this step yet.",
-    "emptySteps": "This roadmap does not have steps yet."
+    "emptySteps": "This roadmap does not have steps yet.",
+    "emptyGraph": {
+      "title": "No roadmaps found",
+      "subtitle": "This roadmap has no visible steps yet. Once content is added, the path will appear here.",
+      "nodes": {
+        "discover": "Discover path",
+        "skills": "Skills map",
+        "projects": "Projects",
+        "finish": "Finish line"
+      },
+      "labels": {
+        "pending": "Waiting for content",
+        "empty": "No steps yet"
+      }
+    }
   },
   "profile": {
     "title": "My profile",
