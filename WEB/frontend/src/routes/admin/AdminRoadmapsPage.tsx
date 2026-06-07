@@ -3,8 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel02Icon, UserEdit01Icon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import { createPageVariants } from '../../libs/motionVariants'
+import {
+  Link,
+} from 'react-router-dom'
 import {
   createAdminRoadmap,
   deleteAdminRoadmap,
@@ -12,6 +17,11 @@ import {
   toggleAdminRoadmapPublish,
   updateAdminRoadmap,
 } from '../../libs/admin-api'
+import type { AdminRoadmapRow } from '../../libs/admin-api'
+import { AdminFilterToggleButton, AdminStatusToggleButton } from '../../components/ui/AdminActionButtons'
+import AdminPagination from '../../components/ui/AdminPagination'
+import CustomDropdown from '../../components/ui/CustomDropdown'
+import AdminRoadmapFormModal from '../../components/models/AdminRoadmapFormModal'
 
 type RoleOption = 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
 type LevelOption = 'beginner' | 'intermediate' | 'advanced'
@@ -27,20 +37,41 @@ export default function AdminRoadmapsPage() {
   const [targetLevel, setTargetLevel] = useState('')
   const [templateType, setTemplateType] = useState('')
   const [isActive, setIsActive] = useState('')
-
-  const [newTitle, setNewTitle] = useState('')
-  const [newSlug, setNewSlug] = useState('')
-  const [newGoal, setNewGoal] = useState('')
-  const [newDescription, setNewDescription] = useState('')
-  const [newTargetRole, setNewTargetRole] = useState<RoleOption>('student')
-  const [newTargetLevel, setNewTargetLevel] = useState<LevelOption>('beginner')
-  const [newTemplateType, setNewTemplateType] = useState<TemplateTypeOption>('roleBased')
-  const [newMarkdown, setNewMarkdown] = useState('## Step One\nDescribe the first milestone.\n\n## Step Two\nDescribe the second milestone.')
+  const [page, setPage] = useState(1)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingRoadmap, setEditingRoadmap] = useState<AdminRoadmapRow | null>(null)
 
   const queryKey = useMemo(
-    () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, isActive],
-    [search, targetRole, targetLevel, templateType, isActive],
+    () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, isActive, page],
+    [search, targetRole, targetLevel, templateType, isActive, page],
   )
+
+  const roleOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allRoles') },
+    { value: 'student', label: t('adminUi.roles.student') },
+    { value: 'instructor', label: t('adminUi.roles.instructor') },
+    { value: 'admin', label: t('adminUi.roles.admin') },
+    { value: 'careerSwitcher', label: t('adminUi.roles.careerSwitcher') },
+    { value: 'jobSeeker', label: t('adminUi.roles.jobSeeker') },
+  ]
+  const levelOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allLevels') },
+    { value: 'beginner', label: t('adminUi.levels.beginner') },
+    { value: 'intermediate', label: t('adminUi.levels.intermediate') },
+    { value: 'advanced', label: t('adminUi.levels.advanced') },
+  ]
+  const typeOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allTypes') },
+    { value: 'roleBased', label: t('adminUi.roadmapTypes.roleBased') },
+    { value: 'skillBased', label: t('adminUi.roadmapTypes.skillBased') },
+  ]
+  const activeOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allStatus') },
+    { value: 'true', label: t('adminUi.status.active') },
+    { value: 'false', label: t('adminUi.status.inactive') },
+  ]
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey,
@@ -51,6 +82,8 @@ export default function AdminRoadmapsPage() {
         targetLevel: targetLevel || undefined,
         templateType: templateType || undefined,
         isActive: isActive || undefined,
+        page,
+        limit: 10,
       }),
     staleTime: 0,
   })
@@ -69,12 +102,7 @@ export default function AdminRoadmapsPage() {
       }
 
       toast.success(result.message)
-      setNewTitle('')
-      setNewSlug('')
-      setNewGoal('')
-      setNewDescription('')
-      setNewTemplateType('roleBased')
-      setNewMarkdown('## Step One\nDescribe the first milestone.\n\n## Step Two\nDescribe the second milestone.')
+      setIsCreateModalOpen(false)
       refresh()
     },
     onError: () => toast.error(t('adminUi.roadmaps.createFailed')),
@@ -104,6 +132,7 @@ export default function AdminRoadmapsPage() {
       }
 
       toast.success(result.message)
+      setEditingRoadmap(null)
       refresh()
     },
     onError: () => toast.error(t('adminUi.roadmaps.updateFailed')),
@@ -133,106 +162,209 @@ export default function AdminRoadmapsPage() {
       }
 
       toast.success(result.message)
+      setSelectedIds((previous) => previous.filter((id) => id !== result.data?._id))
       refresh()
     },
     onError: () => toast.error(t('adminUi.roadmaps.deleteFailed')),
   })
 
+  const visibleRoadmaps = data?.data ?? []
+  const allVisibleSelected = visibleRoadmaps.length > 0 && visibleRoadmaps.every((roadmap) => selectedIds.includes(roadmap._id))
+
   return (
-    <motion.main className="px-6 py-6 lg:px-8 lg:py-8" variants={pageVariants} initial="hidden" animate="show">
-      <section className="grid gap-5 rounded-3xl border border-(--border) bg-(--surface) p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+    <motion.main className="px-3 py-4 sm:px-4 sm:py-5 lg:px-8 lg:py-8" variants={pageVariants} initial="hidden" animate="show">
+      <AdminRoadmapFormModal
+        open={isCreateModalOpen}
+        mode="create"
+        isPending={createMutation.isPending}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={(payload) => createMutation.mutate(payload as Parameters<typeof createAdminRoadmap>[0])}
+      />
+      <AdminRoadmapFormModal
+        open={Boolean(editingRoadmap)}
+        mode="update"
+        roadmap={editingRoadmap}
+        isPending={updateMutation.isPending}
+        onClose={() => setEditingRoadmap(null)}
+        onSubmit={(payload) => {
+          if (!editingRoadmap) return
+          updateMutation.mutate({ templateId: editingRoadmap._id, payload })
+        }}
+      />
+      <section className="grid gap-4 rounded-3xl border border-(--border) bg-(--surface) p-3 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:gap-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-(--text)">{t('adminUi.roadmaps.overline')}</p>
             <h1 className="mt-2 text-3xl font-semibold text-(--text-h)">{t('adminUi.roadmaps.title')}</h1>
             <p className="mt-2 text-sm leading-6 text-(--text)">{t('adminUi.roadmaps.subtitle')}</p>
           </div>
-          <div className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
-            {isFetching ? t('adminUi.common.refreshing') : data ? t('adminUi.roadmaps.total', { count: data.pagination.total }) : t('adminUi.common.noData')}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+              {isFetching ? t('adminUi.common.refreshing') : data ? t('adminUi.roadmaps.total', { count: data.pagination.total }) : t('adminUi.common.noData')}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="rounded-squircle cursor-pointer bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
+            >
+              {t('adminUi.roadmaps.form.add')}
+            </button>
           </div>
         </div>
 
-        <div className="grid gap-3 rounded-2xl border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-2">
-          <input value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder={t('adminUi.roadmaps.form.title')} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none" />
-          <input value={newSlug} onChange={(event) => setNewSlug(event.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder={t('adminUi.roadmaps.form.slug')} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none" />
-          <input value={newGoal} onChange={(event) => setNewGoal(event.target.value)} placeholder={t('adminUi.roadmaps.form.goal')} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2" />
-          <textarea value={newDescription} onChange={(event) => setNewDescription(event.target.value)} placeholder={t('adminUi.roadmaps.form.description')} rows={2} className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2" />
-          <select value={newTargetRole} onChange={(event) => setNewTargetRole(event.target.value as RoleOption)} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="student">{t('adminUi.roles.student')}</option>
-            <option value="instructor">{t('adminUi.roles.instructor')}</option>
-            <option value="admin">{t('adminUi.roles.admin')}</option>
-            <option value="jobSeeker">{t('adminUi.roles.jobSeeker')}</option>
-            <option value="careerSwitcher">{t('adminUi.roles.careerSwitcher')}</option>
-          </select>
-          <select value={newTargetLevel} onChange={(event) => setNewTargetLevel(event.target.value as LevelOption)} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="beginner">{t('adminUi.levels.beginner')}</option>
-            <option value="intermediate">{t('adminUi.levels.intermediate')}</option>
-            <option value="advanced">{t('adminUi.levels.advanced')}</option>
-          </select>
-          <select value={newTemplateType} onChange={(event) => setNewTemplateType(event.target.value as TemplateTypeOption)} className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2">
-            <option value="roleBased">{t('adminUi.roadmapTypes.roleBased')}</option>
-            <option value="skillBased">{t('adminUi.roadmapTypes.skillBased')}</option>
-          </select>
-          <textarea value={newMarkdown} onChange={(event) => setNewMarkdown(event.target.value)} rows={5} className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2" />
-          <button
-            type="button"
-            disabled={createMutation.isPending}
-            className="inline-flex cursor-pointer items-center justify-center rounded-full bg-(--gd-primary) px-5 py-3 text-sm font-semibold uppercase tracking-[0.04em] text-white shadow-[0_12px_24px_rgba(29,185,84,0.22)] transition-transform duration-200 hover:scale-[1.04] hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
-            onClick={() => {
-              if (newTitle.trim().length < 3 || newSlug.trim().length < 3 || newGoal.trim().length < 10 || newMarkdown.trim().length < 4) {
-                toast.error(t('adminUi.roadmaps.form.invalid'))
-                return
-              }
+        <div className="flex flex-wrap justify-end gap-2">
+          {selectedIds.length ? (
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                const confirmed = window.confirm(t('adminUi.common.bulkDeleteConfirm', { count: selectedIds.length }))
+                if (!confirmed) return
+                selectedIds.forEach((id) => deleteMutation.mutate(id))
+              }}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.4)] bg-[rgba(226,33,52,0.08)] px-4 py-2 text-sm font-semibold text-(--error)"
+            >
+              <HugeiconsIcon icon={Cancel02Icon} size={16} />
+              {t('adminUi.common.deleteSelected', { count: selectedIds.length })}
+            </button>
+          ) : null}
+          <AdminFilterToggleButton
+            open={isFiltersOpen}
+            onClick={() => setIsFiltersOpen((previous) => !previous)}
+            showLabel={t('adminUi.common.showFilters')}
+            hideLabel={t('adminUi.common.hideFilters')}
+          />
+        </div>
 
-              createMutation.mutate({
-                title: newTitle.trim(),
-                slug: newSlug.trim(),
-                goal: newGoal.trim(),
-                description: newDescription.trim() || undefined,
-                targetRole: newTargetRole,
-                targetLevel: newTargetLevel,
-                templateType: newTemplateType,
-                contentFormat: 'markdown',
-                contentMarkdown: newMarkdown.trim(),
-              })
+        {isFiltersOpen ? <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-5">
+          <input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
             }}
-          >
-            {createMutation.isPending ? t('adminUi.common.creating') : t('adminUi.roadmaps.form.create')}
-          </button>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-5">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('adminUi.roadmaps.searchPlaceholder')} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none" />
-          <select value={targetRole} onChange={(event) => setTargetRole(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="">{t('adminUi.roadmaps.filters.allRoles')}</option>
-            <option value="student">{t('adminUi.roles.student')}</option>
-            <option value="instructor">{t('adminUi.roles.instructor')}</option>
-            <option value="admin">{t('adminUi.roles.admin')}</option>
-            <option value="careerSwitcher">{t('adminUi.roles.careerSwitcher')}</option>
-            <option value="jobSeeker">{t('adminUi.roles.jobSeeker')}</option>
-          </select>
-          <select value={targetLevel} onChange={(event) => setTargetLevel(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="">{t('adminUi.roadmaps.filters.allLevels')}</option>
-            <option value="beginner">{t('adminUi.levels.beginner')}</option>
-            <option value="intermediate">{t('adminUi.levels.intermediate')}</option>
-            <option value="advanced">{t('adminUi.levels.advanced')}</option>
-          </select>
-          <select value={templateType} onChange={(event) => setTemplateType(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="">{t('adminUi.roadmaps.filters.allTypes')}</option>
-            <option value="roleBased">{t('adminUi.roadmapTypes.roleBased')}</option>
-            <option value="skillBased">{t('adminUi.roadmapTypes.skillBased')}</option>
-          </select>
-          <select value={isActive} onChange={(event) => setIsActive(event.target.value)} className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none">
-            <option value="">{t('adminUi.roadmaps.filters.allStatus')}</option>
-            <option value="true">{t('adminUi.status.active')}</option>
-            <option value="false">{t('adminUi.status.inactive')}</option>
-          </select>
-        </div>
+            placeholder={t('adminUi.roadmaps.searchPlaceholder')}
+            className="rounded-squircle border border-(--border) bg-(--surface-muted) px-4 py-3 text-sm text-(--text-h) outline-none transition focus:border-(--accent-border)"
+          />
+          <CustomDropdown value={targetRole} options={roleOptions} onChange={(value) => { setTargetRole(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+          <CustomDropdown value={targetLevel} options={levelOptions} onChange={(value) => { setTargetLevel(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+          <CustomDropdown value={templateType} options={typeOptions} onChange={(value) => { setTemplateType(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+          <CustomDropdown value={isActive} options={activeOptions} onChange={(value) => { setIsActive(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+        </div> : null}
 
         <div className="overflow-hidden rounded-3xl border border-(--border)">
-          <table className="min-w-full border-separate border-spacing-0 text-sm">
+          <div className="grid gap-3 p-2 sm:p-3 md:hidden">
+            {isLoading ? (
+              <div className="rounded-squircle border border-(--border) bg-(--surface-muted) p-4 text-sm text-(--text)">
+                {t('adminUi.roadmaps.loading')}
+              </div>
+            ) : visibleRoadmaps.length ? visibleRoadmaps.map((roadmap) => (
+              <article key={roadmap._id} className="grid min-w-0 gap-4 rounded-3xl border border-(--border) bg-(--surface-muted) p-3 sm:p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox mt-1"
+                    checked={selectedIds.includes(roadmap._id)}
+                    onChange={(event) => {
+                      setSelectedIds((previous) =>
+                        event.target.checked
+                          ? Array.from(new Set([...previous, roadmap._id]))
+                          : previous.filter((id) => id !== roadmap._id),
+                      )
+                    }}
+                    aria-label={roadmap.title}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <Link to={roadmap._id} className="block wrap-break-word font-semibold text-(--text-h) hover:text-(--gd-primary)">
+                      {roadmap.title}
+                    </Link>
+                    <div className="wrap-break-word text-xs text-(--text)">{roadmap.slug}</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 text-sm min-[460px]:grid-cols-2">
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.status')}</span>
+                    <span className={roadmap.isActive ? 'font-semibold text-(--success)' : 'font-semibold text-(--error)'}>
+                      {roadmap.isActive ? t('adminUi.status.active') : t('adminUi.status.inactive')}
+                    </span>
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.type')}</span>
+                    <span className="wrap-break-word text-(--text-h)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</span>
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.target')}</span>
+                    <span className="wrap-break-word text-(--text-h)">{roadmap.targetRole || t('adminUi.common.any')} | {roadmap.targetLevel || t('adminUi.common.any')}</span>
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.assigned')}</span>
+                    <span className="text-(--text-h)">{roadmap.assignedUsers ?? 0}</span>
+                  </div>
+                </div>
+
+                <div className="admin-mobile-card-actions grid gap-2 min-[420px]:grid-cols-2">
+                  <AdminStatusToggleButton
+                    active={roadmap.isActive}
+                    disabled={publishMutation.isPending}
+                    onClick={() => publishMutation.mutate({ templateId: roadmap._id, makeActive: !roadmap.isActive })}
+                    activeLabel={t('adminUi.roadmaps.actions.unpublish')}
+                    inactiveLabel={t('adminUi.roadmaps.actions.publish')}
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+                    disabled={updateMutation.isPending}
+                    onClick={() => {
+                      setEditingRoadmap(roadmap)
+                    }}
+                  >
+                    <HugeiconsIcon icon={UserEdit01Icon} size={14} />
+                    {t('adminUi.roadmaps.actions.rename')}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
+                    disabled={deleteMutation.isPending}
+                    onClick={() => {
+                      const confirmed = window.confirm(t('adminUi.roadmaps.actions.deleteConfirm', { title: roadmap.title }))
+                      if (!confirmed) {
+                        return
+                      }
+                      deleteMutation.mutate(roadmap._id)
+                    }}
+                  >
+                    <HugeiconsIcon icon={Cancel02Icon} size={14} />
+                    {t('adminUi.roadmaps.actions.delete')}
+                  </button>
+                </div>
+              </article>
+            )) : (
+              <div className="rounded-squircle border border-(--border) bg-(--surface-muted) p-4 text-sm text-(--text)">
+                {t('adminUi.roadmaps.empty')}
+              </div>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
             <thead className="bg-(--surface-soft)">
               <tr className="text-left text-(--text)">
+                <th className="px-4 py-3 font-medium">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    checked={allVisibleSelected}
+                    onChange={(event) => {
+                      if (event.target.checked) {
+                        setSelectedIds((previous) => Array.from(new Set([...previous, ...visibleRoadmaps.map((roadmap) => roadmap._id)])))
+                      } else {
+                        setSelectedIds((previous) => previous.filter((id) => !visibleRoadmaps.some((roadmap) => roadmap._id === id)))
+                      }
+                    }}
+                    aria-label={t('adminUi.common.selectAll')}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.template')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.type')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.target')}</th>
@@ -243,11 +375,28 @@ export default function AdminRoadmapsPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={6}>{t('adminUi.roadmaps.loading')}</td></tr>
-              ) : data?.data.length ? data.data.map((roadmap) => (
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={7}>{t('adminUi.roadmaps.loading')}</td></tr>
+              ) : visibleRoadmaps.length ? visibleRoadmaps.map((roadmap) => (
                 <tr key={roadmap._id} className="border-t border-(--border)">
                   <td className="px-4 py-4">
-                    <div className="font-semibold text-(--text-h)">{roadmap.title}</div>
+                    <input
+                      type="checkbox"
+                      className="admin-checkbox"
+                      checked={selectedIds.includes(roadmap._id)}
+                      onChange={(event) => {
+                        setSelectedIds((previous) =>
+                          event.target.checked
+                            ? Array.from(new Set([...previous, roadmap._id]))
+                            : previous.filter((id) => id !== roadmap._id),
+                        )
+                      }}
+                      aria-label={roadmap.title}
+                    />
+                  </td>
+                  <td className="px-4 py-4">
+                    <Link to={roadmap._id} className="font-semibold text-(--text-h) hover:text-(--gd-primary)">
+                      {roadmap.title}
+                    </Link>
                     <div className="text-xs text-(--text)">{roadmap.slug}</div>
                   </td>
                   <td className="px-4 py-4 text-(--text)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</td>
@@ -256,35 +405,27 @@ export default function AdminRoadmapsPage() {
                   <td className="px-4 py-4 text-(--text)">{roadmap.assignedUsers ?? 0}</td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-full border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+                      <AdminStatusToggleButton
+                        active={roadmap.isActive}
                         disabled={publishMutation.isPending}
                         onClick={() => publishMutation.mutate({ templateId: roadmap._id, makeActive: !roadmap.isActive })}
-                      >
-                        {roadmap.isActive ? t('adminUi.roadmaps.actions.unpublish') : t('adminUi.roadmaps.actions.publish')}
-                      </button>
+                        activeLabel={t('adminUi.roadmaps.actions.unpublish')}
+                        inactiveLabel={t('adminUi.roadmaps.actions.publish')}
+                      />
                       <button
                         type="button"
-                        className="cursor-pointer rounded-full border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
                         disabled={updateMutation.isPending}
                         onClick={() => {
-                          const nextTitle = window.prompt(t('adminUi.roadmaps.actions.renamePrompt'), roadmap.title)?.trim()
-                          if (!nextTitle || nextTitle.length < 3) {
-                            return
-                          }
-
-                          updateMutation.mutate({
-                            templateId: roadmap._id,
-                            payload: { title: nextTitle },
-                          })
+                          setEditingRoadmap(roadmap)
                         }}
                       >
+                        <HugeiconsIcon icon={UserEdit01Icon} size={14} />
                         {t('adminUi.roadmaps.actions.rename')}
                       </button>
                       <button
                         type="button"
-                        className="cursor-pointer rounded-full border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-[#ffb8c0] transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
                         disabled={deleteMutation.isPending}
                         onClick={() => {
                           const confirmed = window.confirm(t('adminUi.roadmaps.actions.deleteConfirm', { title: roadmap.title }))
@@ -294,16 +435,29 @@ export default function AdminRoadmapsPage() {
                           deleteMutation.mutate(roadmap._id)
                         }}
                       >
+                        <HugeiconsIcon icon={Cancel02Icon} size={14} />
                         {t('adminUi.roadmaps.actions.delete')}
                       </button>
                     </div>
                   </td>
                 </tr>
               )) : (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={6}>{t('adminUi.roadmaps.empty')}</td></tr>
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={7}>{t('adminUi.roadmaps.empty')}</td></tr>
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
+          <AdminPagination
+            pagination={data?.pagination}
+            onPageChange={setPage}
+            previousLabel={t('adminUi.common.previous')}
+            nextLabel={t('adminUi.common.next')}
+            summaryLabel={t('adminUi.common.pageSummary', {
+              page: data?.pagination.page ?? 1,
+              pages: data?.pagination.pages ?? 1,
+              total: data?.pagination.total ?? 0,
+            })}
+          />
         </div>
       </section>
     </motion.main>

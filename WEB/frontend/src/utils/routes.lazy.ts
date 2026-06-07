@@ -11,6 +11,7 @@ export const AdminResetPasswordPage = lazy(() => import('../routes/admin/AdminRe
 export const AdminDashboardPage = lazy(() => import('../routes/admin/AdminDashboardPage'))
 export const AdminUsersPage = lazy(() => import('../routes/admin/AdminUsersPage'))
 export const AdminRoadmapsPage = lazy(() => import('../routes/admin/AdminRoadmapsPage'))
+export const AdminRoadmapDetailPage = lazy(() => import('../routes/admin/AdminRoadmapDetailPage'))
 export const AdminCoursesPage = lazy(() => import('../routes/admin/AdminCoursesPage'))
 export const SignupPage = lazy(() => import('../routes/user/SignupPage'))
 export const VerifyEmailPage = lazy(() => import('../routes/user/VerifyEmailPage'))

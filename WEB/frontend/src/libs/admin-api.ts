@@ -22,6 +22,7 @@ export type AdminOverviewData = {
   users: {
     total: number
     active: number
+    online?: number
     inactive: number
     verified: number
     byRole: Record<string, number>
@@ -74,7 +75,23 @@ export type AdminRoadmapRow = {
   templateType?: 'roleBased' | 'skillBased'
   isActive: boolean
   assignedUsers?: number
+  stepProgressRecords?: number
+  totalStepProgressRecords?: number
   createdAt?: string
+}
+
+export type AdminRoadmapStep = {
+  stepKey: string
+  title: string
+  description?: string
+  order?: number
+  dependsOn?: string[]
+  resources?: { title?: string; url?: string }[]
+}
+
+export type AdminRoadmapDetail = AdminRoadmapRow & {
+  steps?: AdminRoadmapStep[]
+  createdBy?: { username?: string; email?: string; role?: string } | null
 }
 
 export type AdminCourseRow = {
@@ -211,6 +228,19 @@ export async function fetchAdminRoadmaps(params: {
     data: data.data ?? [],
     pagination: data.pagination ?? { total: 0, page: 1, limit: 20, pages: 0 },
   }
+}
+
+export async function fetchAdminRoadmapDetail(templateId: string) {
+  const { response, data } = await apiGet<AdminListResponse<AdminRoadmapDetail>>(
+    `/admin/roadmaps/${templateId}`,
+    { data: undefined },
+  )
+
+  if (!response.ok || !data.data) {
+    return null
+  }
+
+  return data.data
 }
 
 export async function createAdminRoadmap(payload: {

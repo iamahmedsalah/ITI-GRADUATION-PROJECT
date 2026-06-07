@@ -212,7 +212,17 @@
       "creating": "جارٍ الإنشاء...",
       "noData": "لا توجد بيانات",
       "any": "أي",
-      "notAvailable": "غير متاح"
+      "notAvailable": "غير متاح",
+      "previous": "السابق",
+      "next": "التالي",
+      "pageSummary": "صفحة {{page}} من {{pages}} - الإجمالي {{total}}",
+      "showFilters": "إظهار الفلاتر",
+      "hideFilters": "إخفاء الفلاتر",
+      "saving": "جارٍ الحفظ...",
+      "close": "إغلاق",
+      "selectAll": "تحديد الكل",
+      "deleteSelected": "حذف المحدد ({{count}})",
+      "bulkDeleteConfirm": "حذف {{count}} عنصر محدد؟"
     },
     "roles": {
       "student": "طالب",
@@ -238,7 +248,13 @@
       "users": "المستخدمون",
       "roadmaps": "خرائط الطريق",
       "courses": "الدورات",
-      "hint": "إدارة المستخدمين وخرائط الطريق والدورات من مكان واحد."
+      "hint": "إدارة المستخدمين وخرائط الطريق والدورات من مكان واحد.",
+      "openSidebar": "فتح شريط الإدارة",
+      "closeSidebar": "إغلاق شريط الإدارة",
+      "collapseSidebar": "طي الشريط الجانبي",
+      "expandSidebar": "توسيع الشريط الجانبي",
+      "online": "متصل",
+      "lastLogin": "آخر دخول"
     },
     "logout": {
       "cta": "تسجيل الخروج",
@@ -278,7 +294,13 @@
       "panelUsers": "حالة المستخدمين",
       "panelUsersHint": "{{active}} حسابًا نشطًا، و{{verified}} مستخدمًا مؤكدًا.",
       "panelLearning": "محتوى التعلّم",
-      "panelLearningHint": "{{published}} دورة منشورة و{{activeRoadmaps}} قالب خريطة نشط."
+      "panelLearningHint": "{{published}} دورة منشورة و{{activeRoadmaps}} قالب خريطة نشط.",
+      "metrics": {
+        "activeUsers": "المستخدمون النشطون",
+        "activeUsersHint": "حسابات مفعلة يمكنها استخدام المنصة.",
+        "onlineUsers": "المستخدمون المتصلون",
+        "onlineUsersHint": "مستخدمون نشطون خلال آخر 15 دقيقة."
+      }
     },
     "tabs": {
       "users": "المستخدمون",
@@ -297,6 +319,8 @@
       "loading": "جارٍ تحميل المستخدمين...",
       "empty": "لا يوجد مستخدمون.",
       "updateFailed": "فشل تحديث المستخدم.",
+      "emailStatus": "البريد",
+      "accountStatus": "الحساب",
       "filters": {
         "allRoles": "كل الأدوار",
         "allVerification": "كل حالات التحقق",
@@ -315,7 +339,8 @@
         "unverify": "إلغاء التأكيد",
         "activate": "تفعيل",
         "deactivate": "تعطيل",
-        "deactivationPrompt": "سبب التعطيل (اختياري)"
+        "deactivationPrompt": "سبب التعطيل (اختياري)",
+        "deactivateSelected": "تعطيل المحدد ({{count}})"
       }
     },
     "roadmaps": {
@@ -334,7 +359,7 @@
         "allRoles": "كل الأدوار",
         "allLevels": "كل المستويات",
         "allStatus": "كل الحالات",
-        "allTypes": "?? ????? ????? ??????"
+        "allTypes": "كل أنواع خرائط الطريق"
       },
       "table": {
         "template": "القالب",
@@ -342,7 +367,7 @@
         "status": "الحالة",
         "assigned": "المستخدمون المعيّنون",
         "actions": "الإجراءات",
-        "type": "?????"
+        "type": "النوع"
       },
       "form": {
         "title": "عنوان خريطة الطريق",
@@ -350,8 +375,10 @@
         "goal": "هدف خريطة الطريق (10 أحرف على الأقل)",
         "description": "الوصف (اختياري)",
         "invalid": "يرجى إدخال العنوان والـ slug والهدف وخطوات markdown.",
+        "add": "إضافة خريطة طريق",
         "create": "إنشاء قالب خريطة طريق",
-        "type": "??? ????? ??????"
+        "update": "تحديث قالب خريطة الطريق",
+        "type": "نوع خريطة الطريق"
       },
       "actions": {
         "publish": "نشر",
@@ -360,6 +387,16 @@
         "renamePrompt": "تحديث عنوان خريطة الطريق",
         "delete": "حذف",
         "deleteConfirm": "حذف خريطة الطريق \"{{title}}\"؟"
+      },
+      "detail": {
+        "back": "العودة إلى خرائط الطريق",
+        "assigned": "المستخدمون المعينون",
+        "steps": "الخطوات",
+        "stepProgress": "سجلات تقدم الخطوات",
+        "step": "الخطوة",
+        "dependencies": "المتطلبات السابقة",
+        "resources": "الموارد",
+        "noSteps": "لم تتم إضافة خطوات لهذه الخريطة."
       }
     },
     "courses": {
@@ -402,7 +439,9 @@
         "published": "منشورة",
         "featured": "مميزة",
         "invalid": "يرجى إدخال العنوان والـ slug والوصف.",
-        "create": "إنشاء دورة"
+        "add": "إضافة دورة",
+        "create": "إنشاء دورة",
+        "update": "تحديث الدورة"
       },
       "actions": {
         "publish": "نشر",
@@ -416,8 +455,8 @@
       }
     },
     "roadmapTypes": {
-      "roleBased": "????? ???? ??? ?????",
-      "skillBased": "????? ???? ??? ???????"
+      "roleBased": "خرائط طريق حسب الدور",
+      "skillBased": "خرائط طريق حسب المهارة"
     }
   },
   "login": {
