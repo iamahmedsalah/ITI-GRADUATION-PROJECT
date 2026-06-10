@@ -41,6 +41,10 @@ export type AdminOverviewData = {
     enrollmentsTotal: number
     enrollmentsCompleted: number
   }
+  contactMessages?: {
+    total: number
+    unread: number
+  }
 }
 
 export type AdminPagination = {
@@ -113,6 +117,58 @@ export type AdminCourseRow = {
     title?: string
     slug?: string
   } | null
+  sections?: Array<{
+    sectionKey?: string
+    title?: string
+    description?: string
+    order?: number
+    lessons?: Array<{
+      lessonKey?: string
+      title?: string
+      summary?: string
+      durationMinutes?: number
+      videoUrl?: string
+      resourceUrl?: string
+      isPreview?: boolean
+      order?: number
+    }>
+  }>
+  tags?: string[]
+  prerequisites?: string[]
+  learningOutcomes?: string[]
+  thumbnailUrl?: string
+  bannerUrl?: string
+  durationMinutes?: number
+  stats?: {
+    enrollmentsCount?: number
+    completionRate?: number
+    averageRating?: number
+  }
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AdminContactReply = {
+  admin?: {
+    username?: string
+    email?: string
+  } | null
+  message: string
+  messageId?: string
+  sentAt?: string
+}
+
+export type AdminContactMessageRow = {
+  _id: string
+  name: string
+  email: string
+  message: string
+  status: 'unread' | 'read' | 'replied'
+  replies?: AdminContactReply[]
+  createdAt?: string
+  updatedAt?: string
+  readAt?: string | null
+  lastRepliedAt?: string | null
 }
 
 type AdminListResponse<T> = {
@@ -426,6 +482,54 @@ export async function deleteAdminCourse(courseId: string) {
   return {
     ok: response.ok,
     message: data.message ?? (response.ok ? 'Course deleted successfully.' : 'Failed to delete course.'),
+    data: data.data ?? null,
+  }
+}
+
+export async function fetchAdminCourseDetail(courseId: string) {
+  const { response, data } = await apiGet<AdminListResponse<AdminCourseRow>>(
+    `/admin/courses/${courseId}`,
+    { data: undefined },
+  )
+
+  if (!response.ok || !data.data) {
+    return null
+  }
+
+  return data.data
+}
+
+export async function fetchAdminContactMessages(params: {
+  q?: string
+  status?: string
+  page?: number
+  limit?: number
+}) {
+  const { response, data } = await apiGet<AdminListResponse<AdminContactMessageRow[]>>(
+    `/admin/contact-messages${toQueryString(params)}`,
+    { data: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } },
+  )
+
+  if (!response.ok) {
+    return null
+  }
+
+  return {
+    data: data.data ?? [],
+    pagination: data.pagination ?? { total: 0, page: 1, limit: 20, pages: 0 },
+  }
+}
+
+export async function replyToAdminContactMessage(contactMessageId: string, reply: string) {
+  const { response, data } = await apiPost<AdminMutationResponse<AdminContactMessageRow>>(
+    `/admin/contact-messages/${contactMessageId}/reply`,
+    {},
+    { json: { reply } },
+  )
+
+  return {
+    ok: response.ok,
+    message: data.message ?? (response.ok ? 'Contact reply sent successfully.' : 'Failed to reply to contact message.'),
     data: data.data ?? null,
   }
 }

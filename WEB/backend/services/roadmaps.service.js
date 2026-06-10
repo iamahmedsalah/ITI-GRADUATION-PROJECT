@@ -1,5 +1,6 @@
 import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
+import UserActivity from "../models/user/userActivityModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 
 
@@ -104,6 +105,19 @@ const createServiceError = (status, message) => {
   return error;
 };
 
+const logRoadmapActivity = async (userId, type, roadmapId, metadata = {}) => {
+  try {
+    await UserActivity.create({
+      user: userId,
+      type,
+      roadmap: roadmapId,
+      metadata,
+    });
+  } catch (error) {
+    console.error("Error logging roadmap activity:", error);
+  }
+};
+
 // ============ USER ROADMAP SERVICES ============
 
 export const assignRoadmapToUser = async (req, res) => {
@@ -150,6 +164,10 @@ export const assignRoadmapToUser = async (req, res) => {
     }));
 
     await UserRoadmapStepProgress.insertMany(stepProgressRecords);
+    await logRoadmapActivity(userId, "roadmap_start", newRoadmap._id, {
+      templateId,
+      topicsCount: stepProgressRecords.length,
+    });
 
     const populatedRoadmap = await UserRoadmap.findById(newRoadmap._id)
       .populate("template", "title description")
@@ -230,6 +248,16 @@ export const updateStepProgress = async (req, res) => {
     );
 
     await updateRoadmapProgress(roadmapId, userId);
+    if (status === "completed") {
+      await logRoadmapActivity(userId, "roadmap_step_complete", roadmapId, {
+        stepKey,
+        completedSteps: 1,
+      });
+    } else if (status === "inProgress") {
+      await logRoadmapActivity(userId, "roadmap_start", roadmapId, {
+        stepKey,
+      });
+    }
 
     return res.status(200).json({
       success: true,

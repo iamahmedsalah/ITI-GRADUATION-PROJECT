@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { DashboardSquare03Icon, Route03Icon, UserEdit01Icon } from '@hugeicons/core-free-icons'
+import { DashboardSquare03Icon, Mail01Icon, Route03Icon, UserEdit01Icon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   createHeroLineVariants,
@@ -53,6 +53,7 @@ function AdminDashboardPage() {
 
   const roadmapsTotal = overview?.roadmaps.templatesTotal ?? 0
   const coursesTotal = overview?.courses.total ?? 0
+  const unreadContactMessages = overview?.contactMessages?.unread ?? 0
   const onlineUsers = overview?.users.online ?? 0
   const activeUsers = overview?.users.active ?? 0
   const liveDate = useMemo(
@@ -91,7 +92,7 @@ function AdminDashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" variants={staggerContainerVariants}>
+        <motion.div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5" variants={staggerContainerVariants}>
           <MetricCard
             label={t('adminUi.dashboard.metrics.activeUsers')}
             value={activeUsers}
@@ -115,6 +116,12 @@ function AdminDashboardPage() {
             value={coursesTotal}
             helper={t('adminUi.tabs.coursesHint')}
             icon={DashboardSquare03Icon}
+          />
+          <MetricCard
+            label={t('adminUi.tabs.contactMessages')}
+            value={unreadContactMessages}
+            helper={t('adminUi.tabs.contactMessagesHint')}
+            icon={Mail01Icon}
           />
         </motion.div>
 

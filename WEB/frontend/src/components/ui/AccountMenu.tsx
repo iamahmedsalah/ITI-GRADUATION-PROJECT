@@ -7,7 +7,6 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   DashboardSquare03Icon,
   Login03Icon,
-  Route03Icon,
   UserEdit01Icon,
 } from '@hugeicons/core-free-icons';
 import { clearAccessToken } from '../../utils/api'
@@ -108,13 +107,6 @@ export default function AccountMenu({ user, language, isRtl = false }: Props) {
                   <HugeiconsIcon icon={UserEdit01Icon} size={16} />
                 </span>
                 <span>{t('navbar.myProfile')}</span>
-              </NavLink>
-
-              <NavLink to={`/${language}/roadmaps/frontend`} className={({ isActive }) => `flex w-full items-center gap-2 rounded-squircle px-4 py-3 text-sm font-medium transition-colors ${isActive ? 'bg-(--surface-3) text-(--text-h)' : 'text-(--text-secondary) hover:bg-(--surface-soft-hover) hover:text-(--text-h)'} cursor-pointer`} onClick={() => setOpen(false)}>
-                <span className="grid size-8 place-items-center rounded-squircle bg-[linear-gradient(135deg,rgba(29,185,84,0.18),rgba(6,95,70,0.1))] text-(--text-h)">
-                  <HugeiconsIcon icon={Route03Icon} size={16} />
-                </span>
-                <span>{t('navbar.roadmaps')}</span>
               </NavLink>
 
               <button type="button" onClick={() => logoutMutation.mutate()} className="flex w-full items-center gap-2 rounded-squircle px-4 py-3 text-start text-sm font-medium text-(--error) transition-colors hover:bg-[rgba(226,33,52,0.08)] hover:text-(--error) cursor-pointer">

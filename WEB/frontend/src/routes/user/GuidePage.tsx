@@ -18,7 +18,7 @@ export default function GuidePage() {
       dir={direction}
     >
       <div className="mx-auto grid max-w-6xl gap-10">
-        <section className="rounded-[32px] border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
+        <section className="rounded-4xl border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
           <div className="max-w-4xl">
             <p className="text-sm uppercase tracking-[0.32em] text-(--gd-primary)">
               {t("guidePage.overline")}

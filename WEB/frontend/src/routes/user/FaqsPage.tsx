@@ -31,7 +31,7 @@ export default function FaqsPage() {
       dir={direction}
     >
       <div className="mx-auto grid max-w-6xl gap-12">
-        <header className="rounded-[32px] border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
+        <header className="rounded-4xl border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
           <p className="text-sm uppercase tracking-[0.32em] text-(--gd-primary)">
             {t("faqPage.overline")}
           </p>

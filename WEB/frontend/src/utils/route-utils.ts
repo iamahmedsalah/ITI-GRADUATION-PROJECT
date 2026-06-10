@@ -15,11 +15,19 @@ export type RoadmapLoaderData = {
 export type AuthUser = {
   _id: string
   username: string
+  Fname?: string
+  Lname?: string
   name: string
   email: string
+  avatarUrl?: string | null
   role: string
   isVerified: boolean
   lastLogin?: string | number | null
+  loginStreak?: {
+    current: number
+    longest: number
+    lastLoginDate?: string | number | null
+  }
 }
 
 export type DashboardLoaderData = {

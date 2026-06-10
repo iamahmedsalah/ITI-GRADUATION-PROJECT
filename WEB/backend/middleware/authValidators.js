@@ -18,6 +18,25 @@ const passwordRequirementsPattern =
   /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]).{8,}/;
 const passwordRequirementsMessage =
   "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+const imageDataUriSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+$/,
+    "Avatar must be a valid base64 image.",
+  )
+  .refine((value) => {
+    const base64 = String(value).split(",")[1] || "";
+    const normalizedBase64 = base64.replace(/\s/g, "");
+    const padding = normalizedBase64.endsWith("==")
+      ? 2
+      : normalizedBase64.endsWith("=")
+        ? 1
+        : 0;
+    const bytes = Math.floor((normalizedBase64.length * 3) / 4) - padding;
+
+    return bytes <= 3 * 1024 * 1024;
+  }, "Avatar image must be 3MB or smaller.");
 
 const getUsernameValidationMessage = (value) => {
   const username = String(value).trim();
@@ -188,6 +207,50 @@ const resetPasswordSchema = z.object({
   }),
 });
 
+const profileUpdateSchema = z.object({
+  body: z
+    .object({
+      username: bodySchema.username.optional(),
+      Fname: bodySchema.Fname.optional(),
+      Lname: bodySchema.Lname.optional(),
+    })
+    .strict()
+    .refine(
+      (value) => Boolean(value.username || value.Fname || value.Lname),
+      "Provide at least one field to update.",
+    ),
+  params: z.object({}).passthrough(),
+});
+
+const updatePasswordSchema = z.object({
+  body: z
+    .object({
+      currentPassword: z
+        .string({ error: "Current password is required." })
+        .min(8, "Current password must be at least 8 characters."),
+      newPassword: z
+        .string({ error: "New password is required." })
+        .min(8, "New password must be at least 8 characters.")
+        .regex(passwordRequirementsPattern, passwordRequirementsMessage),
+    })
+    .strict()
+    .refine(
+      (value) => value.currentPassword !== value.newPassword,
+      {
+        path: ["newPassword"],
+        message: "New password must be different from current password.",
+      },
+    ),
+  params: z.object({}).passthrough(),
+});
+
+const avatarUpdateSchema = z.object({
+  body: z.object({
+    avatarImage: imageDataUriSchema,
+  }),
+  params: z.object({}).passthrough(),
+});
+
 export const signupValidation = validateRequest(signupSchema);
 
 export const signupUniquenessValidation = async (req, res, next) => {
@@ -266,3 +329,9 @@ export const forgetPasswordValidation = validateRequest(forgetPasswordSchema);
 export const resendVerificationValidation = validateRequest(forgetPasswordSchema);
 
 export const resetPasswordValidation = validateRequest(resetPasswordSchema);
+
+export const profileUpdateValidation = validateRequest(profileUpdateSchema);
+
+export const updatePasswordValidation = validateRequest(updatePasswordSchema);
+
+export const avatarUpdateValidation = validateRequest(avatarUpdateSchema);

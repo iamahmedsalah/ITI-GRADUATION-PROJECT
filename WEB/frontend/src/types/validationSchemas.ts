@@ -92,3 +92,18 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
     message: 'validation.password.confirmMatch',
   })
+
+export const contactSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'validation.contact.nameMin')
+    .max(80, 'validation.contact.nameMax')
+    .regex(/^[^\r\n<>]+$/, 'validation.contact.nameInvalid'),
+  email: baseEmailSchema.transform((value) => value.toLowerCase()),
+  message: z
+    .string()
+    .trim()
+    .min(10, 'validation.contact.messageMin')
+    .max(5000, 'validation.contact.messageMax'),
+})

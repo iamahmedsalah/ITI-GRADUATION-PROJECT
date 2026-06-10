@@ -22,7 +22,7 @@ type NavItem = {
   to: string
   exact?: boolean
   count?: number
-  kind: 'dashboard' | 'users' | 'roadmaps' | 'courses'
+  kind: 'dashboard' | 'users' | 'roadmaps' | 'courses' | 'contact'
 }
 
 function localizedPath(language: string, pathname: string) {
@@ -145,6 +145,7 @@ export function AdminLayout() {
     { label: t('adminUi.nav.users'), to: localizedPath(language, '/admin/users'), count: overview?.users.total ?? 0, kind: 'users' },
     { label: t('adminUi.nav.roadmaps'), to: localizedPath(language, '/admin/roadmaps'), count: overview?.roadmaps.templatesTotal ?? 0, kind: 'roadmaps' },
     { label: t('adminUi.nav.courses'), to: localizedPath(language, '/admin/courses'), count: overview?.courses.total ?? 0, kind: 'courses' },
+    { label: t('adminUi.nav.contactMessages'), to: localizedPath(language, '/admin/contact-messages'), count: overview?.contactMessages?.unread ?? 0, kind: 'contact' },
   ]
 
   const handleAdminLogout = async () => {

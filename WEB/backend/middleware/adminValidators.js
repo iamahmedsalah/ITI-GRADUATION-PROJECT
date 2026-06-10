@@ -315,9 +315,32 @@ const adminLogsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
-    targetType: z.enum(["user", "roadmapTemplate", "course", "system"]).optional(),
+    targetType: z.enum(["user", "roadmapTemplate", "course", "contactMessage", "system"]).optional(),
     action: z.string().trim().max(100).optional(),
   }),
+});
+
+const contactMessagesListSchema = z.object({
+  body: z.object({}).passthrough(),
+  params: z.object({}).passthrough(),
+  query: paginationQuerySchema.extend({
+    q: z.string().trim().max(100).optional(),
+    status: z.enum(["unread", "read", "replied"]).optional(),
+  }),
+});
+
+const contactMessageReplySchema = z.object({
+  body: z.object({
+    reply: z
+      .string({ error: "Reply message is required." })
+      .trim()
+      .min(10, "Reply must be at least 10 characters.")
+      .max(5000, "Reply must be at most 5000 characters."),
+  }),
+  params: z.object({
+    contactMessageId: objectIdSchema,
+  }),
+  query: z.object({}).passthrough(),
 });
 
 export const adminUsersListValidation = validateRequest(usersListSchema);
@@ -331,3 +354,5 @@ export const adminCourseIdValidation = validateRequest(courseIdParamsSchema);
 export const adminCreateCourseValidation = validateRequest(createCourseSchema);
 export const adminUpdateCourseValidation = validateRequest(updateCourseSchema);
 export const adminLogsListValidation = validateRequest(adminLogsSchema);
+export const adminContactMessagesListValidation = validateRequest(contactMessagesListSchema);
+export const adminContactMessageReplyValidation = validateRequest(contactMessageReplySchema);

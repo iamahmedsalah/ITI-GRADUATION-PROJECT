@@ -1,98 +1,70 @@
 import { motion } from 'framer-motion'
-import { Link, useLoaderData, useNavigate } from 'react-router-dom'
+import { Link, useLoaderData } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '../../context/LanguageContext'
 import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
-import { clearAccessToken } from '../../utils/api'
 import type { DashboardLoaderData } from '../../utils/route-utils'
-import { authQueryKey, logoutCurrentUser } from '../../libs/react-query'
+import { fetchDashboardSummary } from '../../libs/user-api'
+import {
+  ContinueFollowingSection,
+  DashboardStat,
+  LearningActivitySection,
+  StreakCard,
+} from '../../components/dashboard/DashboardSections'
 
 function DashboardPage() {
   const { language, direction } = useLanguage()
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { user } = useLoaderData() as DashboardLoaderData
   const pageVariants = createPageVariants(direction)
   const heroLineVariants = createHeroLineVariants(direction)
   const staggerContainerVariants = createStaggerContainerVariants(direction)
   const cardVariants = createCardVariants(direction)
-
-  const logoutMutation = useMutation({
-    mutationFn: logoutCurrentUser,
-    onSuccess: async () => {
-      clearAccessToken()
-      queryClient.setQueryData(authQueryKey, null)
-      toast.info(t('auth.logoutSuccess'))
-      navigate(`/${language}/login`, { replace: true })
-    },
-    onError: (error) => {
-      clearAccessToken()
-      toast.error(error instanceof Error ? error.message : t('auth.logoutFailed'))
-    },
+  const summaryQuery = useQuery({
+    queryKey: ['dashboard', 'summary'],
+    queryFn: fetchDashboardSummary,
   })
+  const summary = summaryQuery.data
+  const streak = summary?.streak ?? user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null }
+  const currentlyLearning = (summary?.totals.activeRoadmaps ?? 0) + (summary?.totals.activeCourses ?? 0)
+  const continueRoadmaps = summary?.roadmaps?.slice(0, 4) ?? []
 
   return (
-    <motion.main className="px-8 py-8 -z-20"  variants={pageVariants} initial="hidden" animate="show">
-      <motion.section className="grid gap-6 rounded-2xl border border-(--border) bg-(--surface) p-6 shadow-[0_10px_30px_rgba(0,0,0,0.18)]" variants={staggerContainerVariants}>
-        <motion.div variants={heroLineVariants} className="flex flex-wrap items-center justify-between gap-3">
+    <motion.main className="px-6 py-8 sm:px-8" variants={pageVariants} initial="hidden" animate="show">
+      <motion.section className="mx-auto grid max-w-7xl gap-6" variants={staggerContainerVariants}>
+        <motion.div variants={heroLineVariants} className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-(--text-h)">User dashboard</h1>
-            <p className="mt-2 text-sm leading-6 text-(--text)">
-              Protected route for the signed-in user in the {language} locale.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">{t('dashboard.overline')}</p>
+            <h1 className="mt-3 text-3xl font-semibold text-(--text-h)">{t('dashboard.title')}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-(--text)">{t('dashboard.subtitle')}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link to={`/${language}`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
-              Home
-            </Link>
-            <Link to={`/${language}/verify-email`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
-              Verify email
-            </Link>
-            <button
-              type="button"
-              onClick={() => logoutMutation.mutate()}
-              className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)"
-            >
-              Logout
-            </button>
-          </div>
+          <Link to={`/${language}/profile`} className="rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+            {t('navbar.myProfile')}
+          </Link>
         </motion.div>
 
-        <motion.div className="grid gap-4 md:grid-cols-2" variants={staggerContainerVariants}>
-          <motion.article variants={cardVariants} className="rounded-2xl border border-(--border) bg-(--surface) p-5">
-            <h2 className="text-lg font-semibold text-(--text-h)">Account</h2>
-            <p className="mt-2 text-sm leading-6 text-(--text)">Username: {user.username}</p>
-            <p className="text-sm leading-6 text-(--text)">Name: {user.name}</p>
-            <p className="text-sm leading-6 text-(--text)">Email: {user.email}</p>
-          </motion.article>
-          <motion.article variants={cardVariants} className="rounded-2xl border border-(--border) bg-(--surface) p-5">
-            <h2 className="text-lg font-semibold text-(--text-h)">Status</h2>
-            <p className="mt-2 text-sm leading-6 text-(--text)">Role: {user.role}</p>
-            <p className="text-sm leading-6 text-(--text)">Verified: {user.isVerified ? 'Yes' : 'No'}</p>
-            <p className="text-sm leading-6 text-(--text)">Last login: {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</p>
-          </motion.article>
+        <motion.div variants={cardVariants} className="grid overflow-hidden rounded-lg border border-(--border) bg-(--surface) md:grid-cols-3">
+          <DashboardStat value={summary?.totals.totalCompletedSteps ?? 0} label={t('dashboard.stats.topicsCompleted')} />
+          <DashboardStat value={currentlyLearning} label={t('dashboard.stats.currentlyLearning')} />
+          <DashboardStat value={`${streak.current}d`} label={t('dashboard.stats.visitStreak')} />
         </motion.div>
 
-        {!user.isVerified ? (
-          <motion.div variants={heroLineVariants} className="rounded-2xl border border-(--border) bg-(--surface) p-5">
-            <h2 className="text-lg font-semibold text-(--text-h)">Verify your account</h2>
-            <p className="mt-2 text-sm leading-6 text-(--text)">
-              Your dashboard is available, but verification is still required to unlock the full account flow.
-            </p>
-            <Link to={`/${language}/verify-email`} className="mt-4 inline-flex rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
-              Open verification page
-            </Link>
+        <motion.div variants={staggerContainerVariants} className="grid gap-6 lg:grid-cols-[0.95fr_1.35fr]">
+          <motion.div variants={cardVariants}>
+            <StreakCard current={streak.current} longest={streak.longest} />
           </motion.div>
-        ) : null}
+          <motion.div variants={cardVariants}>
+            <ContinueFollowingSection roadmaps={continueRoadmaps} />
+          </motion.div>
+        </motion.div>
+
+        <motion.div variants={cardVariants}>
+          <LearningActivitySection activities={summary?.activities ?? []} isLoading={summaryQuery.isLoading} />
+        </motion.div>
       </motion.section>
     </motion.main>
   )
 }
 
 export default DashboardPage
-
-
-

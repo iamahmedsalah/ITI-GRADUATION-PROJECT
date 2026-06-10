@@ -228,3 +228,57 @@ export const authFormFieldItemVariants: Variants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0 },
 }
+
+export function createContactPanelVariants(direction: MotionDirection, side: 'form' | 'info'): Variants {
+  const directionSign = direction === 'rtl' ? -1 : 1
+  const sideSign = side === 'form' ? -1 : 1
+
+  return {
+    hidden: {
+      opacity: 0,
+      x: directionSign * sideSign * 34,
+      y: 22,
+      scale: 0.97,
+      filter: 'blur(8px)',
+    },
+    show: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      scale: 1,
+      filter: 'blur(0px)',
+      transition: {
+        duration: 0.62,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  }
+}
+
+export const contactSendIconVariants: Variants = {
+  idle: {
+    x: 0,
+    rotate: 0,
+    scale: 1,
+  },
+  sending: {
+    x: [0, 8, 0],
+    y: [0, -3, 0],
+    rotate: [0, -8, 8, 0],
+    transition: {
+      duration: 0.8,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+  sent: {
+    x: 0,
+    y: 0,
+    rotate: 0,
+    scale: [1, 1.25, 1],
+    transition: {
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+}

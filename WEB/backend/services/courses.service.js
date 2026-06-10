@@ -16,6 +16,55 @@ const logActivity = async (userId, type, courseId, metadata = {}) => {
   }
 };
 
+export const listPublishedCourses = async (req, res) => {
+  const { q = "", level, category, limit = 6 } = req.query;
+
+  try {
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 6, 1), 24);
+    const query = {
+      deletedAt: null,
+      isPublished: true,
+    };
+
+    if (level) query.level = level;
+    if (category) query.category = category;
+
+    const queryText = String(q).trim();
+    if (queryText) {
+      const safeRegex = new RegExp(
+        queryText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
+      query.$or = [
+        { title: safeRegex },
+        { description: safeRegex },
+        { shortDescription: safeRegex },
+        { tags: safeRegex },
+        { category: safeRegex },
+      ];
+    }
+
+    const courses = await Course.find(query)
+      .select(
+        "title slug shortDescription description level category thumbnailUrl durationMinutes tags stats isFeatured createdAt",
+      )
+      .sort({ isFeatured: -1, createdAt: -1 })
+      .limit(parsedLimit)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: courses,
+    });
+  } catch (error) {
+    console.error("List published courses error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch published courses.",
+    });
+  }
+};
+
 export const enrollCourse = async (req, res) => {
   const userId = req.user._id;
   const { courseId, roadmapId } = req.body;

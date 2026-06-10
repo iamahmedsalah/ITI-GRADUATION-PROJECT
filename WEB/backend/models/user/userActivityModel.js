@@ -16,6 +16,8 @@ const userActivitySchema = new mongoose.Schema(
         "course_search",
         "course_bookmark",
         "course_enroll",
+        "course_complete",
+        "login",
         "lesson_complete",
         "roadmap_start",
         "roadmap_step_complete",

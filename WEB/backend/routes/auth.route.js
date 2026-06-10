@@ -14,6 +14,9 @@ import {
   loginValidation,
   forgetPasswordValidation,
   resetPasswordValidation,
+  profileUpdateValidation,
+  updatePasswordValidation,
+  avatarUpdateValidation,
 } from "../middleware/authValidators.js";
 import {
   signup,
@@ -26,6 +29,10 @@ import {
   resetPassword,
   checkAuth,
   refreshAuth,
+  getDashboardSummary,
+  updateProfile,
+  updatePassword,
+  updateAvatar,
   startSocialAuth,
   handleSocialAuthCallback,
 } from "../services/users.service.js";
@@ -241,5 +248,9 @@ router.post("/logout", logout);
  *       - bearerAuth: []
  */
 router.get("/check-auth", protect, checkAuth);
+router.get("/dashboard-summary", protect, getDashboardSummary);
+router.patch("/profile", protect, profileUpdateValidation, updateProfile);
+router.patch("/profile/avatar", protect, avatarUpdateValidation, updateAvatar);
+router.patch("/password", protect, updatePasswordValidation, updatePassword);
 
 export default router;

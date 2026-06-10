@@ -10,6 +10,7 @@ import {
   validateUserEnrollment,
 } from "../middleware/courseValidators.js";
 import {
+  listPublishedCourses,
   enrollCourse,
   updateCourseProgress,
   completeCourse,
@@ -21,7 +22,9 @@ import {
 
 const router = express.Router();
 
-// All routes require authentication
+router.get("/published", listPublishedCourses);
+
+// All routes below require authentication
 router.use(protect);
 router.use(authorizeRoles("student"));
 

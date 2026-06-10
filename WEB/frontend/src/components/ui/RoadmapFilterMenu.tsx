@@ -39,12 +39,11 @@ export default function RoadmapFilterMenu({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currentType =
-    selectedType ??
-    useMemo(
-      () => getFilterType(new URLSearchParams(location.search)),
-      [location.search],
-    );
+  const typeFromLocation = useMemo(
+    () => getFilterType(new URLSearchParams(location.search)),
+    [location.search],
+  );
+  const currentType = selectedType ?? typeFromLocation;
 
   const options: DropdownOption<RoadmapFilterType>[] = roadmapFilters.map(
     (filter) => ({

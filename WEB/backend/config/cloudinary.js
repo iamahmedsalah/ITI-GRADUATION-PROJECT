@@ -1,17 +1,16 @@
 import crypto from "node:crypto";
 
-const {
-  CLOUDINARY_CLOUD_NAME,
-  CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET,
-  CLOUDINARY_UPLOAD_FOLDER,
-} = process.env;
-
-const DEFAULT_FOLDER = CLOUDINARY_UPLOAD_FOLDER || "ilma/courses";
-const CLOUDINARY_UPLOAD_TIMEOUT_MS = Math.max(
-  Number(process.env.CLOUDINARY_UPLOAD_TIMEOUT_MS) || 15000,
-  1000,
-);
+const getCloudinaryConfig = () => ({
+  cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  apiKey: process.env.CLOUDINARY_API_KEY,
+  apiSecret: process.env.CLOUDINARY_API_SECRET,
+  courseFolder: process.env.CLOUDINARY_COURSE_FOLDER || "ilma/courses",
+  avatarFolder: process.env.CLOUDINARY_AVATAR_FOLDER || "ilma/avatars",
+  uploadTimeoutMs: Math.max(
+    Number(process.env.CLOUDINARY_UPLOAD_TIMEOUT_MS) || 15000,
+    1000,
+  ),
+});
 
 const DATA_URI_IMAGE_REGEX =
   /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+$/;
@@ -20,9 +19,9 @@ const isNonEmptyString = (value) =>
   typeof value === "string" && value.trim().length > 0;
 
 export const isCloudinaryConfigured = () =>
-  isNonEmptyString(CLOUDINARY_CLOUD_NAME) &&
-  isNonEmptyString(CLOUDINARY_API_KEY) &&
-  isNonEmptyString(CLOUDINARY_API_SECRET);
+  isNonEmptyString(getCloudinaryConfig().cloudName) &&
+  isNonEmptyString(getCloudinaryConfig().apiKey) &&
+  isNonEmptyString(getCloudinaryConfig().apiSecret);
 
 const isHttpUrl = (value) => {
   if (!isNonEmptyString(value)) return false;
@@ -35,6 +34,9 @@ const isHttpUrl = (value) => {
   }
 };
 
+const isCloudinaryUrl = (value) =>
+  isNonEmptyString(value) && value.includes("res.cloudinary.com/");
+
 const isDataUriImage = (value) =>
   isNonEmptyString(value) && DATA_URI_IMAGE_REGEX.test(value.trim());
 
@@ -44,7 +46,7 @@ const makeError = (message, status = 500) => {
   return error;
 };
 
-const sanitizePublicIdPart = (value, fallback = "course") =>
+const sanitizePublicIdPart = (value, fallback = "image") =>
   String(value || fallback)
     .trim()
     .toLowerCase()
@@ -52,6 +54,21 @@ const sanitizePublicIdPart = (value, fallback = "course") =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 80) || fallback;
+
+const getDataUriSizeBytes = (value) => {
+  if (!isDataUriImage(value)) return 0;
+
+  const base64 = String(value).split(",")[1] || "";
+  const normalizedBase64 = base64.replace(/\s/g, "");
+
+  const padding = normalizedBase64.endsWith("==")
+    ? 2
+    : normalizedBase64.endsWith("=")
+      ? 1
+      : 0;
+
+  return Math.floor((normalizedBase64.length * 3) / 4) - padding;
+};
 
 const signCloudinaryParams = (params, apiSecret) => {
   const paramsToSign = Object.entries(params)
@@ -68,14 +85,21 @@ const signCloudinaryParams = (params, apiSecret) => {
 };
 
 const uploadImageToCloudinary = async (fileValue, { folder, publicId }) => {
-  if (!isCloudinaryConfigured()) {
+  const config = getCloudinaryConfig();
+
+  if (
+    !isNonEmptyString(config.cloudName) ||
+    !isNonEmptyString(config.apiKey) ||
+    !isNonEmptyString(config.apiSecret)
+  ) {
     throw makeError(
       "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.",
-      500,
+      503,
     );
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
+
   const paramsToSign = {
     folder,
     public_id: publicId,
@@ -83,12 +107,13 @@ const uploadImageToCloudinary = async (fileValue, { folder, publicId }) => {
     overwrite: "true",
   };
 
-  const signature = signCloudinaryParams(paramsToSign, CLOUDINARY_API_SECRET);
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const signature = signCloudinaryParams(paramsToSign, config.apiSecret);
+
+  const endpoint = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
 
   const form = new FormData();
   form.append("file", fileValue);
-  form.append("api_key", CLOUDINARY_API_KEY);
+  form.append("api_key", config.apiKey);
   form.append("timestamp", String(timestamp));
   form.append("signature", signature);
   form.append("folder", folder);
@@ -96,11 +121,13 @@ const uploadImageToCloudinary = async (fileValue, { folder, publicId }) => {
   form.append("overwrite", "true");
 
   const abortController = new AbortController();
+
   const timeoutId = setTimeout(() => {
     abortController.abort();
-  }, CLOUDINARY_UPLOAD_TIMEOUT_MS);
+  }, config.uploadTimeoutMs);
 
   let response;
+
   try {
     response = await fetch(endpoint, {
       method: "POST",
@@ -110,10 +137,11 @@ const uploadImageToCloudinary = async (fileValue, { folder, publicId }) => {
   } catch (error) {
     if (error.name === "AbortError") {
       throw makeError(
-        `Cloudinary upload timed out after ${CLOUDINARY_UPLOAD_TIMEOUT_MS}ms.`,
+        `Cloudinary upload timed out after ${config.uploadTimeoutMs}ms.`,
         504,
       );
     }
+
     throw makeError(`Cloudinary upload request failed: ${error.message}`, 502);
   } finally {
     clearTimeout(timeoutId);
@@ -126,6 +154,7 @@ const uploadImageToCloudinary = async (fileValue, { folder, publicId }) => {
       payload?.error?.message ||
       payload?.message ||
       `Cloudinary upload failed with status ${response.status}.`;
+
     throw makeError(reason, response.status || 500);
   }
 
@@ -141,13 +170,14 @@ export const resolveCourseImageUrls = async (
   }
 
   const fields = ["thumbnailUrl", "bannerUrl"];
-  const baseSlug = sanitizePublicIdPart(slug || courseId || "course");
-  const baseFolder = DEFAULT_FOLDER;
+  const baseSlug = sanitizePublicIdPart(slug || courseId || "course", "course");
+  const baseFolder = getCloudinaryConfig().courseFolder;
 
   for (const field of fields) {
     if (payload[field] === undefined) continue;
 
     const rawValue = payload[field];
+
     const normalizedValue =
       typeof rawValue === "string" ? rawValue.trim() : rawValue;
 
@@ -158,14 +188,14 @@ export const resolveCourseImageUrls = async (
 
     const canUpload =
       isDataUriImage(normalizedValue) ||
-      (isHttpUrl(normalizedValue) &&
-        !String(normalizedValue).includes("res.cloudinary.com/"));
+      (isHttpUrl(normalizedValue) && !isCloudinaryUrl(normalizedValue));
 
     if (!canUpload) {
       continue;
     }
 
-    const publicId = `${baseSlug}-${field}`;
+    const publicId = sanitizePublicIdPart(`${baseSlug}-${field}`, field);
+
     payload[field] = await uploadImageToCloudinary(normalizedValue, {
       folder: baseFolder,
       publicId,
@@ -173,4 +203,40 @@ export const resolveCourseImageUrls = async (
   }
 
   return payload;
+};
+
+export const resolveUserAvatarUrl = async (
+  avatarImage,
+  { userId, username } = {},
+) => {
+  const normalizedValue =
+    typeof avatarImage === "string" ? avatarImage.trim() : avatarImage;
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (isCloudinaryUrl(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  if (!isDataUriImage(normalizedValue)) {
+    throw makeError("Avatar must be a valid base64 image.", 400);
+  }
+
+  const maxAvatarSizeBytes = 3 * 1024 * 1024;
+
+  if (getDataUriSizeBytes(normalizedValue) > maxAvatarSizeBytes) {
+    throw makeError("Avatar image must be 3MB or smaller.", 400);
+  }
+
+  const publicId = sanitizePublicIdPart(
+    `${username || "user"}-${userId || "avatar"}`,
+    "avatar",
+  );
+
+  return uploadImageToCloudinary(normalizedValue, {
+    folder: getCloudinaryConfig().avatarFolder,
+    publicId,
+  });
 };
