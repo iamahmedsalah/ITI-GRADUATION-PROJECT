@@ -1,18 +1,17 @@
-import { useEffect, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { LanguageProvider, useLanguage } from '../../context/LanguageContext'
 import { ThemeProvider, useTheme } from '../../context/ThemeContext'
-import LangToggleButton from '../../components/common/lang-toggle'
-import ThemeToggleButton from '../../components/common/theme-toggle'
 import Navbar from '../../components/ui/navbar'
 import SiteFooter from '../../components/ui/SiteFooter'
+import AdminSidebar, { AdminMenuToggleIcon } from '../../components/ui/AdminSidebar'
 import { Toaster } from 'sonner'
 import type { RouteLanguageData } from '../../utils/route-utils'
 import { fetchAdminOverview } from '../../libs/admin-api'
-import { adminAuthQueryKey, logoutAdminUser } from '../../libs/react-query'
+import { adminAuthQueryKey, fetchAdminCurrentUser, logoutAdminUser } from '../../libs/react-query'
 
 type RootLayoutProps = {
   children?: ReactNode
@@ -23,7 +22,7 @@ type NavItem = {
   to: string
   exact?: boolean
   count?: number
-  icon?: React.ReactNode
+  kind: 'dashboard' | 'users' | 'roadmaps' | 'courses'
 }
 
 function localizedPath(language: string, pathname: string) {
@@ -34,17 +33,15 @@ function localizedPath(language: string, pathname: string) {
   return `/${language}${pathname.startsWith('/') ? pathname : `/${pathname}`}`
 }
 
-function navClassName({ isActive }: { isActive: boolean }) {
-  return [
-    'flex items-center justify-between rounded-full px-4 py-2.5 text-sm font-semibold transition-transform duration-200',
-    isActive
-      ? 'bg-(--gd-primary) text-white'
-      : 'text-(--text-h) hover:scale-[1.03] hover:bg-(--surface-soft-hover)',
-  ].join(' ')
-}
-
 function ShellGradient() {
-  return <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(29,185,84,0.08),transparent_35%),linear-gradient(to_bottom,var(--bg),var(--bg))]" />
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(to_bottom,var(--bg),var(--bg))]">
+      <span className="admin-spark left-[12%] top-[12%]" />
+      <span className="admin-spark left-[62%] top-[20%] delay-300" />
+      <span className="admin-spark left-[78%] top-[68%] delay-700" />
+      <span className="admin-spark left-[28%] top-[76%] delay-1000" />
+    </div>
+  )
 }
 
 function AppToaster() {
@@ -121,6 +118,9 @@ export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isMobileSidebarMounted, setIsMobileSidebarMounted] = useState(false)
   const isAuthRoute =
     location.pathname.endsWith('/login') ||
     location.pathname.endsWith('/forgot-password') ||
@@ -133,11 +133,18 @@ export function AdminLayout() {
     enabled: !isAuthRoute,
   })
 
+  const { data: adminUser } = useQuery({
+    queryKey: adminAuthQueryKey,
+    queryFn: fetchAdminCurrentUser,
+    staleTime: 60_000,
+    enabled: !isAuthRoute,
+  })
+
   const sidebarItems: NavItem[] = [
-    { label: t('adminUi.nav.dashboard'), to: localizedPath(language, '/admin'), exact: true },
-    { label: t('adminUi.nav.users'), to: localizedPath(language, '/admin/users'), count: overview?.users.total ?? 0 },
-    { label: t('adminUi.nav.roadmaps'), to: localizedPath(language, '/admin/roadmaps'), count: overview?.roadmaps.templatesTotal ?? 0 },
-    { label: t('adminUi.nav.courses'), to: localizedPath(language, '/admin/courses'), count: overview?.courses.total ?? 0 },
+    { label: t('adminUi.nav.dashboard'), to: localizedPath(language, '/admin'), exact: true, kind: 'dashboard' },
+    { label: t('adminUi.nav.users'), to: localizedPath(language, '/admin/users'), count: overview?.users.total ?? 0, kind: 'users' },
+    { label: t('adminUi.nav.roadmaps'), to: localizedPath(language, '/admin/roadmaps'), count: overview?.roadmaps.templatesTotal ?? 0, kind: 'roadmaps' },
+    { label: t('adminUi.nav.courses'), to: localizedPath(language, '/admin/courses'), count: overview?.courses.total ?? 0, kind: 'courses' },
   ]
 
   const handleAdminLogout = async () => {
@@ -152,58 +159,98 @@ export function AdminLayout() {
     }
   }
 
+  const openMobileSidebar = () => {
+    setIsMobileSidebarMounted(true)
+    window.requestAnimationFrame(() => {
+      setIsMobileSidebarOpen(true)
+    })
+  }
+
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false)
+  }
+
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsMobileSidebarMounted(false)
+    }, 260)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isMobileSidebarOpen])
+
+  const sidebarProps = {
+    items: sidebarItems,
+    language,
+    brandLabel: t('logo'),
+    consoleLabel: t('adminUi.nav.console'),
+    logoutLabel: t('adminUi.logout.cta'),
+    closeLabel: t('adminUi.nav.closeSidebar'),
+    adminName: adminUser?.name || adminUser?.username || t('adminUi.nav.console'),
+    adminEmail: adminUser?.email,
+    lastLogin: adminUser?.lastLogin,
+    onlineLabel: t('adminUi.nav.online'),
+    lastLoginLabel: t('adminUi.nav.lastLogin'),
+    collapseLabel: t('adminUi.nav.collapseSidebar'),
+    expandLabel: t('adminUi.nav.expandSidebar'),
+    collapsed: isSidebarCollapsed,
+    onClose: closeMobileSidebar,
+    onToggleCollapse: () => setIsSidebarCollapsed((previous) => !previous),
+    onLogout: () => void handleAdminLogout(),
+  }
+
   return (
     <div className="relative flex min-h-screen text-(--text-h)">
       <ShellGradient />
 
       {!isAuthRoute ? (
-        <aside className="hidden w-72 bg-black px-5 py-6 lg:flex lg:flex-col">
-          <Link to={localizedPath(language, '/admin')} className="flex items-center gap-3 text-xl font-semibold text-(--text-h)">
-            <span className="grid size-11 place-items-center rounded-2xl bg-(--gd-primary) text-white shadow-lg shadow-[rgba(29,185,84,0.35)]">
-              A
-            </span>
-            <span>{t('adminUi.nav.console')}</span>
-          </Link>
+        <div className="sticky top-0 hidden h-screen shrink-0 lg:block">
+          <AdminSidebar {...sidebarProps} />
+        </div>
+      ) : null}
 
-          <nav className="mt-10 flex flex-col gap-2">
-            {sidebarItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.exact ?? false} className={navClassName}>
-                <span>{item.label}</span>
-                {typeof item.count === 'number' ? (
-                  <span className="rounded-full bg-(--surface-2) px-2 py-0.5 text-xs text-(--text)">
-                    {item.count}
-                  </span>
-                ) : null}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="mt-auto grid gap-3">
-            <p className="rounded-2xl bg-(--surface) p-4 text-sm text-(--text)">
-              {t('adminUi.nav.hint')}
-            </p>
-            <button
-              type="button"
-              onClick={() => void handleAdminLogout()}
-              className="cursor-pointer rounded-full border border-(--border) bg-transparent px-4 py-2.5 text-sm font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
-            >
-              {t('adminUi.logout.cta')}
-            </button>
+      {!isAuthRoute && isMobileSidebarMounted ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            className={[
+              'absolute inset-0 bg-black/60 transition-opacity duration-300 ease-out',
+              isMobileSidebarOpen ? 'opacity-100' : 'opacity-0',
+            ].join(' ')}
+            aria-label={t('adminUi.nav.closeSidebar')}
+            onClick={closeMobileSidebar}
+          />
+          <div
+            className={[
+              'relative h-full w-72 transition-transform duration-300 ease-out',
+              isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+            ].join(' ')}
+          >
+            <AdminSidebar {...sidebarProps} mobile />
           </div>
-        </aside>
+        </div>
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {!isAuthRoute ? (
           <header className="border-b border-(--border) bg-(--surface)/90 backdrop-blur-xl">
-            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-(--text)">{t('adminUi.header.overline')}</p>
-                <h1 className="text-lg font-semibold text-(--text-h)">{t('adminUi.header.title')}</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <LangToggleButton />
-                <ThemeToggleButton />
+            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={openMobileSidebar}
+                  className="grid size-10 cursor-pointer place-items-center rounded-squircle border border-(--border) text-(--text-h) lg:hidden"
+                  aria-label={t('adminUi.nav.openSidebar')}
+                >
+                  <AdminMenuToggleIcon open={false} />
+                </button>
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-[0.24em] text-(--text)">{t('adminUi.header.overline')}</p>
+                  <h1 className="text-base font-semibold text-(--text-h)">{t('adminUi.header.title')}</h1>
+                </div>
               </div>
             </div>
           </header>
@@ -216,4 +263,3 @@ export function AdminLayout() {
     </div>
   )
 }
-

@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 
 import { RoadmapHeader } from '../../components/ui/RoadmapHeader'
 import { RoadmapGraph } from '../../components/ui/RoadmapGraph'
@@ -12,7 +11,6 @@ import {
   useUpdateStepStatus,
   useUserRoadmaps,
 } from '../../hooks/useRoadmapData'
-import { fallbackTemplate } from '../../utils/fallbackTemplate'
 import {
   buildProgressMap,
   calculateProgress,
@@ -24,7 +22,6 @@ import type { RoadmapLoaderData } from '../../utils/route-utils'
 
 export default function RoadmapPage() {
   const { slug } = useLoaderData() as RoadmapLoaderData
-  const { t } = useTranslation()
   const [selectedStepKey, setSelectedStepKey] = useState('')
   const [isPanelOpen, setIsPanelOpen] = useState(true)
 
@@ -33,7 +30,7 @@ export default function RoadmapPage() {
   const templateQuery = useRoadmapTemplate(slug)
   const userRoadmapsQuery = useUserRoadmaps(Boolean(authQuery.data))
 
-  const template = templateQuery.data ?? (templateQuery.isFetched ? fallbackTemplate : null)
+  const template = templateQuery.data ?? null
   const enrolledRoadmap = userRoadmapsQuery.data?.find(
     (r) => r.template?._id === template?._id,
   )
@@ -45,7 +42,7 @@ export default function RoadmapPage() {
 
   // ─── Derived state ────────────────────────────────────────────────────
   const steps = useMemo(
-    () => (template ? normalizeSteps(template, fallbackTemplate.steps ?? []) : []),
+    () => (template ? normalizeSteps(template) : []),
     [template],
   )
 
@@ -84,6 +81,7 @@ export default function RoadmapPage() {
     () => createGraph(steps, activeStepKey, progressMap, handleSelectStep),
     [steps, activeStepKey, progressMap, handleSelectStep],
   )
+  const shouldShowPanel = isPanelOpen && Boolean(selectedStep)
 
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handleStatusChange = (nextStatus: StepStatus) => {
@@ -106,7 +104,7 @@ export default function RoadmapPage() {
         <div
           className={[
             'grid gap-5',
-            isPanelOpen ? 'xl:grid-cols-[minmax(0,1fr)_380px]' : '',
+            shouldShowPanel ? 'xl:grid-cols-[minmax(0,1fr)_380px]' : '',
           ].join(' ')}
         >
           <RoadmapGraph
@@ -114,25 +112,19 @@ export default function RoadmapPage() {
             edges={edges}
             isLoading={templateQuery.isLoading}
             stepCount={steps.length}
-            isPanelOpen={isPanelOpen}
+            isPanelOpen={shouldShowPanel}
             onTogglePanel={() => setIsPanelOpen((v) => !v)}
           />
 
-          {isPanelOpen && (
-            selectedStep ? (
-              <StepDetailPanel
-                step={selectedStep}
-                status={selectedStatus}
-                disabled={!authQuery.data}
-                isUpdating={isPending}
-                onStatusChange={handleStatusChange}
-                onClose={() => setIsPanelOpen(false)}
-              />
-            ) : (
-              <aside className="rounded-xl border border-(--border) bg-(--surface) p-6 text-(--text)">
-                {t('roadmapDetail.emptySteps')}
-              </aside>
-            )
+          {shouldShowPanel && selectedStep && (
+            <StepDetailPanel
+              step={selectedStep}
+              status={selectedStatus}
+              disabled={!authQuery.data}
+              isUpdating={isPending}
+              onStatusChange={handleStatusChange}
+              onClose={() => setIsPanelOpen(false)}
+            />
           )}
         </div>
       </div>

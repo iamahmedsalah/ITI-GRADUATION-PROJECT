@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import RouteErrorPage from './routes/common/RouteErrorPage'
 import { adminAuthPageLoader, adminProtectedLoader, authPageLoader, dashboardLoader, landingLoader, languageAction, languageLoader, profileLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
 import { AdminLayout, ClientLayout, LanguageLayout, RootLayout } from './routes/common/layouts'
-import { AdminCoursesPage, AdminDashboardPage, AdminForgotPasswordPage, AdminLoginPage, AdminResetPasswordPage, AdminRoadmapsPage, AdminUsersPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
+import { AdminCoursesPage, AdminDashboardPage, AdminForgotPasswordPage, AdminLoginPage, AdminResetPasswordPage, AdminRoadmapDetailPage, AdminRoadmapsPage, AdminUsersPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
 
 export const appRouter = createBrowserRouter([
   {
@@ -88,6 +88,11 @@ export const appRouter = createBrowserRouter([
                 path: 'roadmaps',
                 loader: adminProtectedLoader,
                 element: <AdminRoadmapsPage />,
+              },
+              {
+                path: 'roadmaps/:templateId',
+                loader: adminProtectedLoader,
+                element: <AdminRoadmapDetailPage />,
               },
               {
                 path: 'courses',

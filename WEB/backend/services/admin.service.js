@@ -394,9 +394,11 @@ export const adminCheckAuth = async (req, res) => {
 
 export const getAdminOverview = async (_req, res) => {
   try {
+    const onlineSince = new Date(Date.now() - 15 * 60 * 1000);
     const [
       totalUsers,
       activeUsers,
+      onlineUsers,
       verifiedUsers,
       studentsCount,
       instructorsCount,
@@ -414,6 +416,7 @@ export const getAdminOverview = async (_req, res) => {
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ isActive: true }),
+      User.countDocuments({ isActive: true, lastLogin: { $gte: onlineSince } }),
       User.countDocuments({ isVerified: true }),
       User.countDocuments({ role: "student" }),
       User.countDocuments({ role: "instructor" }),
@@ -439,6 +442,7 @@ export const getAdminOverview = async (_req, res) => {
         users: {
           total: totalUsers,
           active: activeUsers,
+          online: onlineUsers,
           inactive: totalUsers - activeUsers,
           verified: verifiedUsers,
           byRole: {

@@ -110,11 +110,9 @@ export function createGraph(
   return { nodes, edges }
 }
 
-export function normalizeSteps(template: { steps?: RoadmapStep[] }, fallbackSteps: RoadmapStep[]) {
+export function normalizeSteps(template: { steps?: RoadmapStep[] }) {
   const steps = [...(template.steps ?? [])]
-  return (steps.length ? steps : fallbackSteps).sort(
-    (a, b) => (a.order ?? 0) - (b.order ?? 0),
-  )
+  return steps.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
 export function calculateProgress(

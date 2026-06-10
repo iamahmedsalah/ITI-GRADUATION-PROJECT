@@ -101,7 +101,21 @@
     "progressFailed": "Could not update roadmap progress.",
     "resources": "Resources",
     "emptyResources": "No resources were added for this step yet.",
-    "emptySteps": "This roadmap does not have steps yet."
+    "emptySteps": "This roadmap does not have steps yet.",
+    "emptyGraph": {
+      "title": "No roadmaps found",
+      "subtitle": "This roadmap has no visible steps yet. Once content is added, the path will appear here.",
+      "nodes": {
+        "discover": "Discover path",
+        "skills": "Skills map",
+        "projects": "Projects",
+        "finish": "Finish line"
+      },
+      "labels": {
+        "pending": "Waiting for content",
+        "empty": "No steps yet"
+      }
+    }
   },
   "profile": {
     "title": "My profile",
@@ -198,7 +212,17 @@
       "creating": "Creating...",
       "noData": "No data",
       "any": "Any",
-      "notAvailable": "N/A"
+      "notAvailable": "N/A",
+      "previous": "Previous",
+      "next": "Next",
+      "pageSummary": "Page {{page}} of {{pages}} - {{total}} total",
+      "showFilters": "Show filters",
+      "hideFilters": "Hide filters",
+      "saving": "Saving...",
+      "close": "Close",
+      "selectAll": "Select all",
+      "deleteSelected": "Delete selected ({{count}})",
+      "bulkDeleteConfirm": "Delete {{count}} selected item(s)?"
     },
     "roles": {
       "student": "Student",
@@ -224,7 +248,13 @@
       "users": "Users",
       "roadmaps": "Roadmaps",
       "courses": "Courses",
-      "hint": "Manage users, roadmap templates, and courses from one place."
+      "hint": "Manage users, roadmap templates, and courses from one place.",
+      "openSidebar": "Open admin sidebar",
+      "closeSidebar": "Close admin sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "expandSidebar": "Expand sidebar",
+      "online": "Online",
+      "lastLogin": "Last login"
     },
     "logout": {
       "cta": "Logout",
@@ -264,7 +294,13 @@
       "panelUsers": "Users status",
       "panelUsersHint": "{{active}} active accounts, {{verified}} verified users.",
       "panelLearning": "Learning assets",
-      "panelLearningHint": "{{published}} published courses and {{activeRoadmaps}} active roadmap templates."
+      "panelLearningHint": "{{published}} published courses and {{activeRoadmaps}} active roadmap templates.",
+      "metrics": {
+        "activeUsers": "Active users",
+        "activeUsersHint": "Enabled accounts that can access the platform.",
+        "onlineUsers": "Online users",
+        "onlineUsersHint": "Users active in the last 15 minutes."
+      }
     },
     "tabs": {
       "users": "Users",
@@ -283,6 +319,8 @@
       "loading": "Loading users...",
       "empty": "No users found.",
       "updateFailed": "Failed to update user.",
+      "emailStatus": "Email",
+      "accountStatus": "Account",
       "filters": {
         "allRoles": "All roles",
         "allVerification": "All verification",
@@ -301,7 +339,8 @@
         "unverify": "Unverify",
         "activate": "Activate",
         "deactivate": "Deactivate",
-        "deactivationPrompt": "Optional deactivation reason"
+        "deactivationPrompt": "Optional deactivation reason",
+        "deactivateSelected": "Deactivate selected ({{count}})"
       }
     },
     "roadmaps": {
@@ -336,7 +375,9 @@
         "goal": "Roadmap goal (at least 10 chars)",
         "description": "Description (optional)",
         "invalid": "Please complete title, slug, goal, and markdown steps.",
+        "add": "Add roadmap",
         "create": "Create roadmap template",
+        "update": "Update roadmap template",
         "type": "Roadmap type"
       },
       "actions": {
@@ -346,6 +387,16 @@
         "renamePrompt": "Update roadmap title",
         "delete": "Delete",
         "deleteConfirm": "Delete roadmap \"{{title}}\"?"
+      },
+      "detail": {
+        "back": "Back to roadmaps",
+        "assigned": "Assigned users",
+        "steps": "Steps",
+        "stepProgress": "Step progress records",
+        "step": "Step",
+        "dependencies": "Dependencies",
+        "resources": "Resources",
+        "noSteps": "No steps were added to this roadmap."
       }
     },
     "courses": {
@@ -388,7 +439,9 @@
         "published": "Published",
         "featured": "Featured",
         "invalid": "Please complete title, slug, and description.",
-        "create": "Create course"
+        "add": "Add course",
+        "create": "Create course",
+        "update": "Update course"
       },
       "actions": {
         "publish": "Publish",
