@@ -1,8 +1,47 @@
-import { createBrowserRouter } from 'react-router-dom'
-import RouteErrorPage from './routes/common/RouteErrorPage'
-import { adminAuthPageLoader, adminProtectedLoader, authPageLoader, dashboardLoader, landingLoader, languageAction, languageLoader, profileLoader, roadmapAction, roadmapLoader } from './utils/route-utils'
-import { AdminLayout, ClientLayout, LanguageLayout, RootLayout } from './routes/common/layouts'
-import { AdminCoursesPage, AdminDashboardPage, AdminForgotPasswordPage, AdminLoginPage, AdminResetPasswordPage, AdminRoadmapDetailPage, AdminRoadmapsPage, AdminUsersPage, DashboardPage, ForgotPasswordPage, HomePage, LoginPage, NotFound, ProfilePage, ResetPasswordPage, RoadmapPage, SignupPage, VerifyEmailPage } from './utils/routes.lazy'
+import { createBrowserRouter } from "react-router-dom";
+import RouteErrorPage from "./routes/common/RouteErrorPage";
+import {
+  adminAuthPageLoader,
+  adminProtectedLoader,
+  authPageLoader,
+  dashboardLoader,
+  landingLoader,
+  languageAction,
+  languageLoader,
+  profileLoader,
+  roadmapAction,
+  roadmapLoader,
+} from "./utils/route-utils";
+import {
+  AdminLayout,
+  ClientLayout,
+  LanguageLayout,
+  RootLayout,
+} from "./routes/common/layouts";
+import {
+  AdminCoursesPage,
+  AdminDashboardPage,
+  AdminForgotPasswordPage,
+  AdminLoginPage,
+  AdminResetPasswordPage,
+  AdminRoadmapDetailPage,
+  AdminRoadmapsPage,
+  AdminUsersPage,
+  AboutPage,
+  DashboardPage,
+  FaqsPage,
+  ForgotPasswordPage,
+  GuidePage,
+  HomePage,
+  LoginPage,
+  NotFound,
+  ProfilePage,
+  ResetPasswordPage,
+  RoadmapPage,
+  RoadmapsPage,
+  SignupPage,
+  VerifyEmailPage,
+} from "./utils/routes.lazy";
 
 export const appRouter = createBrowserRouter([
   {
@@ -18,7 +57,7 @@ export const appRouter = createBrowserRouter([
         loader: landingLoader,
       },
       {
-        path: ':language',
+        path: ":language",
         loader: languageLoader,
         action: languageAction,
         element: <LanguageLayout />,
@@ -31,39 +70,55 @@ export const appRouter = createBrowserRouter([
                 element: <HomePage />,
               },
               {
-                path: 'login',
+                path: "login",
                 loader: authPageLoader,
                 element: <LoginPage />,
               },
               {
-                path: 'forgot-password',
+                path: "forgot-password",
                 element: <ForgotPasswordPage />,
               },
               {
-                path: 'signup',
+                path: "signup",
                 loader: authPageLoader,
                 element: <SignupPage />,
               },
               {
-                path: 'verify-email',
+                path: "verify-email",
                 element: <VerifyEmailPage />,
               },
               {
-                path: 'reset-password/:token',
+                path: "reset-password/:token",
                 element: <ResetPasswordPage />,
               },
               {
-                path: 'dashboard',
+                path: "dashboard",
                 loader: dashboardLoader,
                 element: <DashboardPage />,
               },
               {
-                path: 'profile',
+                path: "profile",
                 loader: profileLoader,
                 element: <ProfilePage />,
               },
               {
-                path: 'roadmaps/:slug',
+                path: "roadmaps/frontend",
+                element: <RoadmapsPage />,
+              },
+              {
+                path: "faqs",
+                element: <FaqsPage />,
+              },
+              {
+                path: "about",
+                element: <AboutPage />,
+              },
+              {
+                path: "guides",
+                element: <GuidePage />,
+              },
+              {
+                path: "roadmaps/:slug",
                 loader: roadmapLoader,
                 action: roadmapAction,
                 element: <RoadmapPage />,
@@ -71,7 +126,7 @@ export const appRouter = createBrowserRouter([
             ],
           },
           {
-            path: 'admin',
+            path: "admin",
             element: <AdminLayout />,
             children: [
               {
@@ -80,54 +135,54 @@ export const appRouter = createBrowserRouter([
                 element: <AdminDashboardPage />,
               },
               {
-                path: 'users',
+                path: "users",
                 loader: adminProtectedLoader,
                 element: <AdminUsersPage />,
               },
               {
-                path: 'roadmaps',
+                path: "roadmaps",
                 loader: adminProtectedLoader,
                 element: <AdminRoadmapsPage />,
               },
               {
-                path: 'roadmaps/:templateId',
+                path: "roadmaps/:templateId",
                 loader: adminProtectedLoader,
                 element: <AdminRoadmapDetailPage />,
               },
               {
-                path: 'courses',
+                path: "courses",
                 loader: adminProtectedLoader,
                 element: <AdminCoursesPage />,
               },
               {
-                path: 'login',
+                path: "login",
                 loader: adminAuthPageLoader,
                 element: <AdminLoginPage />,
               },
               {
-                path: 'forgot-password',
+                path: "forgot-password",
                 element: <AdminForgotPasswordPage />,
               },
               {
-                path: 'reset-password/:token',
+                path: "reset-password/:token",
                 element: <AdminResetPasswordPage />,
               },
             ],
           },
           {
-            path: '*',
+            path: "*",
             element: <NotFound />,
           },
         ],
       },
       {
-        path: 'reset-password/:token',
+        path: "reset-password/:token",
         element: <ResetPasswordPage />,
       },
       {
-        path: '*',
+        path: "*",
         element: <NotFound />,
       },
     ],
   },
-])
+]);

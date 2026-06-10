@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
-
 /* Cairo font weights: using public static fonts - Arabic */
 @font-face {
   font-family: "Cairo";
-  src: local("Cairo"), url("/fonts/ar/Cairo-VariableFont_slnt,wght.ttf") format("truetype");
+  src:
+    local("Cairo"),
+    url("/fonts/ar/Cairo-VariableFont_slnt,wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -13,7 +14,9 @@
 /* iceland & DMSans font weights: using public static fonts - English */
 @font-face {
   font-family: "DM Sans";
-  src: local("DM Sans"), url("/fonts/en/DMSans-VariableFont_opsz,wght.ttf") format("truetype");
+  src:
+    local("DM Sans"),
+    url("/fonts/en/DMSans-VariableFont_opsz,wght.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -21,7 +24,9 @@
 
 @font-face {
   font-family: "Iceland";
-  src: local("Iceland"), url("/fonts/en/Iceland-Regular.ttf") format("truetype");
+  src:
+    local("Iceland"),
+    url("/fonts/en/Iceland-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -29,13 +34,13 @@
 
 :root {
   /* Green Deck - Dark defaults */
-  --gd-primary: #1DB954; /* Primary (green) */
-  --gd-primary-hover: #1ED760;
+  --gd-primary: #1db954; /* Primary (green) */
+  --gd-primary-hover: #1ed760;
   --gd-secondary: #535353;
-  --gd-neutral: #B3B3B3;
+  --gd-neutral: #b3b3b3;
 
-  --text: #A7A7A7;
-  --text-h: #FFFFFF;
+  --text: #a7a7a7;
+  --text-h: #ffffff;
   --bg: #121212;
   --border: #282828;
   --code-bg: #1f2028;
@@ -54,14 +59,14 @@
   --surface-header: rgba(18, 18, 18, 0.92);
   --surface-header-line: rgba(255, 255, 255, 0.03);
   --glow-neutral-rgb: 255, 255, 255;
-  --text-primary: #FFFFFF;
-  --text-secondary: #A7A7A7;
+  --text-primary: #ffffff;
+  --text-secondary: #a7a7a7;
   --success: var(--gd-primary);
-  --warning: #F59B23;
-  --error: #E22134;
+  --warning: #f59b23;
+  --error: #e22134;
 
-  --sans: 'DM Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Iceland', 'DM Sans', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: "Iceland", "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 16px/1.5 var(--sans);
@@ -82,13 +87,13 @@
 /* explicit theme override: set data-theme="dark" or data-theme="light" on html to force theme
    'system' is represented by removing the attribute and using prefers-color-scheme */
 html[data-theme="dark"] {
-  --gd-primary: #1DB954;
-  --gd-primary-hover: #1ED760;
+  --gd-primary: #1db954;
+  --gd-primary-hover: #1ed760;
   --gd-secondary: #535353;
-  --gd-neutral: #B3B3B3;
+  --gd-neutral: #b3b3b3;
 
-  --text: #B3B3B3;
-  --text-h: #FFFFFF;
+  --text: #b3b3b3;
+  --text-h: #ffffff;
   --bg: #121212;
   --border: #282828;
   --code-bg: #1f2028;
@@ -96,7 +101,8 @@ html[data-theme="dark"] {
   --accent-bg: rgba(29, 185, 84, 0.08);
   --accent-border: rgba(29, 185, 84, 0.35);
   --social-bg: rgba(47, 48, 58, 0.5);
-  --shadow: rgba(0, 0, 0, 0.5) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  --shadow:
+    rgba(0, 0, 0, 0.5) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
   --surface: #181818;
   --surface-2: #282828;
@@ -107,18 +113,18 @@ html[data-theme="dark"] {
   --surface-header: rgba(18, 18, 18, 0.92);
   --surface-header-line: rgba(255, 255, 255, 0.03);
   --glow-neutral-rgb: 255, 255, 255;
-  --text-primary: #FFFFFF;
-  --text-secondary: #A7A7A7;
+  --text-primary: #ffffff;
+  --text-secondary: #a7a7a7;
   --success: var(--gd-primary);
-  --warning: #F59B23;
-  --error: #E22134;
+  --warning: #f59b23;
+  --error: #e22134;
 }
 
 html[data-theme="light"] {
-  --gd-primary: #1DB954;
-  --gd-primary-hover: #1ED760;
+  --gd-primary: #1db954;
+  --gd-primary-hover: #1ed760;
   --gd-secondary: #535353;
-  --gd-neutral: #B3B3B3;
+  --gd-neutral: #b3b3b3;
 
   --text: #6b6375;
   --text-h: #08060d;
@@ -129,7 +135,8 @@ html[data-theme="light"] {
   --accent-bg: rgba(29, 185, 84, 0.08);
   --accent-border: rgba(29, 185, 84, 0.35);
   --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow: rgba(0, 0, 0, 0.06) 0 10px 15px -3px, rgba(0, 0, 0, 0.03) 0 4px 6px -2px;
+  --shadow:
+    rgba(0, 0, 0, 0.06) 0 10px 15px -3px, rgba(0, 0, 0, 0.03) 0 4px 6px -2px;
   --surface: #ffffff;
   --surface-2: #f6f4f8;
   --surface-3: #ece8f2;
@@ -147,19 +154,19 @@ html[data-theme="light"] {
 }
 
 html[lang="ar"] {
-  --sans: 'Cairo', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Cairo', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: "Cairo", system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: "Cairo", system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --gd-primary: #1DB954;
-    --gd-primary-hover: #1ED760;
+    --gd-primary: #1db954;
+    --gd-primary-hover: #1ed760;
     --gd-secondary: #535353;
-    --gd-neutral: #B3B3B3;
+    --gd-neutral: #b3b3b3;
 
-    --text: #A7A7A7;
-    --text-h: #FFFFFF;
+    --text: #a7a7a7;
+    --text-h: #ffffff;
     --bg: #121212;
     --border: #282828;
     --code-bg: #1f2028;
@@ -179,11 +186,11 @@ html[lang="ar"] {
     --surface-header: rgba(18, 18, 18, 0.92);
     --surface-header-line: rgba(255, 255, 255, 0.03);
     --glow-neutral-rgb: 255, 255, 255;
-    --text-primary: #FFFFFF;
-    --text-secondary: #A7A7A7;
+    --text-primary: #ffffff;
+    --text-secondary: #a7a7a7;
     --success: var(--gd-primary);
-    --warning: #F59B23;
-    --error: #E22134;
+    --warning: #f59b23;
+    --error: #e22134;
   }
 
   #social .button-icon {
@@ -362,9 +369,20 @@ textarea {
   border-radius: 999px;
   background:
     radial-gradient(circle, rgba(29, 185, 84, 0.32) 0 2px, transparent 3px),
-    radial-gradient(circle at 72% 28%, rgba(30, 215, 96, 0.22) 0 3px, transparent 4px),
-    radial-gradient(circle at 32% 68%, rgba(29, 185, 84, 0.18) 0 2px, transparent 3px);
-  background-size: 34px 34px, 54px 54px, 42px 42px;
+    radial-gradient(
+      circle at 72% 28%,
+      rgba(30, 215, 96, 0.22) 0 3px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 32% 68%,
+      rgba(29, 185, 84, 0.18) 0 2px,
+      transparent 3px
+    );
+  background-size:
+    34px 34px,
+    54px 54px,
+    42px 42px;
   filter: blur(0.2px);
   opacity: 0.22;
   animation: adminSparkFloat 8s ease-in-out infinite;
@@ -372,7 +390,11 @@ textarea {
 
 .admin-sidebar {
   background-image:
-    radial-gradient(circle at 12% 18%, rgba(29, 185, 84, 0.12), transparent 28%),
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(29, 185, 84, 0.12),
+      transparent 28%
+    ),
     linear-gradient(to bottom, var(--surface), var(--surface));
 }
 
@@ -453,7 +475,7 @@ textarea {
 
 /* Squircle corners: opt-in utility so Tailwind rounded/full classes keep default behavior. */
 :root {
-  --sq-radius: 12px; 
+  --sq-radius: 12px;
 }
 
 /* Apply squircle only when this class is used. */
@@ -469,4 +491,55 @@ textarea {
     corner-shape: squircle;
     border-radius: 9999px;
   }
+}
+
+.dropdown-panel {
+  min-width: 240px;
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.18);
+}
+
+.faq-card {
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface);
+  padding: 1.5rem;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.faq-card:hover {
+  transform: translateY(-2px);
+  background: var(--surface-2);
+}
+
+.faq-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-h);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.faq-chevron {
+  color: var(--gd-primary);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.faq-answer {
+  margin-top: 0.75rem;
+  color: var(--text);
+  line-height: 1.85;
 }
