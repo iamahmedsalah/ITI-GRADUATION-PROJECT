@@ -24,6 +24,7 @@ const swaggerDefinition = {
   tags: [
     { name: "Health", description: "Service liveness checks" },
     { name: "Auth", description: "User authentication" },
+    { name: "Contact", description: "Public contact form" },
     { name: "Admin Auth", description: "Admin authentication" },
     { name: "Roadmaps", description: "Roadmap templates and user roadmaps" },
     { name: "Courses", description: "Course enrollment and progress" },
