@@ -63,7 +63,7 @@ export default function RoadmapsPage() {
       dir={direction}
     >
       <div className="mx-auto grid max-w-6xl gap-10">
-        <section className="rounded-[32px] border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
+        <section className="rounded-4xl border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-2xl">
               <p className="text-sm uppercase tracking-[0.32em] text-(--gd-primary)">

@@ -54,7 +54,7 @@ export default function RoadmapFilterMenu({
   );
 
   return (
-    <div className="min-w-[220px]" dir={direction}>
+    <div className="min-w-55" dir={direction}>
       <CustomDropdown<RoadmapFilterType>
         value={currentType}
         options={options}
