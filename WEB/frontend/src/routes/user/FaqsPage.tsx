@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTranslation } from "react-i18next";
@@ -12,27 +11,19 @@ import {
 export default function FaqsPage() {
   const { t } = useTranslation();
   const { direction } = useLanguage();
+
   const pageVariants = createPageVariants(direction);
   const heroLineVariants = createHeroLineVariants(direction);
   const staggerContainerVariants = createStaggerContainerVariants(direction);
 
-  const faqs = useMemo(
-    () => [
-      {
-        question: t("faqPage.question1"),
-        answer: t("faqPage.answer1"),
-      },
-      {
-        question: t("faqPage.question2"),
-        answer: t("faqPage.answer2"),
-      },
-      {
-        question: t("faqPage.question3"),
-        answer: t("faqPage.answer3"),
-      },
-    ],
-    [t],
-  );
+  const faqCategories = [
+    "gettingStarted",
+    "roadmaps",
+    "learningProgress",
+    "accountAuthentication",
+    "coursesRecommendations",
+    "generalQuestions",
+  ];
 
   return (
     <motion.main
@@ -42,7 +33,8 @@ export default function FaqsPage() {
       initial="hidden"
       animate="show"
     >
-      <div className="mx-auto grid max-w-6xl gap-12">
+      <div className="mx-auto grid max-w-6xl gap-10">
+        {/* HEADER ONCE */}
         <motion.header
           className="rounded-4xl border border-(--border) bg-(--surface) p-8 shadow-[0_30px_80px_rgba(0,0,0,0.18)]"
           variants={heroLineVariants}
@@ -50,7 +42,7 @@ export default function FaqsPage() {
           <p className="text-sm uppercase tracking-[0.32em] text-(--gd-primary)">
             {t("faqPage.overline")}
           </p>
-          <h1 className="mt-4 text-4xl font-bold tracking-[-0.03em] text-(--text-h) sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-bold sm:text-5xl">
             {t("faqPage.title")}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-(--text)">
@@ -58,18 +50,41 @@ export default function FaqsPage() {
           </p>
         </motion.header>
 
-        <motion.section
-          className="grid gap-4"
-          variants={staggerContainerVariants}
-        >
-          {faqs.map((faq) => (
-            <FaqItem
-              key={faq.question}
-              question={faq.question}
-              answer={faq.answer}
-            />
-          ))}
-        </motion.section>
+        {/* CATEGORIES */}
+        {faqCategories
+          .slice()
+          .reverse()
+          .map((category) => {
+            const title = t(`faqPage.categories.${category}.title`);
+
+            const items = t(`faqPage.categories.${category}.items`, {
+              returnObjects: true,
+            }) as { question: string; answer: string }[];
+
+            return (
+              <div key={category} className="space-y-4">
+                <motion.h2
+                  className="text-center text-3xl font-semibold text-(--gd-primary)!"
+                  variants={heroLineVariants}
+                >
+                  {title}
+                </motion.h2>
+
+                <motion.section
+                  className="grid gap-4"
+                  variants={staggerContainerVariants}
+                >
+                  {items.map((faq) => (
+                    <FaqItem
+                      key={faq.question}
+                      question={faq.question}
+                      answer={faq.answer}
+                    />
+                  ))}
+                </motion.section>
+              </div>
+            );
+          })}
       </div>
     </motion.main>
   );

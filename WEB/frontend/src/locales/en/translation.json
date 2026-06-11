@@ -82,13 +82,135 @@
   "faqPage": {
     "overline": "Help center",
     "title": "Frequently asked questions",
-    "subtitle": "Quick answers for roadmap browsing, account access, and using ILMA's learning paths.",
-    "question1": "How can I choose between role-based and skill-based roadmaps?",
-    "answer1": "Start from your goal: if you want a job title path, choose role-based. If you want to master a skill set, choose skill-based.",
-    "question2": "Can I change my roadmap type later?",
-    "answer2": "Yes. The roadmap explorer lets you switch between role and skill filters anytime so you can compare options before you commit.",
-    "question3": "Is ILMA available in Arabic and English?",
-    "answer3": "Absolutely. The platform respects your language preference and adapts both content direction and interface labels.",
+    "subtitle": "Find answers about getting started with ILMA, choosing roadmaps, tracking progress, and more.",
+    "categories": {
+      "gettingStarted": {
+        "title": "Getting Started",
+        "items": [
+          {
+            "question": "What is ILMA and how does it help me learn?",
+            "answer": "ILMA is an AI-powered learning roadmap platform that guides you through structured learning paths tailored to your career goals. We help you discover the right skills to learn, stay motivated with progress tracking, and become job-ready faster."
+          },
+          {
+            "question": "How do I get started with my first roadmap?",
+            "answer": "Sign up with your email or Google account, choose between role-based or skill-based roadmaps, and select a learning path that matches your career goals. Once selected, you'll see a step-by-step guide to follow."
+          },
+          {
+            "question": "Do I need prior experience before using ILMA?",
+            "answer": "No. ILMA serves both beginners and experienced developers. We have roadmaps starting from fundamentals, so you can begin your learning journey regardless of your current level."
+          },
+          {
+            "question": "Is ILMA free to use?",
+            "answer": "Yes, ILMA is completely free. You get full access to all roadmaps, progress tracking, and AI recommendations at no cost."
+          }
+        ]
+      },
+      "roadmaps": {
+        "title": "Roadmaps",
+        "items": [
+          {
+            "question": "What is a learning roadmap?",
+            "answer": "A learning roadmap is a structured guide that breaks down a career path or skill into manageable steps. Each step includes recommended resources, projects, and milestones to help you learn systematically."
+          },
+          {
+            "question": "How do I choose the right roadmap for my career goals?",
+            "answer": "Use our role-based roadmaps if you're aiming for a specific job title, or skill-based roadmaps if you want to master particular technologies. You can preview both types in the roadmap explorer before committing."
+          },
+          {
+            "question": "Can I switch to a different roadmap later?",
+            "answer": "Absolutely. You can switch roadmaps at any time through your dashboard. Your progress on previous roadmaps is saved, so you can return to them whenever you want."
+          },
+          {
+            "question": "How often are roadmaps updated?",
+            "answer": "Our roadmaps are updated regularly to reflect industry trends and emerging technologies. You'll be notified when updates relevant to your learning path are available."
+          }
+        ]
+      },
+      "learningProgress": {
+        "title": "Learning Progress",
+        "items": [
+          {
+            "question": "How is my progress tracked?",
+            "answer": "Your progress is tracked as you complete steps in your roadmap. Each completed step contributes to your overall progress percentage, and you can view detailed analytics on your dashboard."
+          },
+          {
+            "question": "Can I mark steps as completed?",
+            "answer": "Yes. You can manually mark any step as completed. We also support integration with popular learning platforms to automatically track your progress."
+          },
+          {
+            "question": "Will I lose my progress if I leave the platform?",
+            "answer": "No. Your progress is securely saved to your account. You can log in anytime and pick up where you left off, even months later."
+          },
+          {
+            "question": "How can I monitor my learning journey?",
+            "answer": "Use your dashboard to view overall progress, completed milestones, and learning streaks. You can also set reminders to stay consistent with your learning goals."
+          }
+        ]
+      },
+      "accountAuthentication": {
+        "title": "Account & Authentication",
+        "items": [
+          {
+            "question": "How do I create an account?",
+            "answer": "Click the sign-up button, enter your email and password, or sign in directly with your Google account. Confirm your email and you're ready to start learning."
+          },
+          {
+            "question": "Can I sign in with Google?",
+            "answer": "Yes. We support Google authentication for quick and secure sign-up. Your data is safely managed with industry-standard encryption."
+          },
+          {
+            "question": "How do I reset my password?",
+            "answer": "Click 'Forgot Password' on the login page, enter your email, and follow the reset link sent to your inbox. You can then create a new password."
+          },
+          {
+            "question": "How do I update my profile information?",
+            "answer": "Go to your account settings to update your name, profile picture, email, and learning preferences. Changes are saved instantly."
+          }
+        ]
+      },
+      "coursesRecommendations": {
+        "title": "Courses & Recommendations",
+        "items": [
+          {
+            "question": "How are course recommendations generated?",
+            "answer": "Our AI analyzes your selected roadmap, learning pace, and progress to recommend high-quality courses and resources that match your goals."
+          },
+          {
+            "question": "Are the recommended courses free or paid?",
+            "answer": "We recommend both free and paid resources. You can filter recommendations by price and platform, so you can choose what works best for your budget."
+          },
+          {
+            "question": "Can I save courses for later?",
+            "answer": "Yes. You can bookmark courses and resources to a personal collection, making them easy to access when you're ready to start learning."
+          },
+          {
+            "question": "How do I know which course to take next?",
+            "answer": "Your roadmap provides a recommended order for courses based on dependencies and learning prerequisites. Our AI also suggests next steps based on your progress and learning style."
+          }
+        ]
+      },
+      "generalQuestions": {
+        "title": "General Questions",
+        "items": [
+          {
+            "question": "Is ILMA suitable for beginners?",
+            "answer": "Absolutely. ILMA is designed for everyone—from complete beginners to experienced professionals. Our roadmaps include beginner-friendly paths with foundational content."
+          },
+          {
+            "question": "Can I use ILMA on mobile devices?",
+            "answer": "Yes. ILMA is fully responsive and works seamlessly on smartphones and tablets. You can access your roadmaps and progress from anywhere."
+          },
+          {
+            "question": "Does ILMA support multiple languages?",
+            "answer": "Yes. ILMA is available in both Arabic and English. You can switch languages anytime in your settings."
+          },
+          {
+            "question": "How can I contact support?",
+            "answer": "Visit our Contact page to reach our support team. We respond to inquiries within 24-48 hours. You can also check our knowledge base for instant answers."
+          }
+        ]
+      }
+    },
     "contactPrompt": "Still have questions? Reach out through the Contact page form."
   },
   "contactPage": {
