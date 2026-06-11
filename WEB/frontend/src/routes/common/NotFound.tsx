@@ -72,15 +72,9 @@ export default function NotFound() {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link
             to={`/${language}`}
-            className="rounded-squircle border border-(--border) bg-(--surface-soft) px-4 py-2 text-sm text-(--text-h) transition-colors hover:bg-(--surface-soft-hover)"
-          >
-            {t('notFound.home')}
-          </Link>
-          <Link
-            to={`/${language}/dashboard`}
             className="rounded-squircle border border-(--border) bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
           >
-            {t('notFound.dashboard')}
+            {t('notFound.home')}
           </Link>
         </div>
       </motion.section>

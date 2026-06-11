@@ -1,6 +1,16 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../context/LanguageContext";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Facebook02Icon,
+  GithubIcon,
+  GitlabIcon,
+  Linkedin02Icon,
+} from '@hugeicons/core-free-icons';
+import { motion } from "framer-motion";
+import { createListItemVariants, createStaggerContainerVariants } from "../../libs/motionVariants";
+
 
 function localizedPath(language: string, pathname: string) {
   if (!pathname || pathname === "/") {
@@ -13,11 +23,13 @@ function localizedPath(language: string, pathname: string) {
 export default function SiteFooter() {
   const { t } = useTranslation();
   const { language, direction } = useLanguage();
+  const MotionLink = motion(Link);
+
 
   const navLinks = [
     {
       label: t("footer.roadmaps"),
-      to: localizedPath(language, "/roadmaps/frontend"),
+      to: localizedPath(language, "/"),
     },
     {
       label: t("footer.guides"),
@@ -25,6 +37,27 @@ export default function SiteFooter() {
     },
     { label: t("footer.faqs"), to: localizedPath(language, "/faqs") },
     { label: t("footer.contact"), to: localizedPath(language, "/contact") },
+  ];
+
+
+
+  const soicalLinks = [
+    {
+      icon: <HugeiconsIcon icon={Facebook02Icon} size={18} />,
+      url: "https://facebook.com",
+    },
+    {
+      icon: <HugeiconsIcon icon={Linkedin02Icon} size={18} />,
+      url: "https://linkedin.com",
+    },
+    {
+      icon: <HugeiconsIcon icon={GithubIcon} size={18} />,
+      url: "https://github.com",
+    },
+    {
+      icon: <HugeiconsIcon icon={GitlabIcon} size={18} />,
+      url: "https://gitlab.com",
+    }
   ];
 
   return (
@@ -86,14 +119,28 @@ export default function SiteFooter() {
                 {t("footer.privacy")}
               </Link>
               <span>|</span>
-              {["in", "yt", "x"].map((item) => (
-                <span
-                  key={item}
-                  className="grid size-5 place-items-center rounded-squircle bg-(--surface-3) text-[10px] font-bold text-(--text-h)"
-                >
-                  {item}
-                </span>
-              ))}
+<motion.div
+  className="flex items-center gap-2"
+  variants={createStaggerContainerVariants(direction)}
+  initial="hidden"
+  whileInView="show"
+  viewport={{ once: true, amount: 0.3 }}
+>
+  {soicalLinks.map((item, index) => (
+    <MotionLink
+      key={index}
+      to={item.url}
+      target="_blank"
+      rel="noreferrer"
+      variants={createListItemVariants(direction)}
+      whileHover={{ y: -3, scale: 1.08 }}
+      whileTap={{ scale: 0.92 }}
+      className="grid size-7 place-items-center rounded-squircle bg-(--surface-3) hover:bg-(--gd-primary) text-[10px] font-bold text-(--text-h)"
+    >
+      {item.icon}
+    </MotionLink>
+  ))}
+</motion.div>
             </div>
           </div>
 
