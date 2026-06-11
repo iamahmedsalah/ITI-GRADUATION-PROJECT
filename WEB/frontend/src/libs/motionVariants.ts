@@ -168,6 +168,25 @@ export const listItemVariants: Variants = {
   },
 }
 
+export const faqAnswerVariants: Variants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    transition: {
+      duration: 0.28,
+      ease: 'easeOut',
+    },
+  },
+  expanded: {
+    height: 'auto',
+    opacity: 1,
+    transition: {
+      duration: 0.35,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+}
+
 export const toggleWrapperVariants: Variants = {
   rest: {
     scale: 1,
