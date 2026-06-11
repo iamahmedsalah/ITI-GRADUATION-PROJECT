@@ -30,6 +30,7 @@ type AdminSidebarProps = {
   collapsed: boolean
   adminName?: string
   adminEmail?: string
+  adminAvatarUrl?: string | null
   lastLogin?: string | number | null
   onlineLabel?: string
   lastLoginLabel?: string
@@ -78,6 +79,7 @@ export default function AdminSidebar({
   collapsed,
   adminName = 'Admin',
   adminEmail,
+  adminAvatarUrl,
   lastLogin,
   onlineLabel = 'Online',
   lastLoginLabel = 'Last login',
@@ -101,9 +103,14 @@ export default function AdminSidebar({
       })
     : '-'
 
+  const adminProfilePath = localizedPath(language, '/admin/profile')
   const avatar = (
-    <span className="relative grid size-11 shrink-0 place-items-center rounded-squircle bg-(--gd-primary) text-white shadow-[0_14px_28px_rgba(29,185,84,0.24)]">
-      {avatarLetter}
+    <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-white shadow-[0_14px_28px_rgba(29,185,84,0.24)]">
+      {adminAvatarUrl ? (
+        <img src={adminAvatarUrl} alt={adminName || consoleLabel} className="size-full object-cover" />
+      ) : (
+        avatarLetter
+      )}
     </span>
   )
 
@@ -196,7 +203,11 @@ export default function AdminSidebar({
           <ThemeToggleButton />
         </div>
         {!isCollapsed ? (
-          <div className="flex items-start gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+          <Link
+            to={adminProfilePath}
+            onClick={onClose}
+            className="flex items-start gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border) hover:bg-(--surface-soft-hover)"
+          >
             {avatar}
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-(--text-h)">{adminName || consoleLabel}</span>
@@ -211,11 +222,11 @@ export default function AdminSidebar({
                 <span className="block truncate">{formattedLastLoginTime}</span>
               </span>
             </span>
-          </div>
+          </Link>
         ) : (
-          <div className="flex justify-center" title={adminName || consoleLabel}>
+          <Link to={adminProfilePath} onClick={onClose} className="flex justify-center" title={adminName || consoleLabel}>
             {avatar}
-          </div>
+          </Link>
         )}
         <button
           type="button"

@@ -16,6 +16,7 @@ import { resetPasswordSchema, signupSchema } from '../../types/validationSchemas
 type ProfileSettingsPanelProps = {
   user: AuthUser
   variants?: Variants
+  cacheQueryKey?: readonly unknown[]
 }
 
 const profileSettingsSchema = signupSchema.pick({
@@ -27,7 +28,7 @@ const passwordSettingsSchema = resetPasswordSchema.extend({
   currentPassword: signupSchema.shape.password,
 })
 
-export default function ProfileSettingsPanel({ user, variants }: ProfileSettingsPanelProps) {
+export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = authQueryKey }: ProfileSettingsPanelProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [profileForm, setProfileForm] = useState({
@@ -53,6 +54,7 @@ export default function ProfileSettingsPanel({ user, variants }: ProfileSettings
         Fname: updatedUser.Fname ?? updatedUser.name.split(' ')[0] ?? '',
         Lname: updatedUser.Lname ?? updatedUser.name.split(' ').slice(1).join(' ') ?? '',
       })
+      queryClient.setQueryData(cacheQueryKey, updatedUser)
       queryClient.setQueryData(authQueryKey, updatedUser)
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       toast.success(t('profile.settings.profileSaved'))

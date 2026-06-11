@@ -6,6 +6,7 @@ import { Route03Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useLanguage } from '../../context/LanguageContext'
 import { fetchRoadmapTemplates, searchRoadmaps, type RoadmapTemplate } from '../../libs/roadmaps-api'
+import {SeparatorRoadmaps,SeparatorCourses} from '../ui/saparator'
 import AvailableCoursesSection from './AvailableCoursesSection'
 
 function uniqueBySlug(roadmaps: RoadmapTemplate[]) {
@@ -34,7 +35,7 @@ type RoadmapCardProps = {
   roadmap: RoadmapTemplate
 }
 
-function RoadmapCard({ roadmap }: RoadmapCardProps) {
+export function RoadmapCard({ roadmap }: RoadmapCardProps) {
   const { language } = useLanguage()
   const { t } = useTranslation()
   const tags = roadmap.tags?.slice(0, 2) ?? []
@@ -60,34 +61,6 @@ function RoadmapCard({ roadmap }: RoadmapCardProps) {
   )
 }
 
-type RoadmapSectionProps = {
-  title: string
-  roadmaps: RoadmapTemplate[]
-}
-
-function RoadmapSection({ title, roadmaps }: RoadmapSectionProps) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="relative border-t border-(--border) pt-12">
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-squircle border border-(--border) bg-(--surface) px-5 py-2 text-base text-(--text-h) shadow-(--shadow)">
-        {title}
-      </div>
-
-      {roadmaps.length ? (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {roadmaps.map((roadmap) => (
-            <RoadmapCard key={roadmap.slug || roadmap._id} roadmap={roadmap} />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-squircle border border-(--border) bg-(--surface) px-5 py-8 text-center text-(--text)">
-          {t('landing.noRoadmaps')}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function RoadmapListSkeleton() {
   const { t } = useTranslation()
@@ -199,17 +172,21 @@ export default function RoadmapLanding() {
           {isRoadmapListLoading ? (
             <RoadmapListSkeleton />
           ) : trimmedQuery ? (
-            <RoadmapSection title={t('landing.searchResults')} roadmaps={searchRoadmapsList} />
+            <SeparatorRoadmaps title={t('landing.searchResults')} roadmaps={searchRoadmapsList} />
           ) : (
             <div className="grid gap-16">
               {selectedType !== 'skillBased' ? (
-                <RoadmapSection title={t('landing.roleRoadmaps')} roadmaps={groupedRoadmaps.roleBased} />
+                <SeparatorRoadmaps title={t('landing.roleRoadmaps')} roadmaps={groupedRoadmaps.roleBased} />
               ) : null}
               {selectedType !== 'roleBased' ? (
-                <RoadmapSection title={t('landing.skillRoadmaps')} roadmaps={groupedRoadmaps.skillBased} />
+                <SeparatorRoadmaps title={t('landing.skillRoadmaps')} roadmaps={groupedRoadmaps.skillBased} />
               ) : null}
             </div>
           )}
+
+                  <SeparatorCourses/>
+
+        <AvailableCoursesSection />
         </div>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -250,7 +227,7 @@ export default function RoadmapLanding() {
           </section>
         </div>
 
-        <AvailableCoursesSection />
+
       </div>
     </section>
   )

@@ -21,6 +21,9 @@ export const AdminResetPasswordPage = lazy(
 export const AdminDashboardPage = lazy(
   () => import("../routes/admin/AdminDashboardPage"),
 );
+export const AdminProfilePage = lazy(
+  () => import("../routes/admin/AdminProfilePage"),
+);
 export const AdminUsersPage = lazy(
   () => import("../routes/admin/AdminUsersPage"),
 );

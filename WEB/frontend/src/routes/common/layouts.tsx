@@ -192,6 +192,7 @@ export function AdminLayout() {
     closeLabel: t('adminUi.nav.closeSidebar'),
     adminName: adminUser?.name || adminUser?.username || t('adminUi.nav.console'),
     adminEmail: adminUser?.email,
+    adminAvatarUrl: adminUser?.avatarUrl,
     lastLogin: adminUser?.lastLogin,
     onlineLabel: t('adminUi.nav.online'),
     lastLoginLabel: t('adminUi.nav.lastLogin'),

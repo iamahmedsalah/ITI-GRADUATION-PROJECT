@@ -19,7 +19,7 @@ function CourseCard({ course }: { course: PublicCourse }) {
 
   return (
     <article className="overflow-hidden rounded-lg border border-(--border) bg-(--surface) shadow-(--shadow)">
-      <div className="aspect-[16/8] bg-(--surface-2)">
+      <div className="aspect-16/8 bg-(--surface-2)">
         {course.thumbnailUrl ? (
           <img src={course.thumbnailUrl} alt={course.title} className="size-full object-cover" />
         ) : (

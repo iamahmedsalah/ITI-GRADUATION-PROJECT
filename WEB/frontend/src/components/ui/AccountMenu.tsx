@@ -62,14 +62,12 @@ export default function AccountMenu({ user, language, isRtl = false }: Props) {
             : undefined
         }
       >
-        <span
-          className="grid size-10 place-items-center rounded-squircle text-sm font-semibold text-white shadow-[0_12px_24px_rgba(12,107,80,0.28)] ring-1 ring-white/10"
-          style={{
-            background:
-              'linear-gradient(145deg, #0c6b50 0%, #33ab6a 34%, #36e28a 66%, #9fd95b 100%)',
-          }}
-        >
-          {accountInitials}
+        <span className="grid size-10 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-sm font-semibold text-white shadow-[0_12px_24px_rgba(12,107,80,0.28)] ring-1 ring-white/10">
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.name} className="size-full object-cover" />
+          ) : (
+            accountInitials
+          )}
         </span>
         <span className="flex flex-col leading-tight">
           <span className="text-[10px] uppercase tracking-[0.22em] text-(--text-secondary)">{t('navbar.account')}</span>
@@ -89,9 +87,20 @@ export default function AccountMenu({ user, language, isRtl = false }: Props) {
             style={{ boxShadow: '0 24px 80px rgba(0,0,0,0.32), 0 0 0 2px rgba(255,255,255,0.03)' }}
           >
             <div className="rounded-squircle border border-(--border) bg-[radial-gradient(circle_at_top_left,rgba(29,185,84,0.12),rgba(255,255,255,0.02))] px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-(--text-secondary)">{t('navbar.signedInAs')}</p>
-              <p className="mt-1 truncate text-sm font-semibold text-(--text-h)">{user.name}</p>
-              <p className="truncate text-xs text-(--text)">{user.email}</p>
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-sm font-semibold text-white ring-1 ring-white/10">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="size-full object-cover" />
+                  ) : (
+                    accountInitials
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-(--text-secondary)">{t('navbar.signedInAs')}</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-(--text-h)">{user.name}</p>
+                  <p className="truncate text-xs text-(--text)">{user.email}</p>
+                </span>
+              </div>
             </div>
 
             <div className="mt-2 grid gap-1">

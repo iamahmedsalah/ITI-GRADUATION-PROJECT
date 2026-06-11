@@ -424,6 +424,8 @@ export async function createAdminCourse(payload: {
   shortDescription?: string
   level?: 'beginner' | 'intermediate' | 'advanced'
   category?: string
+  thumbnailUrl?: string | null
+  bannerUrl?: string | null
   isPublished?: boolean
   isFeatured?: boolean
 }) {
@@ -449,6 +451,8 @@ export async function updateAdminCourse(
     shortDescription: string
     level: 'beginner' | 'intermediate' | 'advanced'
     category: string
+    thumbnailUrl: string | null
+    bannerUrl: string | null
     isPublished: boolean
     isFeatured: boolean
   }>,

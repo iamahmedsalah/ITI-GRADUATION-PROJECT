@@ -106,6 +106,8 @@ export default function AdminCoursesPage() {
         shortDescription: string
         level: CourseLevel
         category: string
+        thumbnailUrl: string | null
+        bannerUrl: string | null
         isPublished: boolean
         isFeatured: boolean
       }>
@@ -308,7 +310,7 @@ export default function AdminCoursesPage() {
                     }}
                   >
                     <HugeiconsIcon icon={UserEdit01Icon} size={14} />
-                    {t('adminUi.courses.actions.rename')}
+                    {t('adminUi.courses.actions.update')}
                   </button>
                   <button
                     type="button"
@@ -427,7 +429,7 @@ export default function AdminCoursesPage() {
                         }}
                       >
                         <HugeiconsIcon icon={UserEdit01Icon} size={14} />
-                        {t('adminUi.courses.actions.rename')}
+                        {t('adminUi.courses.actions.update')}
                       </button>
                       <button
                         type="button"

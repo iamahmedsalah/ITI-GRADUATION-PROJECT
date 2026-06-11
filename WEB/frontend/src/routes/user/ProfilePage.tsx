@@ -9,6 +9,7 @@ import type { ProfileLoaderData } from '../../utils/route-utils'
 import PageHeader from '../../components/ui/PageHeader'
 import ProfileSettingsPanel from '../../components/profile/ProfileSettingsPanel'
 import ProfileAvatarUploader from '../../components/profile/ProfileAvatarUploader'
+import ProfileStatusCard from '../../components/ui/ProfileStatusCard'
 
 function ProfilePage() {
   const { direction } = useLanguage()
@@ -29,8 +30,11 @@ function ProfilePage() {
           variants={heroLineVariants}
         />
 
-        <motion.div variants={heroLineVariants}>
-          <ProfileAvatarUploader user={user} />
+        <motion.div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)]" variants={staggerContainerVariants}>
+          <motion.div variants={heroLineVariants}>
+            <ProfileAvatarUploader user={user} />
+          </motion.div>
+          <ProfileStatusCard user={user} t={t} variants={heroLineVariants} />
         </motion.div>
 
         <ProfileSettingsPanel user={user} variants={heroLineVariants} />

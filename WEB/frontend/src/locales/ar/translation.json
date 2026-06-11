@@ -673,8 +673,8 @@
       "actions": {
         "publish": "نشر",
         "unpublish": "إلغاء النشر",
-        "rename": "إعادة تسمية",
-        "renamePrompt": "تحديث عنوان خريطة الطريق",
+        "update": "تحديث",
+        "updatePrompt": "تحديث عنوان خريطة الطريق",
         "delete": "حذف",
         "deleteConfirm": "حذف خريطة الطريق \"{{title}}\"؟"
       },
@@ -738,8 +738,8 @@
         "unpublish": "إلغاء النشر",
         "feature": "تمييز",
         "unfeature": "إلغاء التمييز",
-        "rename": "إعادة تسمية",
-        "renamePrompt": "تحديث عنوان الدورة",
+        "update": "تحديث",
+        "updatePrompt": "تحديث عنوان الدورة",
         "delete": "حذف",
         "deleteConfirm": "حذف الدورة \"{{title}}\"؟"
       },

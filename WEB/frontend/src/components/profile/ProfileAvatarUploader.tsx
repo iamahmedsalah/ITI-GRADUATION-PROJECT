@@ -10,6 +10,7 @@ import type { AuthUser } from '../../utils/route-utils'
 
 type ProfileAvatarUploaderProps = {
   user: AuthUser
+  cacheQueryKey?: readonly unknown[]
 }
 
 const maxAvatarSizeBytes = 3 * 1024 * 1024
@@ -23,7 +24,7 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
-export default function ProfileAvatarUploader({ user }: ProfileAvatarUploaderProps) {
+export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryKey }: ProfileAvatarUploaderProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -35,6 +36,7 @@ export default function ProfileAvatarUploader({ user }: ProfileAvatarUploaderPro
     onSuccess: (updatedUser) => {
       setAvatarUrl(updatedUser.avatarUrl ?? null)
       setPendingAvatarImage(null)
+      queryClient.setQueryData(cacheQueryKey, updatedUser)
       queryClient.setQueryData(authQueryKey, updatedUser)
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       toast.success(t('profile.avatar.saved'))
@@ -45,8 +47,8 @@ export default function ProfileAvatarUploader({ user }: ProfileAvatarUploaderPro
   })
 
   return (
-    <div className="flex flex-wrap items-center gap-5 rounded-lg border border-(--border) bg-(--surface) p-5">
-      <div className="relative size-24 overflow-hidden rounded-full border border-(--accent-border) bg-(--surface-2)">
+    <div className="flex flex-wrap items-center gap-5 rounded-3xl border border-(--border) bg-(--surface) p-5">
+      <div className="relative size-30 overflow-hidden rounded-squircle border border-(--accent-border) bg-(--surface-2)">
         {pendingAvatarImage || avatarUrl ? (
           <img src={pendingAvatarImage ?? avatarUrl ?? ''} alt={user.name} className="size-full object-cover" />
         ) : (

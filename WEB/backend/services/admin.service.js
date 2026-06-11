@@ -82,11 +82,19 @@ const logAdminAction = async ({
 const toPublicAdmin = (user) => ({
   _id: user._id,
   username: user.username,
+  Fname: user.Fname,
+  Lname: user.Lname,
   name: `${user.Fname} ${user.Lname}`,
   email: user.email,
+  avatarUrl: user.avatarUrl || null,
   role: user.role,
   isVerified: user.isVerified,
   lastLogin: user.lastLogin,
+  loginStreak: {
+    current: user.loginStreak?.current ?? 0,
+    longest: user.loginStreak?.longest ?? 0,
+    lastLoginDate: user.loginStreak?.lastLoginDate ?? null,
+  },
 });
 
 const ensureAdminRole = (user) => user?.role === "admin";

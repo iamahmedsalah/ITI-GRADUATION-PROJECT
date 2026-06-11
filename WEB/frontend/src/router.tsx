@@ -26,6 +26,7 @@ import {
   AdminLoginPage,
   AdminResetPasswordPage,
   AdminContactMessagesPage,
+  AdminProfilePage,
   AdminRoadmapDetailPage,
   AdminRoadmapsPage,
   AdminUsersPage,
@@ -135,6 +136,11 @@ export const appRouter = createBrowserRouter([
                 index: true,
                 loader: adminProtectedLoader,
                 element: <AdminDashboardPage />,
+              },
+              {
+                path: "profile",
+                loader: adminProtectedLoader,
+                element: <AdminProfilePage />,
               },
               {
                 path: "users",

@@ -320,7 +320,7 @@ export default function AdminRoadmapsPage() {
                     }}
                   >
                     <HugeiconsIcon icon={UserEdit01Icon} size={14} />
-                    {t('adminUi.roadmaps.actions.rename')}
+                    {t('adminUi.roadmaps.actions.update')}
                   </button>
                   <button
                     type="button"
@@ -421,7 +421,7 @@ export default function AdminRoadmapsPage() {
                         }}
                       >
                         <HugeiconsIcon icon={UserEdit01Icon} size={14} />
-                        {t('adminUi.roadmaps.actions.rename')}
+                        {t('adminUi.roadmaps.actions.update')}
                       </button>
                       <button
                         type="button"

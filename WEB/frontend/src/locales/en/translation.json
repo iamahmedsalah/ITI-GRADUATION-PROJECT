@@ -673,8 +673,8 @@
       "actions": {
         "publish": "Publish",
         "unpublish": "Unpublish",
-        "rename": "Rename",
-        "renamePrompt": "Update roadmap title",
+        "update": "update",
+        "updatePrompt": "Update roadmap title",
         "delete": "Delete",
         "deleteConfirm": "Delete roadmap \"{{title}}\"?"
       },
@@ -738,8 +738,8 @@
         "unpublish": "Unpublish",
         "feature": "Feature",
         "unfeature": "Unfeature",
-        "rename": "Rename",
-        "renamePrompt": "Update course title",
+        "update": "update",
+        "updatePrompt": "Update course title",
         "delete": "Delete",
         "deleteConfirm": "Delete course \"{{title}}\"?"
       },

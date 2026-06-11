@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { ImageUploadIcon } from '@hugeicons/core-free-icons'
 import CustomDropdown from '../ui/CustomDropdown'
 import type { AdminCourseRow } from '../../libs/admin-api'
 
@@ -13,6 +15,8 @@ type CoursePayload = {
   shortDescription?: string
   level?: CourseLevel
   category?: string
+  thumbnailUrl?: string | null
+  bannerUrl?: string | null
   isPublished?: boolean
   isFeatured?: boolean
 }
@@ -41,16 +45,103 @@ export default function AdminCourseFormModal({
   const [shortDescription, setShortDescription] = useState(course?.shortDescription ?? '')
   const [level, setLevel] = useState<CourseLevel>((course?.level as CourseLevel) ?? 'beginner')
   const [category, setCategory] = useState(course?.category ?? '')
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(course?.thumbnailUrl ?? null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(course?.bannerUrl ?? null)
   const [published, setPublished] = useState(course?.isPublished ?? false)
   const [featured, setFeatured] = useState(course?.isFeatured ?? false)
-
-  if (!open) return null
 
   const levelOptions = [
     { value: 'beginner' as const, label: t('adminUi.levels.beginner') },
     { value: 'intermediate' as const, label: t('adminUi.levels.intermediate') },
     { value: 'advanced' as const, label: t('adminUi.levels.advanced') },
   ]
+
+  useEffect(() => {
+    if (!open) return
+    
+    setTitle(course?.title ?? '')
+    setSlug(course?.slug ?? '')
+    setDescription(course?.description ?? '')
+    setShortDescription(course?.shortDescription ?? '')
+    setLevel((course?.level as CourseLevel) ?? 'beginner')
+    setCategory(course?.category ?? '')
+    setThumbnailUrl(course?.thumbnailUrl ?? null)
+    setBannerUrl(course?.bannerUrl ?? null)
+    setPublished(course?.isPublished ?? false)
+    setFeatured(course?.isFeatured ?? false)
+  }, [course, open])
+
+  const readImageFile = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result ?? ''))
+      reader.onerror = () => reject(new Error('Could not read image file.'))
+      reader.readAsDataURL(file)
+    })
+
+  const handleImageChange = async (
+    file: File | undefined,
+    setter: (value: string | null) => void,
+  ) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('profile.avatar.invalidType'))
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('adminUi.courses.form.imageTooLarge', { defaultValue: 'Course image must be 5MB or smaller.' }))
+      return
+    }
+
+    try {
+      setter(await readImageFile(file))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('adminUi.courses.updateFailed'))
+    }
+  }
+
+  const renderImagePicker = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string
+    value: string | null
+    onChange: (value: string | null) => void
+  }) => (
+    <div className="grid gap-3 rounded-3xl border border-(--border) bg-(--surface-2) p-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold text-(--text-h)">{label}</span>
+        {value ? (
+          <button type="button" className="text-xs font-semibold text-(--error)" onClick={() => onChange(null)}>
+            {t('adminUi.common.clear', { defaultValue: 'Clear' })}
+          </button>
+        ) : null}
+      </div>
+      <div className="grid aspect-video place-items-center overflow-hidden rounded-squircle border border-dashed border-(--border) bg-(--surface)">
+        {value ? (
+          <img src={value} alt={label} className="size-full object-cover" />
+        ) : (
+          <span className="text-sm text-(--text)">{t('adminUi.courses.form.noImage', { defaultValue: 'No image selected' })}</span>
+        )}
+      </div>
+      <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-squircle border border-(--border) px-4 py-2.5 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)">
+        <HugeiconsIcon icon={ImageUploadIcon} size={16} />
+        {t('profile.avatar.choose')}
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={(event) => {
+            void handleImageChange(event.target.files?.[0], onChange)
+            event.target.value = ''
+          }}
+        />
+      </label>
+    </div>
+  )
+
+  if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-8">
@@ -84,6 +175,18 @@ export default function AdminCourseFormModal({
               <span>{t('adminUi.courses.form.featured')}</span>
             </label>
           </div>
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+            {renderImagePicker({
+              label: t('adminUi.courses.form.thumbnail', { defaultValue: 'Thumbnail image' }),
+              value: thumbnailUrl,
+              onChange: setThumbnailUrl,
+            })}
+            {renderImagePicker({
+              label: t('adminUi.courses.form.banner', { defaultValue: 'Banner image' }),
+              value: bannerUrl,
+              onChange: setBannerUrl,
+            })}
+          </div>
           <button
             type="button"
             disabled={isPending}
@@ -100,6 +203,8 @@ export default function AdminCourseFormModal({
                 shortDescription: shortDescription.trim() || undefined,
                 category: category.trim() || undefined,
                 level,
+                thumbnailUrl,
+                bannerUrl,
                 isPublished: published,
                 isFeatured: featured,
               })

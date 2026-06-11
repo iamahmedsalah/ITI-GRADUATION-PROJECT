@@ -9,7 +9,7 @@ type Props = {
 
 export default function ProfileStatusCard({ user, t, variants }: Props) {
   return (
-    <motion.article variants={variants} className="rounded-2xl border border-(--border) bg-(--surface) p-5">
+    <motion.article variants={variants} className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <h2 className="text-lg font-semibold text-(--text-h)">{t('profile.status')}</h2>
       <p className="mt-2 text-sm leading-6 text-(--text)">{t('profile.role')}: {user.role}</p>
       <p className="text-sm leading-6 text-(--text)">{t('profile.verified')}: {user.isVerified ? t('profile.verifiedYes') : t('profile.verifiedNo')}</p>
