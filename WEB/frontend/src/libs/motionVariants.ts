@@ -1,9 +1,9 @@
-import type { Variants } from 'framer-motion'
+import type { Variants } from "framer-motion";
 
-export type MotionDirection = 'ltr' | 'rtl'
+export type MotionDirection = "ltr" | "rtl";
 
 function getDirectionX(direction: MotionDirection, amount: number) {
-  return direction === 'rtl' ? amount : -amount
+  return direction === "rtl" ? amount : -amount;
 }
 
 export function createPageVariants(direction: MotionDirection): Variants {
@@ -12,22 +12,22 @@ export function createPageVariants(direction: MotionDirection): Variants {
       opacity: 0,
       y: 18,
       x: getDirectionX(direction, 14),
-      filter: 'blur(6px)',
+      filter: "blur(6px)",
     },
     show: {
       opacity: 1,
       y: 0,
       x: 0,
-      filter: 'blur(0px)',
+      filter: "blur(0px)",
       transition: {
         duration: 0.7,
         ease: [0.22, 1, 0.36, 1],
-        when: 'beforeChildren',
-        staggerChildren: direction === 'rtl' ? 0.14 : 0.1,
+        when: "beforeChildren",
+        staggerChildren: direction === "rtl" ? 0.14 : 0.1,
         delayChildren: 0.08,
       },
     },
-  }
+  };
 }
 
 export function createHeroLineVariants(direction: MotionDirection): Variants {
@@ -39,19 +39,21 @@ export function createHeroLineVariants(direction: MotionDirection): Variants {
       x: 0,
       transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
     },
-  }
+  };
 }
 
-export function createStaggerContainerVariants(direction: MotionDirection): Variants {
+export function createStaggerContainerVariants(
+  direction: MotionDirection,
+): Variants {
   return {
     hidden: {},
     show: {
       transition: {
-        staggerChildren: direction === 'rtl' ? 0.14 : 0.12,
-        delayChildren: direction === 'rtl' ? 0.14 : 0.08,
+        staggerChildren: direction === "rtl" ? 0.14 : 0.12,
+        delayChildren: direction === "rtl" ? 0.14 : 0.08,
       },
     },
-  }
+  };
 }
 
 export function createCardVariants(direction: MotionDirection): Variants {
@@ -61,7 +63,7 @@ export function createCardVariants(direction: MotionDirection): Variants {
       y: 28,
       x: getDirectionX(direction, 18),
       scale: 0.94,
-      rotate: direction === 'rtl' ? -1.5 : 1.5,
+      rotate: direction === "rtl" ? -1.5 : 1.5,
     },
     show: {
       opacity: 1,
@@ -74,7 +76,7 @@ export function createCardVariants(direction: MotionDirection): Variants {
         ease: [0.22, 1, 0.36, 1],
       },
     },
-  }
+  };
 }
 
 export function createListItemVariants(direction: MotionDirection): Variants {
@@ -88,34 +90,34 @@ export function createListItemVariants(direction: MotionDirection): Variants {
       x: 0,
       transition: {
         duration: 0.34,
-        ease: 'easeOut',
+        ease: "easeOut",
       },
     },
-  }
+  };
 }
 
 export function getCardHoverShift(direction: MotionDirection) {
-  return direction === 'rtl' ? -8 : 8
+  return direction === "rtl" ? -8 : 8;
 }
 
 export const pageVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 18,
-    filter: 'blur(6px)',
+    filter: "blur(6px)",
   },
   show: {
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
+    filter: "blur(0px)",
     transition: {
       duration: 0.55,
       ease: [0.22, 1, 0.36, 1],
-      when: 'beforeChildren',
+      when: "beforeChildren",
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 export const heroLineVariants: Variants = {
   hidden: { opacity: 0, y: 14 },
@@ -124,7 +126,7 @@ export const heroLineVariants: Variants = {
     y: 0,
     transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
   },
-}
+};
 
 export const staggerContainerVariants: Variants = {
   hidden: {},
@@ -134,7 +136,7 @@ export const staggerContainerVariants: Variants = {
       delayChildren: 0.08,
     },
   },
-}
+};
 
 export const cardVariants: Variants = {
   hidden: {
@@ -151,7 +153,7 @@ export const cardVariants: Variants = {
       ease: [0.22, 1, 0.36, 1],
     },
   },
-}
+};
 
 export const listItemVariants: Variants = {
   hidden: {
@@ -163,10 +165,10 @@ export const listItemVariants: Variants = {
     x: 0,
     transition: {
       duration: 0.28,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
-}
+};
 
 export const faqAnswerVariants: Variants = {
   collapsed: {
@@ -174,18 +176,18 @@ export const faqAnswerVariants: Variants = {
     opacity: 0,
     transition: {
       duration: 0.28,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
   expanded: {
-    height: 'auto',
+    height: "auto",
     opacity: 1,
     transition: {
       duration: 0.35,
       ease: [0.22, 1, 0.36, 1],
     },
   },
-}
+};
 
 export const toggleWrapperVariants: Variants = {
   rest: {
@@ -197,7 +199,7 @@ export const toggleWrapperVariants: Variants = {
     rotate: -4,
     transition: {
       duration: 0.24,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
   tap: {
@@ -205,10 +207,10 @@ export const toggleWrapperVariants: Variants = {
     rotate: 0,
     transition: {
       duration: 0.1,
-      ease: 'easeOut',
+      ease: "easeOut",
     },
   },
-}
+};
 
 export const authFormVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
@@ -220,7 +222,7 @@ export const authFormVariants: Variants = {
       delayChildren: 0.04,
     },
   },
-}
+};
 
 export const authFormSectionVariants: Variants = {
   hidden: { opacity: 0, y: 18 },
@@ -231,7 +233,7 @@ export const authFormSectionVariants: Variants = {
       duration: 0.35,
     },
   },
-}
+};
 
 export const authFormFieldGridVariants: Variants = {
   hidden: {},
@@ -241,16 +243,19 @@ export const authFormFieldGridVariants: Variants = {
       delayChildren: 0.02,
     },
   },
-}
+};
 
 export const authFormFieldItemVariants: Variants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0 },
-}
+};
 
-export function createContactPanelVariants(direction: MotionDirection, side: 'form' | 'info'): Variants {
-  const directionSign = direction === 'rtl' ? -1 : 1
-  const sideSign = side === 'form' ? -1 : 1
+export function createContactPanelVariants(
+  direction: MotionDirection,
+  side: "form" | "info",
+): Variants {
+  const directionSign = direction === "rtl" ? -1 : 1;
+  const sideSign = side === "form" ? -1 : 1;
 
   return {
     hidden: {
@@ -258,20 +263,20 @@ export function createContactPanelVariants(direction: MotionDirection, side: 'fo
       x: directionSign * sideSign * 34,
       y: 22,
       scale: 0.97,
-      filter: 'blur(8px)',
+      filter: "blur(8px)",
     },
     show: {
       opacity: 1,
       x: 0,
       y: 0,
       scale: 1,
-      filter: 'blur(0px)',
+      filter: "blur(0px)",
       transition: {
         duration: 0.62,
         ease: [0.22, 1, 0.36, 1],
       },
     },
-  }
+  };
 }
 
 export const contactSendIconVariants: Variants = {
@@ -287,7 +292,7 @@ export const contactSendIconVariants: Variants = {
     transition: {
       duration: 0.8,
       repeat: Infinity,
-      ease: 'easeInOut',
+      ease: "easeInOut",
     },
   },
   sent: {
@@ -300,4 +305,4 @@ export const contactSendIconVariants: Variants = {
       ease: [0.22, 1, 0.36, 1],
     },
   },
-}
+};

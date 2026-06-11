@@ -58,7 +58,10 @@ export default function FaqsPage() {
           </p>
         </motion.header>
 
-        <motion.section className="grid gap-4" variants={staggerContainerVariants}>
+        <motion.section
+          className="grid gap-4"
+          variants={staggerContainerVariants}
+        >
           {faqs.map((faq) => (
             <FaqItem
               key={faq.question}
