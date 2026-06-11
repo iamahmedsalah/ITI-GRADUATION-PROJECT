@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import CustomDropdown from '../ui/CustomDropdown'
+import { generateAdminRoadmapDraft } from '../../libs/admin-api'
 import type { AdminRoadmapRow } from '../../libs/admin-api'
 
 type RoleOption = 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
@@ -16,6 +17,19 @@ type RoadmapPayload = {
   targetRole?: RoleOption
   targetLevel?: LevelOption
   templateType?: TemplateTypeOption
+  tags?: string[]
+  steps?: Array<{
+    stepKey: string
+    title: string
+    description?: string
+    resources?: Array<{ title?: string; url?: string }>
+    order: number
+    estimatedMinutes?: number
+    required?: boolean
+    dependsOn?: string[]
+  }>
+  source?: 'admin' | 'ai' | 'manual'
+  estimatedTotalMinutes?: number
   contentFormat?: 'markdown'
   contentMarkdown?: string
 }
@@ -48,6 +62,13 @@ export default function AdminRoadmapFormModal({
   const [targetLevel, setTargetLevel] = useState<LevelOption>((roadmap?.targetLevel as LevelOption) ?? 'beginner')
   const [templateType, setTemplateType] = useState<TemplateTypeOption>(roadmap?.templateType ?? 'roleBased')
   const [markdown, setMarkdown] = useState(defaultMarkdown)
+  const [durationWeeks, setDurationWeeks] = useState(8)
+  const [weeklyStudyHours, setWeeklyStudyHours] = useState(6)
+  const [generatedTags, setGeneratedTags] = useState<string[]>([])
+  const [generatedSteps, setGeneratedSteps] = useState<RoadmapPayload['steps']>()
+  const [generatedEstimatedMinutes, setGeneratedEstimatedMinutes] = useState<number | undefined>()
+  const [generatedSource, setGeneratedSource] = useState<'admin' | 'ai' | 'manual' | undefined>()
+  const [isGenerating, setIsGenerating] = useState(false)
 
   if (!open) return null
 
@@ -92,6 +113,72 @@ export default function AdminRoadmapFormModal({
           <CustomDropdown<LevelOption> value={targetLevel} options={levelOptions} onChange={setTargetLevel} buttonClassName="bg-(--surface-2)! px-4! py-3!" />
           <CustomDropdown<TemplateTypeOption> value={templateType} options={typeOptions} onChange={setTemplateType} className="md:col-span-2" buttonClassName="bg-(--surface-2)! px-4! py-3!" />
           {mode === 'create' ? (
+            <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-muted) p-4 md:col-span-2 md:grid-cols-[10rem_10rem_1fr]">
+              <input
+                type="number"
+                min={4}
+                max={12}
+                value={durationWeeks}
+                onChange={(event) => setDurationWeeks(Number(event.target.value))}
+                aria-label={t('adminUi.roadmaps.ai.durationWeeks')}
+                className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none"
+              />
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={weeklyStudyHours}
+                onChange={(event) => setWeeklyStudyHours(Number(event.target.value))}
+                aria-label={t('adminUi.roadmaps.ai.weeklyStudyHours')}
+                className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none"
+              />
+              <button
+                type="button"
+                disabled={isGenerating || goal.trim().length < 10}
+                onClick={async () => {
+                  setIsGenerating(true)
+                  try {
+                    const result = await generateAdminRoadmapDraft({
+                      goal: goal.trim(),
+                      targetRole,
+                      targetLevel,
+                      templateType,
+                      durationWeeks,
+                      weeklyStudyHours,
+                    })
+
+                    if (!result.ok || !result.data?.draft) {
+                      toast.error(result.message)
+                      return
+                    }
+
+                    const draft = result.data.draft
+                    setTitle(draft.title)
+                    setSlug(draft.slug)
+                    setGoal(draft.goal)
+                    setDescription(draft.description ?? '')
+                    setTargetRole(draft.targetRole ?? targetRole)
+                    setTargetLevel(draft.targetLevel ?? targetLevel)
+                    setTemplateType(draft.templateType ?? templateType)
+                    setMarkdown(draft.contentMarkdown)
+                    setGeneratedTags(draft.tags ?? [])
+                    setGeneratedSteps(draft.steps)
+                    setGeneratedEstimatedMinutes(draft.estimatedTotalMinutes)
+                    setGeneratedSource(draft.source)
+                    toast.success(result.message)
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : t('adminUi.roadmaps.ai.failed'))
+                  } finally {
+                    setIsGenerating(false)
+                  }
+                }}
+                className="inline-flex cursor-pointer items-center justify-center rounded-squircle border border-(--accent-border) px-4 py-3 text-sm font-semibold text-(--accent) transition hover:bg-(--accent-soft) disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isGenerating ? t('adminUi.roadmaps.ai.generating') : t('adminUi.roadmaps.ai.generate')}
+              </button>
+            </div>
+          ) : null}
+          {mode === 'create' ? (
             <textarea value={markdown} onChange={(event) => setMarkdown(event.target.value)} rows={5} className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none md:col-span-2" />
           ) : null}
           <button
@@ -111,7 +198,14 @@ export default function AdminRoadmapFormModal({
                 targetRole,
                 targetLevel,
                 templateType,
-                ...(mode === 'create' ? { contentFormat: 'markdown' as const, contentMarkdown: markdown.trim() } : {}),
+                ...(mode === 'create' ? {
+                  tags: generatedTags.length ? generatedTags : undefined,
+                  steps: generatedSteps,
+                  source: generatedSource,
+                  estimatedTotalMinutes: generatedEstimatedMinutes,
+                  contentFormat: 'markdown' as const,
+                  contentMarkdown: markdown.trim(),
+                } : {}),
               })
             }}
           >

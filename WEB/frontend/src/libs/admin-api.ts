@@ -98,6 +98,35 @@ export type AdminRoadmapDetail = AdminRoadmapRow & {
   createdBy?: { username?: string; email?: string; role?: string } | null
 }
 
+export type AdminAiRoadmapDraft = {
+  engine: string
+  generatedAt: string
+  draft: {
+    title: string
+    slug: string
+    goal: string
+    description?: string
+    targetRole?: 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
+    targetLevel?: 'beginner' | 'intermediate' | 'advanced'
+    templateType?: 'roleBased' | 'skillBased'
+    tags?: string[]
+    source: 'ai'
+    contentFormat: 'markdown'
+    contentMarkdown: string
+    steps?: Array<{
+      stepKey: string
+      title: string
+      description?: string
+      resources?: Array<{ title?: string; url?: string }>
+      order: number
+      estimatedMinutes?: number
+      required?: boolean
+      dependsOn?: string[]
+    }>
+    estimatedTotalMinutes?: number
+  }
+}
+
 export type AdminCourseRow = {
   _id: string
   title: string
@@ -308,6 +337,18 @@ export async function createAdminRoadmap(payload: {
   targetLevel?: 'beginner' | 'intermediate' | 'advanced'
   templateType?: 'roleBased' | 'skillBased'
   tags?: string[]
+  steps?: Array<{
+    stepKey: string
+    title: string
+    description?: string
+    resources?: Array<{ title?: string; url?: string }>
+    order: number
+    estimatedMinutes?: number
+    required?: boolean
+    dependsOn?: string[]
+  }>
+  source?: 'admin' | 'ai' | 'manual'
+  estimatedTotalMinutes?: number
   contentFormat: 'markdown'
   contentMarkdown: string
 }) {
@@ -320,6 +361,27 @@ export async function createAdminRoadmap(payload: {
   return {
     ok: response.ok,
     message: data.message ?? (response.ok ? 'Roadmap created successfully.' : 'Failed to create roadmap.'),
+    data: data.data ?? null,
+  }
+}
+
+export async function generateAdminRoadmapDraft(payload: {
+  goal: string
+  targetRole?: 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
+  targetLevel?: 'beginner' | 'intermediate' | 'advanced'
+  templateType?: 'roleBased' | 'skillBased'
+  durationWeeks?: number
+  weeklyStudyHours?: number
+}) {
+  const { response, data } = await apiPost<AdminMutationResponse<AdminAiRoadmapDraft>>(
+    '/ai/roadmaps/draft',
+    {},
+    { json: payload },
+  )
+
+  return {
+    ok: response.ok,
+    message: data.message ?? (response.ok ? 'AI roadmap draft generated successfully.' : 'Failed to generate AI roadmap draft.'),
     data: data.data ?? null,
   }
 }

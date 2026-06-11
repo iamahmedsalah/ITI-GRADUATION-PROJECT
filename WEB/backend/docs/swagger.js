@@ -28,6 +28,7 @@ const swaggerDefinition = {
     { name: "Admin Auth", description: "Admin authentication" },
     { name: "Roadmaps", description: "Roadmap templates and user roadmaps" },
     { name: "Courses", description: "Course enrollment and progress" },
+    { name: "AI", description: "Personalized learning intelligence" },
     { name: "Admin", description: "Admin management endpoints" },
   ],
   components: {
@@ -345,6 +346,23 @@ const swaggerDefinition = {
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ValidationErrorResponse" },
+          },
+        },
+      },
+      UnauthorizedError: {
+        description: "Authentication is required.",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                success: { type: "boolean", example: false },
+                message: {
+                  type: "string",
+                  example: "Access denied. Please log in to continue.",
+                },
+              },
+            },
           },
         },
       },

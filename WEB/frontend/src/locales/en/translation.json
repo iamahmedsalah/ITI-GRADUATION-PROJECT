@@ -317,6 +317,10 @@
     "progressSaved": "Roadmap progress saved.",
     "progressFailed": "Could not update roadmap progress.",
     "resources": "Resources",
+    "docsResources": "Docs",
+    "videoResources": "Videos",
+    "openResource": "Open",
+    "watchResource": "Watch",
     "emptyResources": "No resources were added for this step yet.",
     "emptySteps": "This roadmap does not have steps yet.",
     "emptyGraph": {
@@ -395,6 +399,25 @@
     "emptyRoadmaps": "You have not started tracking any roadmap yet.",
     "emptyCourses": "No course progress has been recorded yet.",
     "unknownCourse": "Course",
+    "ai": {
+      "title": "AI recommendations",
+      "subtitle": "Personalized next steps from your roadmaps, courses, progress, and preferences.",
+      "loading": "Building your recommendations...",
+      "empty": "Recommendations will appear after you start a roadmap or course.",
+      "nextStep": "Next step",
+      "course": "Course",
+      "roadmap": "Roadmap",
+      "unknownStep": "Recommended step",
+      "actions": {
+        "continue_step": "Continue step",
+        "start_step": "Start step",
+        "continue_course": "Continue course",
+        "retry_course": "Retry course",
+        "start_roadmap_course": "Start roadmap course",
+        "enroll_course": "Enroll course",
+        "assign_roadmap": "Start roadmap"
+      }
+    },
     "stats": {
       "topicsCompleted": "Topics completed",
       "currentlyLearning": "Currently learning",
@@ -669,6 +692,13 @@
         "create": "Create roadmap template",
         "update": "Update roadmap template",
         "type": "Roadmap type"
+      },
+      "ai": {
+        "generate": "Generate with AI",
+        "generating": "Generating...",
+        "failed": "Failed to generate AI roadmap draft.",
+        "durationWeeks": "Duration weeks",
+        "weeklyStudyHours": "Weekly study hours"
       },
       "actions": {
         "publish": "Publish",

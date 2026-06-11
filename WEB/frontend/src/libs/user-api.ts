@@ -80,9 +80,87 @@ export type DashboardSummary = {
   activities: DashboardActivity[]
 }
 
+export type AiRecommendationCourse = {
+  type: 'course'
+  matchScore: number
+  reason: string
+  nextAction: string
+  course: {
+    _id: string
+    title: string
+    slug?: string
+    shortDescription?: string
+    level?: string
+    category?: string
+    tags?: string[]
+    thumbnailUrl?: string
+    durationMinutes?: number
+  }
+}
+
+export type AiRecommendationRoadmap = {
+  type: 'roadmap'
+  matchScore: number
+  reason: string
+  nextAction: string
+  roadmap: {
+    _id: string
+    title?: string
+    slug?: string
+    goal?: string
+    description?: string
+    targetLevel?: string
+    templateType?: string
+    tags?: string[]
+    estimatedTotalMinutes?: number
+  }
+}
+
+export type AiRecommendationNextStep = {
+  type: 'roadmap_step'
+  matchScore: number
+  reason: string
+  nextAction: string
+  roadmap: {
+    _id?: string
+    title?: string
+    slug?: string
+    progressPercent?: number
+  }
+  step: {
+    stepKey: string
+    title?: string
+    description?: string
+    estimatedMinutes?: number
+    course?: string | null
+  }
+}
+
+export type AiRecommendationsData = {
+  engine: string
+  generatedAt: string
+  profile?: {
+    preferredLevel?: string
+    learningPace?: string
+    weeklyStudyHours?: number
+    interests?: string[]
+    source?: string
+  }
+  recommendations: {
+    nextSteps: AiRecommendationNextStep[]
+    courses: AiRecommendationCourse[]
+    roadmaps: AiRecommendationRoadmap[]
+  }
+}
+
 type DashboardSummaryResponse = {
   success?: boolean
   data?: DashboardSummary
+}
+
+type AiRecommendationsResponse = {
+  success?: boolean
+  data?: AiRecommendationsData
 }
 
 type ProfileUpdateInput = {
@@ -108,6 +186,7 @@ type UserMutationResponse = {
 }
 
 const emptyDashboardSummaryResponse: DashboardSummaryResponse = {}
+const emptyAiRecommendationsResponse: AiRecommendationsResponse = {}
 const emptyMutationResponse: UserMutationResponse = {}
 
 function firstApiError(data: UserMutationResponse, fallback: string) {
@@ -122,6 +201,19 @@ export async function fetchDashboardSummary() {
 
   if (!response.ok || !data.data) {
     throw new Error('Could not load dashboard summary.')
+  }
+
+  return data.data
+}
+
+export async function fetchAiRecommendations(limit = 6) {
+  const { response, data } = await apiGet<AiRecommendationsResponse>(
+    `/ai/recommendations?limit=${limit}`,
+    emptyAiRecommendationsResponse,
+  )
+
+  if (!response.ok || !data.data) {
+    throw new Error('Could not load AI recommendations.')
   }
 
   return data.data

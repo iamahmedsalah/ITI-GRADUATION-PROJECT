@@ -3,7 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Activity01Icon, MoreVerticalIcon, Route03Icon, ZapIcon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
-import type { DashboardActivity, DashboardRoadmap } from '../../libs/user-api'
+import type {
+  AiRecommendationCourse,
+  AiRecommendationNextStep,
+  AiRecommendationRoadmap,
+  AiRecommendationsData,
+  DashboardActivity,
+  DashboardRoadmap,
+} from '../../libs/user-api'
 
 function relativeTime(value?: string | number) {
   if (!value) return ''
@@ -167,6 +174,154 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
         ) : (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2">
             {t('dashboard.emptyRoadmaps')}
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function recommendationActionLabel(action: string, t: (key: string, options?: Record<string, unknown>) => string) {
+  return t(`dashboard.ai.actions.${action}`, {
+    defaultValue: action
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' '),
+  })
+}
+
+function RecommendationCard({
+  title,
+  eyebrow,
+  reason,
+  score,
+  action,
+  to,
+}: {
+  title: string
+  eyebrow: string
+  reason: string
+  score: number
+  action: string
+  to?: string
+}) {
+  const content = (
+    <article className="flex h-full flex-col rounded-lg border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--accent)">{eyebrow}</p>
+          <h3 className="mt-2 line-clamp-2 text-base font-semibold text-(--text-h)">{title}</h3>
+        </div>
+        <span className="shrink-0 rounded-md border border-(--accent-border) px-2 py-1 text-xs font-semibold text-(--accent)">
+          {score}%
+        </span>
+      </div>
+      <p className="mt-3 line-clamp-3 text-sm leading-6 text-(--text)">{reason}</p>
+      <span className="mt-auto pt-4 text-sm font-semibold text-(--text-h)">{action}</span>
+    </article>
+  )
+
+  return to ? (
+    <Link to={to} className="block h-full">
+      {content}
+    </Link>
+  ) : content
+}
+
+function buildRecommendationCards({
+  data,
+  language,
+  t,
+}: {
+  data?: AiRecommendationsData
+  language: string
+  t: (key: string, options?: Record<string, unknown>) => string
+}) {
+  type RecommendationCardData = {
+    key: string
+    title: string
+    eyebrow: string
+    reason: string
+    score: number
+    action: string
+    to?: string
+  }
+
+  const nextSteps =
+    data?.recommendations.nextSteps.slice(0, 2).map<RecommendationCardData>((item: AiRecommendationNextStep) => ({
+      key: `step-${item.roadmap._id}-${item.step.stepKey}`,
+      title: item.step.title ?? t('dashboard.ai.unknownStep'),
+      eyebrow: t('dashboard.ai.nextStep'),
+      reason: item.reason,
+      score: item.matchScore,
+      action: recommendationActionLabel(item.nextAction, t),
+      to: item.roadmap.slug ? `/${language}/roadmaps/${item.roadmap.slug}` : `/${language}/roadmaps`,
+    })) ?? []
+
+  const courses =
+    data?.recommendations.courses.slice(0, 2).map<RecommendationCardData>((item: AiRecommendationCourse) => ({
+      key: `course-${item.course._id}`,
+      title: item.course.title,
+      eyebrow: item.course.category || t('dashboard.ai.course'),
+      reason: item.reason,
+      score: item.matchScore,
+      action: recommendationActionLabel(item.nextAction, t),
+    })) ?? []
+
+  const roadmaps =
+    data?.recommendations.roadmaps.slice(0, 2).map<RecommendationCardData>((item: AiRecommendationRoadmap) => ({
+      key: `roadmap-${item.roadmap._id}`,
+      title: item.roadmap.title ?? t('profile.unknownRoadmap'),
+      eyebrow: item.roadmap.templateType || t('dashboard.ai.roadmap'),
+      reason: item.reason,
+      score: item.matchScore,
+      action: recommendationActionLabel(item.nextAction, t),
+      to: item.roadmap.slug ? `/${language}/roadmaps/${item.roadmap.slug}` : `/${language}/roadmaps`,
+    })) ?? []
+
+  return [...nextSteps, ...courses, ...roadmaps].slice(0, 6)
+}
+
+export function AiRecommendationsSection({
+  data,
+  isLoading,
+}: {
+  data?: AiRecommendationsData
+  isLoading: boolean
+}) {
+  const { language } = useLanguage()
+  const { t } = useTranslation()
+  const cards = buildRecommendationCards({ data, language, t })
+
+  return (
+    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.ai.title')}</h2>
+          <p className="mt-2 text-sm text-(--text)">{t('dashboard.ai.subtitle')}</p>
+        </div>
+        <HugeiconsIcon icon={ZapIcon} size={20} className="text-(--accent)" />
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {isLoading ? (
+          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2 xl:col-span-3">
+            {t('dashboard.ai.loading')}
+          </p>
+        ) : cards.length ? (
+          cards.map((card) => (
+            <RecommendationCard
+              key={card.key}
+              title={card.title}
+              eyebrow={card.eyebrow}
+              reason={card.reason}
+              score={card.score}
+              action={card.action}
+              to={card.to}
+            />
+          ))
+        ) : (
+          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2 xl:col-span-3">
+            {t('dashboard.ai.empty')}
           </p>
         )}
       </div>

@@ -18,6 +18,7 @@ import roadmapsRoutes from "./routes/roadmaps.route.js";
 import coursesRoutes from "./routes/courses.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import contactRoutes from "./routes/contact.route.js";
+import aiRoutes from "./routes/ai.route.js";
 import {
   swaggerSpec,
   swaggerUiAssetPath,
@@ -224,6 +225,9 @@ app.use("/api/roadmaps", roadmapsRoutes);
 
 // Courses Routes
 app.use("/api/courses", coursesRoutes);
+
+// AI-powered recommendations
+app.use("/api/ai", aiRoutes);
 
 // Admin Routes
 app.use("/api/admin", adminRoutes);

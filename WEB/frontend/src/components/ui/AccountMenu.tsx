@@ -62,7 +62,7 @@ export default function AccountMenu({ user, language, isRtl = false }: Props) {
             : undefined
         }
       >
-        <span className="grid size-10 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-sm font-semibold text-white shadow-[0_12px_24px_rgba(12,107,80,0.28)] ring-1 ring-white/10">
+        <span className="grid size-10 place-items-center overflow-hidden rounded-squircle bg-(--surface-2) text-sm font-semibold text-white shadow-[0_12px_24px_rgba(12,107,80,0.28)] ring-1 ring-white/10">
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name} className="size-full object-cover" />
           ) : (
@@ -88,7 +88,7 @@ export default function AccountMenu({ user, language, isRtl = false }: Props) {
           >
             <div className="rounded-squircle border border-(--border) bg-[radial-gradient(circle_at_top_left,rgba(29,185,84,0.12),rgba(255,255,255,0.02))] px-4 py-3">
               <div className="flex items-center gap-3">
-                <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-sm font-semibold text-white ring-1 ring-white/10">
+                <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--surface-2) text-sm font-semibold text-white ring-1 ring-white/10">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.name} className="size-full object-cover" />
                   ) : (

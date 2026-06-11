@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '../../context/LanguageContext'
 import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
 import type { DashboardLoaderData } from '../../utils/route-utils'
-import { fetchDashboardSummary } from '../../libs/user-api'
+import { fetchAiRecommendations, fetchDashboardSummary } from '../../libs/user-api'
 import {
+  AiRecommendationsSection,
   ContinueFollowingSection,
   DashboardStat,
   LearningActivitySection,
@@ -24,6 +25,10 @@ function DashboardPage() {
   const summaryQuery = useQuery({
     queryKey: ['dashboard', 'summary'],
     queryFn: fetchDashboardSummary,
+  })
+  const recommendationsQuery = useQuery({
+    queryKey: ['dashboard', 'ai-recommendations'],
+    queryFn: () => fetchAiRecommendations(6),
   })
   const summary = summaryQuery.data
   const streak = summary?.streak ?? user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null }
@@ -57,6 +62,10 @@ function DashboardPage() {
           <motion.div variants={cardVariants}>
             <ContinueFollowingSection roadmaps={continueRoadmaps} />
           </motion.div>
+        </motion.div>
+
+        <motion.div variants={cardVariants}>
+          <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
         </motion.div>
 
         <motion.div variants={cardVariants}>

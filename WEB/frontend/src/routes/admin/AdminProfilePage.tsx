@@ -11,7 +11,6 @@ import { adminAuthQueryKey, fetchAdminCurrentUser } from '../../libs/react-query
 import PageHeader from '../../components/ui/PageHeader'
 import ProfileAvatarUploader from '../../components/profile/ProfileAvatarUploader'
 import ProfileSettingsPanel from '../../components/profile/ProfileSettingsPanel'
-import ProfileIdentityCard from '../../components/ui/ProfileIdentityCard'
 import ProfileStatusCard from '../../components/ui/ProfileStatusCard'
 
 export default function AdminProfilePage() {
@@ -50,7 +49,6 @@ export default function AdminProfilePage() {
                 <ProfileAvatarUploader user={adminUser} cacheQueryKey={adminAuthQueryKey} />
               </motion.div>
               <ProfileStatusCard user={adminUser} t={t} variants={heroLineVariants} />
-              <ProfileIdentityCard user={adminUser} t={t} variants={heroLineVariants} />
             </motion.div>
 
             <ProfileSettingsPanel user={adminUser} variants={heroLineVariants} cacheQueryKey={adminAuthQueryKey} />

@@ -317,6 +317,10 @@
     "progressSaved": "تم حفظ تقدم خريطة الطريق.",
     "progressFailed": "تعذر تحديث تقدم خريطة الطريق.",
     "resources": "الموارد",
+    "docsResources": "المستندات",
+    "videoResources": "الفيديوهات",
+    "openResource": "فتح",
+    "watchResource": "مشاهدة",
     "emptyResources": "لم تتم إضافة موارد لهذه الخطوة بعد.",
     "emptySteps": "لا تحتوي خريطة الطريق هذه على خطوات بعد.",
     "emptyGraph": {
@@ -395,6 +399,25 @@
     "emptyRoadmaps": "لم تبدأ تتبع أي خريطة طريق بعد.",
     "emptyCourses": "لم يتم تسجيل أي تقدم في الدورات بعد.",
     "unknownCourse": "دورة",
+    "ai": {
+      "title": "توصيات الذكاء الاصطناعي",
+      "subtitle": "خطوات مخصصة بناء على خرائط الطريق والدورات والتقدم والتفضيلات.",
+      "loading": "جار إنشاء توصياتك...",
+      "empty": "ستظهر التوصيات بعد بدء خريطة طريق أو دورة.",
+      "nextStep": "الخطوة التالية",
+      "course": "دورة",
+      "roadmap": "خريطة طريق",
+      "unknownStep": "خطوة مقترحة",
+      "actions": {
+        "continue_step": "استكمل الخطوة",
+        "start_step": "ابدأ الخطوة",
+        "continue_course": "استكمل الدورة",
+        "retry_course": "أعد محاولة الدورة",
+        "start_roadmap_course": "ابدأ دورة الخريطة",
+        "enroll_course": "سجل في الدورة",
+        "assign_roadmap": "ابدأ الخريطة"
+      }
+    },
     "stats": {
       "topicsCompleted": "الموضوعات المكتملة",
       "currentlyLearning": "تتعلم حاليا",
@@ -669,6 +692,13 @@
         "create": "إنشاء قالب خريطة طريق",
         "update": "تحديث قالب خريطة الطريق",
         "type": "نوع خريطة الطريق"
+      },
+      "ai": {
+        "generate": "إنشاء بالذكاء الاصطناعي",
+        "generating": "جار الإنشاء...",
+        "failed": "فشل إنشاء مسودة خريطة الطريق بالذكاء الاصطناعي.",
+        "durationWeeks": "مدة الأسابيع",
+        "weeklyStudyHours": "ساعات الدراسة أسبوعيا"
       },
       "actions": {
         "publish": "نشر",

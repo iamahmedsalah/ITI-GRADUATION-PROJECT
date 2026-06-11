@@ -58,6 +58,17 @@ export const contactLimiter = rateLimit({
   },
 });
 
+export const aiRecommendationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.AI_RECOMMENDATION_RATE_LIMIT || "60", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many AI recommendation requests, try again later.",
+  },
+});
+
 // Admin endpoints rate limiters
 export const adminListLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -83,4 +94,4 @@ export const adminPublishLimiter = rateLimit({
   message: { success: false, message: "Too many publish requests, try again later." },
 });
 
-export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, contactLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };
+export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, contactLimiter, aiRecommendationLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };

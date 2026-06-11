@@ -105,7 +105,7 @@ export default function AdminSidebar({
 
   const adminProfilePath = localizedPath(language, '/admin/profile')
   const avatar = (
-    <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--gd-primary) text-white shadow-[0_14px_28px_rgba(29,185,84,0.24)]">
+    <span className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-squircle bg-(--surface) text-white shadow-[0_14px_28px_rgba(29,185,84,0.24)]">
       {adminAvatarUrl ? (
         <img src={adminAvatarUrl} alt={adminName || consoleLabel} className="size-full object-cover" />
       ) : (
