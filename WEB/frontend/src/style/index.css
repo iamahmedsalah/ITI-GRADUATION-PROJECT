@@ -242,6 +242,10 @@ body {
   background: var(--gd-primary-hover);
 }
 
+textarea{
+  resize:none;
+}
+
 .admin-checkbox {
   width: 22px;
   height: 22px;

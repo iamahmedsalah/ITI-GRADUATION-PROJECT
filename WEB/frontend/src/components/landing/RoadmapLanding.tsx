@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Route03Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useLanguage } from '../../context/LanguageContext'
 import { fetchRoadmapTemplates, searchRoadmaps, type RoadmapTemplate } from '../../libs/roadmaps-api'
+import AvailableCoursesSection from './AvailableCoursesSection'
 
 function uniqueBySlug(roadmaps: RoadmapTemplate[]) {
   const seen = new Set<string>()
@@ -123,18 +124,24 @@ function RoadmapListSkeleton() {
 export default function RoadmapLanding() {
   const { t } = useTranslation()
   const { direction, language } = useLanguage()
+  const [searchParams] = useSearchParams()
   const [query, setQuery] = useState('')
   const trimmedQuery = query.trim()
+  const selectedType = searchParams.get('type') === 'skillBased'
+    ? 'skillBased'
+    : searchParams.get('type') === 'roleBased'
+      ? 'roleBased'
+      : null
 
   const templatesQuery = useQuery({
-    queryKey: ['roadmaps', 'templates', 50],
-    queryFn: () => fetchRoadmapTemplates(50),
+    queryKey: ['roadmaps', 'templates', 50, selectedType],
+    queryFn: () => fetchRoadmapTemplates(50, selectedType ?? undefined),
     staleTime: 60_000,
   })
 
   const searchQuery = useQuery({
-    queryKey: ['roadmaps', 'search', trimmedQuery],
-    queryFn: () => searchRoadmaps(trimmedQuery, 18),
+    queryKey: ['roadmaps', 'search', trimmedQuery, selectedType],
+    queryFn: () => searchRoadmaps(trimmedQuery, 18, selectedType ?? undefined),
     enabled: trimmedQuery.length > 0,
     staleTime: 30_000,
   })
@@ -195,8 +202,12 @@ export default function RoadmapLanding() {
             <RoadmapSection title={t('landing.searchResults')} roadmaps={searchRoadmapsList} />
           ) : (
             <div className="grid gap-16">
-              <RoadmapSection title={t('landing.roleRoadmaps')} roadmaps={groupedRoadmaps.roleBased} />
-              <RoadmapSection title={t('landing.skillRoadmaps')} roadmaps={groupedRoadmaps.skillBased} />
+              {selectedType !== 'skillBased' ? (
+                <RoadmapSection title={t('landing.roleRoadmaps')} roadmaps={groupedRoadmaps.roleBased} />
+              ) : null}
+              {selectedType !== 'roleBased' ? (
+                <RoadmapSection title={t('landing.skillRoadmaps')} roadmaps={groupedRoadmaps.skillBased} />
+              ) : null}
             </div>
           )}
         </div>
@@ -238,6 +249,8 @@ export default function RoadmapLanding() {
             </div>
           </section>
         </div>
+
+        <AvailableCoursesSection />
       </div>
     </section>
   )

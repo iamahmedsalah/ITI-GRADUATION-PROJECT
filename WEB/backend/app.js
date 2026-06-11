@@ -17,6 +17,7 @@ import authRoutes from "./routes/auth.route.js";
 import roadmapsRoutes from "./routes/roadmaps.route.js";
 import coursesRoutes from "./routes/courses.route.js";
 import adminRoutes from "./routes/admin.route.js";
+import contactRoutes from "./routes/contact.route.js";
 import {
   swaggerSpec,
   swaggerUiAssetPath,
@@ -185,6 +186,9 @@ app.get("/api/docs/swagger-initializer.js", (_req, res) => {
 });
 
 app.use("/api/docs", express.static(swaggerUiAssetPath));
+
+// Contact form does not depend on the database.
+app.use("/api/contact", contactRoutes);
 
 // Reconnect middleware
 app.use("/api", async (req, res, next) => {

@@ -1,4 +1,9 @@
 import User from "../models/user/userAccountModel.js";
+import UserActivity from "../models/user/userActivityModel.js";
+import UserCourseProgress from "../models/user/userCourseProgressModel.js";
+import UserRoadmap from "../models/user/userRoadmapModel.js";
+import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
+import { resolveUserAvatarUrl } from "../config/cloudinary.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { customAlphabet } from "nanoid";
@@ -34,16 +39,85 @@ const SOCIAL_PROVIDER_CONFIG = {
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
 const DEFAULT_SOCIAL_INTENT = "signup";
+const STREAK_TIME_ZONE = "Africa/Cairo";
 
 const toPublicUser = (user) => ({
   _id: user._id,
   username: user.username,
+  Fname: user.Fname,
+  Lname: user.Lname,
   name: `${user.Fname} ${user.Lname}`,
   email: user.email,
+  avatarUrl: user.avatarUrl || null,
   role: user.role,
   isVerified: user.isVerified,
   lastLogin: user.lastLogin,
+  loginStreak: {
+    current: user.loginStreak?.current ?? 0,
+    longest: user.loginStreak?.longest ?? 0,
+    lastLoginDate: user.loginStreak?.lastLoginDate ?? null,
+  },
 });
+
+const getStreakDateKey = (date = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: STREAK_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+
+const dayNumberFromKey = (key) => {
+  const [year, month, day] = key.split("-").map(Number);
+  return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+};
+
+const updateLoginStreak = (user, now = new Date()) => {
+  const todayKey = getStreakDateKey(now);
+  const streak = user.loginStreak ?? {};
+  const lastLoginDate = streak.lastLoginDate ? new Date(streak.lastLoginDate) : null;
+  const lastLoginKey = lastLoginDate ? getStreakDateKey(lastLoginDate) : null;
+
+  if (lastLoginKey === todayKey) {
+    user.loginStreak = {
+      current: streak.current ?? 1,
+      longest: Math.max(streak.longest ?? 0, streak.current ?? 1),
+      lastLoginDate: lastLoginDate ?? now,
+    };
+    return user.loginStreak;
+  }
+
+  const current =
+    lastLoginKey && dayNumberFromKey(todayKey) - dayNumberFromKey(lastLoginKey) === 1
+      ? (streak.current ?? 0) + 1
+      : 1;
+
+  user.loginStreak = {
+    current,
+    longest: Math.max(streak.longest ?? 0, current),
+    lastLoginDate: now,
+  };
+
+  return user.loginStreak;
+};
+
+const recordLoginActivity = async (req, user) => {
+  try {
+    await UserActivity.create({
+      user: user._id,
+      type: "login",
+      device: req?.headers?.["user-agent"] || "Unknown",
+      ipAddress:
+        req?.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() ||
+        req?.socket?.remoteAddress ||
+        req?.ip ||
+        "Unknown",
+      occurredAt: new Date(),
+    });
+  } catch (error) {
+    console.warn("Unable to record login activity:", error.message);
+  }
+};
 
 const generateVerificationToken = customAlphabet(
   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -260,7 +334,9 @@ const exchangeCodeForSocialProfile = async (req, provider, code) => {
 };
 
 const handleSocialAuthSuccess = async (res, user) => {
-  user.lastLogin = Date.now();
+  const now = new Date();
+  user.lastLogin = now;
+  updateLoginStreak(user, now);
   user.failedLoginAttempts = 0;
   user.lockUntil = undefined;
 
@@ -268,6 +344,7 @@ const handleSocialAuthSuccess = async (res, user) => {
   user.refreshTokenHash = hashRefreshToken(refreshToken);
   user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
   await user.save();
+  await recordLoginActivity(res.req, user);
 
   return user;
 };
@@ -516,6 +593,11 @@ export const signup = async (req, res) => {
       Lname: normalizedLname,
       email: normalizedEmail,
       password,
+      loginStreak: {
+        current: 1,
+        longest: 1,
+        lastLoginDate: new Date(),
+      },
     });
 
     const { accessToken, refreshToken } = generateTokenSetCookie(res, newUser._id);
@@ -650,8 +732,11 @@ export const login = async (req, res) => {
     user.refreshTokenHash = hashRefreshToken(refreshToken);
     user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
 
-    user.lastLogin = Date.now();
+    const now = new Date();
+    user.lastLogin = now;
+    updateLoginStreak(user, now);
     await user.save();
+    await recordLoginActivity(req, user);
 
     return res.status(200).json({
       success: true,
@@ -1016,6 +1101,244 @@ export const checkAuth = (req, res) => {
   });
 };
 
+export const getDashboardSummary = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const [roadmaps, stepTimeByRoadmap, courses] = await Promise.all([
+      UserRoadmap.find({ user: userId, status: { $ne: "archived" } })
+        .populate("template", "title slug templateType targetLevel estimatedTotalMinutes tags")
+        .sort({ lastAccessedAt: -1, updatedAt: -1 })
+        .lean(),
+      UserRoadmapStepProgress.aggregate([
+        { $match: { user: userId } },
+        {
+          $group: {
+            _id: "$roadmap",
+            timeSpentMinutes: { $sum: "$timeSpentMinutes" },
+            completedSteps: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            },
+          },
+        },
+      ]),
+      UserCourseProgress.find({ user: userId })
+        .populate("course", "title slug level category durationMinutes thumbnailUrl")
+        .sort({ lastAccessedAt: -1, updatedAt: -1 })
+        .lean(),
+    ]);
+    const activities = await UserActivity.find({ user: userId })
+      .populate("course", "title slug")
+      .populate({
+        path: "roadmap",
+        select: "template progressPercent",
+        populate: {
+          path: "template",
+          select: "title slug tags",
+        },
+      })
+      .sort({ occurredAt: -1, createdAt: -1 })
+      .limit(8)
+      .lean();
+
+    const timeByRoadmapId = new Map(
+      stepTimeByRoadmap.map((item) => [
+        String(item._id),
+        {
+          timeSpentMinutes: item.timeSpentMinutes ?? 0,
+          completedSteps: item.completedSteps ?? 0,
+        },
+      ]),
+    );
+
+    const roadmapItems = roadmaps.map((roadmap) => ({
+      ...roadmap,
+      timeSpentMinutes: timeByRoadmapId.get(String(roadmap._id))?.timeSpentMinutes ?? 0,
+      completedSteps: timeByRoadmapId.get(String(roadmap._id))?.completedSteps ?? 0,
+    }));
+
+    const totalRoadmapMinutes = roadmapItems.reduce(
+      (sum, roadmap) => sum + (roadmap.timeSpentMinutes ?? 0),
+      0,
+    );
+    const totalCourseMinutes = courses.reduce(
+      (sum, courseProgress) => sum + (courseProgress.watchedMinutes ?? 0),
+      0,
+    );
+    const totalCompletedSteps = roadmapItems.reduce(
+      (sum, roadmap) => sum + (roadmap.completedSteps ?? 0),
+      0,
+    );
+    const activeRoadmaps = roadmapItems.filter((roadmap) =>
+      ["assigned", "inProgress", "paused"].includes(roadmap.status),
+    ).length;
+    const completedRoadmaps = roadmapItems.filter((roadmap) => roadmap.status === "completed").length;
+    const activeCourses = courses.filter((course) =>
+      ["notStarted", "inProgress"].includes(course.status),
+    ).length;
+    const completedCourses = courses.filter((course) => course.status === "completed").length;
+    const averageRoadmapProgress = roadmapItems.length
+      ? Math.round(
+          roadmapItems.reduce((sum, roadmap) => sum + (roadmap.progressPercent ?? 0), 0) /
+            roadmapItems.length,
+        )
+      : 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: toPublicUser(req.user),
+        streak: req.user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null },
+        totals: {
+          roadmaps: roadmapItems.length,
+          activeRoadmaps,
+          completedRoadmaps,
+          courses: courses.length,
+          activeCourses,
+          completedCourses,
+          totalRoadmapMinutes,
+          totalCourseMinutes,
+          totalLearningMinutes: totalRoadmapMinutes + totalCourseMinutes,
+          averageRoadmapProgress,
+          totalCompletedSteps,
+        },
+        roadmaps: roadmapItems,
+        courses,
+        activities,
+      },
+    });
+  } catch (error) {
+    console.error("Dashboard summary error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not load dashboard summary.",
+    });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const { username, Fname, Lname } = req.body;
+
+    if (username && username !== user.username) {
+      const usernameOwner = await User.findOne({
+        username,
+        _id: { $ne: user._id },
+      }).select("_id");
+
+      if (usernameOwner) {
+        return res.status(409).json({
+          success: false,
+          message: "Validation failed.",
+          errors: [{ field: "username", message: "Username is already taken." }],
+        });
+      }
+
+      user.username = username;
+    }
+
+    if (Fname) {
+      user.Fname = Fname;
+    }
+
+    if (Lname) {
+      user.Lname = Lname;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      user: toPublicUser(user),
+    });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Validation failed.",
+        errors: [{ field: "username", message: "Username is already taken." }],
+      });
+    }
+
+    console.error("Update profile error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not update profile.",
+    });
+  }
+};
+
+export const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated successfully.",
+    });
+  } catch (error) {
+    console.error("Update password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not update password.",
+    });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const avatarUrl = await resolveUserAvatarUrl(req.body.avatarImage, {
+      userId: user._id,
+      username: user.username,
+    });
+
+    user.avatarUrl = avatarUrl;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Avatar updated successfully.",
+      user: toPublicUser(user),
+    });
+  } catch (error) {
+    console.error("Update avatar error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Could not update avatar.",
+    });
+  }
+};
+
 export default {
   signup,
   verifyEmail,
@@ -1027,4 +1350,8 @@ export default {
   resendPasswordReset,
   resetPassword,
   checkAuth,
+  getDashboardSummary,
+  updateProfile,
+  updateAvatar,
+  updatePassword,
 };

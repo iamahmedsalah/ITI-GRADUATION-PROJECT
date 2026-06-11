@@ -29,7 +29,7 @@ export default function FormInput({
       <div className="relative">
         <input
           {...props}
-          className={`w-full rounded-2xl border bg-transparent px-4 py-3 text-start text-(--text-h) outline-none transition-colors focus:ring-2 placeholder:text-(--text) ${stateClass} ${className}`}
+          className={`w-full rounded-squircle border bg-transparent px-4 py-3 text-start text-(--text-h) outline-none transition-colors focus:ring-2 placeholder:text-(--text) ${stateClass} ${className}`}
         />
         {rightAdornment}
       </div>

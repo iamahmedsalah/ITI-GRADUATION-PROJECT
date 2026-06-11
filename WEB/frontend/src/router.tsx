@@ -20,14 +20,16 @@ import {
 } from "./routes/common/layouts";
 import {
   AdminCoursesPage,
+  AdminCourseDetailPage,
   AdminDashboardPage,
   AdminForgotPasswordPage,
   AdminLoginPage,
   AdminResetPasswordPage,
+  AdminContactMessagesPage,
   AdminRoadmapDetailPage,
   AdminRoadmapsPage,
   AdminUsersPage,
-  AboutPage,
+  ContactPage,
   DashboardPage,
   FaqsPage,
   ForgotPasswordPage,
@@ -110,8 +112,8 @@ export const appRouter = createBrowserRouter([
                 element: <FaqsPage />,
               },
               {
-                path: "about",
-                element: <AboutPage />,
+                path: "contact",
+                element: <ContactPage />,
               },
               {
                 path: "guides",
@@ -153,6 +155,16 @@ export const appRouter = createBrowserRouter([
                 path: "courses",
                 loader: adminProtectedLoader,
                 element: <AdminCoursesPage />,
+              },
+              {
+                path: "courses/:courseId",
+                loader: adminProtectedLoader,
+                element: <AdminCourseDetailPage />,
+              },
+              {
+                path: "contact-messages",
+                loader: adminProtectedLoader,
+                element: <AdminContactMessagesPage />,
               },
               {
                 path: "login",

@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    avatarUrl: {
+      type: String,
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, "Please add a password"],
@@ -50,6 +54,21 @@ const userSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
       default: Date.now,
+    },
+    loginStreak: {
+      current: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      longest: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      lastLoginDate: {
+        type: Date,
+      },
     },
     isVerified: {
       type: Boolean,

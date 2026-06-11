@@ -4,6 +4,7 @@ import {
   WELCOME_EMAIL_TEMPLATE,
   PASSWORD_RESET_REQUEST_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
+  CONTACT_REPLY_EMAIL_TEMPLATE,
 } from "../utils/emailsTemplate.js";
 import logger from "../utils/logger.js";
 
@@ -23,6 +24,16 @@ const baseHeaders = {
   "X-Mailer": "ILMA Backend",
   "X-Priority": "3",
 };
+
+const escapeHtml = (value) =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const formatMultilineHtml = (value) => escapeHtml(value).replace(/\n/g, "<br />");
 
 export const sendVerificationEmail = async (email, verificationToken, name) => {
   try {
@@ -243,5 +254,65 @@ ILMA Security Team`;
     });
 
     throw new Error(`Error sending password reset success email: ${error.message}`);
+  }
+};
+
+export const sendContactReplyEmail = async ({
+  email,
+  name,
+  replyMessage,
+  originalMessage,
+}) => {
+  try {
+    verifyTransporterState();
+
+    const formattedHtml = CONTACT_REPLY_EMAIL_TEMPLATE.replace(
+      "{name}",
+      escapeHtml(name),
+    )
+      .replace("{replyMessage}", formatMultilineHtml(replyMessage))
+      .replace("{originalMessage}", formatMultilineHtml(originalMessage));
+
+    const text = `Hello ${name},
+
+Thank you for contacting ILMA. Our team replied to your message.
+
+Our reply:
+${replyMessage}
+
+Your original message:
+${originalMessage}
+
+You can reply directly to this email if you need more help.
+
+ILMA Support Team`;
+
+    const res = await transporter.sendMail({
+      from: `"ILMA Support" <${sender}>`,
+      to: email,
+      replyTo: sender,
+      subject: "Reply from ILMA Support",
+      text,
+      html: formattedHtml,
+      headers: {
+        ...baseHeaders,
+        "X-Category": "Contact Reply Email",
+      },
+    });
+
+    logger.info("Contact reply email sent successfully", {
+      messageId: res.messageId,
+      recipient: email,
+    });
+
+    return res;
+  } catch (error) {
+    logger.error("Error executing sendContactReplyEmail", {
+      recipient: email,
+      errorMessage: error.message,
+      stack: error.stack,
+    });
+
+    throw new Error(`Error sending contact reply email: ${error.message}`);
   }
 };

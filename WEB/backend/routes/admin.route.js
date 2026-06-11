@@ -18,6 +18,8 @@ import {
   adminCourseIdValidation,
   adminUpdateCourseValidation,
   adminLogsListValidation,
+  adminContactMessagesListValidation,
+  adminContactMessageReplyValidation,
 } from "../middleware/adminValidators.js";
 import {
   loginValidation,
@@ -50,6 +52,8 @@ import {
   adminResetPassword,
   adminLogout,
   adminCheckAuth,
+  getAdminContactMessages,
+  replyToContactMessageByAdmin,
 } from "../services/admin.service.js";
 import { createRoadmapTemplate } from "../services/roadmaps.service.js";
 
@@ -698,6 +702,56 @@ router.delete(
   adminWriteLimiter,
   adminCourseIdValidation,
   deleteCourseByAdmin,
+);
+
+/**
+ * @openapi
+ * /admin/contact-messages:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List contact form messages for admin
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get(
+  "/contact-messages",
+  adminListLimiter,
+  adminContactMessagesListValidation,
+  getAdminContactMessages,
+);
+
+/**
+ * @openapi
+ * /admin/contact-messages/{contactMessageId}/reply:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reply to a contact form message
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contactMessageId
+ *         required: true
+ *         schema:
+ *           $ref: '#/components/schemas/ObjectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reply]
+ *             properties:
+ *               reply:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 5000
+ */
+router.post(
+  "/contact-messages/:contactMessageId/reply",
+  adminWriteLimiter,
+  adminContactMessageReplyValidation,
+  replyToContactMessageByAdmin,
 );
 
 /**

@@ -371,16 +371,6 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                   </span>
                   <span className="flex-1">{t("navbar.myProfile")}</span>
                 </NavLink>
-                <NavLink
-                  to={`/${language}/roadmaps/frontend`}
-                  className="flex items-center gap-3 rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span className="grid size-8 place-items-center rounded-2xl bg-[linear-gradient(135deg,rgba(29,185,84,0.16),rgba(6,95,70,0.08))] text-(--text-h)">
-                    <HugeiconsIcon icon={Route03Icon} size={16} />
-                  </span>
-                  <span className="flex-1">{t("navbar.roadmaps")}</span>
-                </NavLink>
                 <button
                   type="button"
                   className="flex items-center gap-3 rounded-2xl border border-[rgba(226,33,52,0.25)] bg-[linear-gradient(135deg,rgba(226,33,52,0.14),rgba(226,33,52,0.05))] px-4 py-3 text-sm font-medium text-(--error) transition-colors hover:bg-[rgba(226,33,52,0.08)]"

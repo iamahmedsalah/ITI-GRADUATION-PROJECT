@@ -501,9 +501,124 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
 </html>
 `;
 
+export const CONTACT_EMAIL_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>New ILMA contact message</title>
+  ${EMAIL_STYLE}
+</head>
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
+          <tr>
+            <td class="email-header">
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
+              <h1 class="email-title">New contact message</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="email-content">
+              <p class="lead">A visitor sent a message through the ILMA contact form.</p>
+              <table class="details-table">
+                <tr>
+                  <td class="label">Name</td>
+                  <td>{name}</td>
+                </tr>
+                <tr>
+                  <td class="label">Email</td>
+                  <td>{email}</td>
+                </tr>
+              </table>
+              <h3 class="section-title">Message</h3>
+              <div class="info-card">
+                <p>{message}</p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+              <p>This message was sent from the ILMA public contact form.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+export const CONTACT_REPLY_EMAIL_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Reply from ILMA</title>
+  ${EMAIL_STYLE}
+</head>
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
+          <tr>
+            <td class="email-header">
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
+              <h1 class="email-title">Reply from ILMA</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="email-content">
+              <p class="lead">Hello {name},</p>
+              <p>Thank you for contacting ILMA. Our team replied to your message.</p>
+              <h3 class="section-title">Our reply</h3>
+              <div class="info-card">
+                <p>{replyMessage}</p>
+              </div>
+              <h3 class="section-title">Your original message</h3>
+              <div class="info-card">
+                <p>{originalMessage}</p>
+              </div>
+              <p>You can reply directly to this email if you need more help.</p>
+              <p>Best regards,<br />ILMA Support Team</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+              <p>This message was sent by the ILMA support team.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 export default {
   VERIFICATION_EMAIL_TEMPLATE,
   WELCOME_EMAIL_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   PASSWORD_RESET_REQUEST_TEMPLATE,
+  CONTACT_EMAIL_TEMPLATE,
+  CONTACT_REPLY_EMAIL_TEMPLATE,
 };

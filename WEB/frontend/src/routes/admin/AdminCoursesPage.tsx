@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +23,7 @@ import AdminCourseFormModal from '../../components/models/AdminCourseFormModal'
 type CourseLevel = 'beginner' | 'intermediate' | 'advanced'
 
 export default function AdminCoursesPage() {
-  const { direction } = useLanguage()
+  const { direction, language } = useLanguage()
   const { t } = useTranslation()
   const pageVariants = createPageVariants(direction)
   const queryClient = useQueryClient()
@@ -243,7 +244,9 @@ export default function AdminCoursesPage() {
                     aria-label={course.title}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="wrap-break-word font-semibold text-(--text-h)">{course.title}</div>
+                    <Link to={`/${language}/admin/courses/${course._id}`} className="wrap-break-word font-semibold text-(--text-h) hover:text-(--accent)">
+                      {course.title}
+                    </Link>
                     <div className="wrap-break-word text-xs text-(--text)">{course.slug} | {course.category || t('adminUi.courses.uncategorized')}</div>
                   </div>
                 </div>
@@ -379,7 +382,9 @@ export default function AdminCoursesPage() {
                     />
                   </td>
                   <td className="px-4 py-4">
-                    <div className="font-semibold text-(--text-h)">{course.title}</div>
+                    <Link to={`/${language}/admin/courses/${course._id}`} className="font-semibold text-(--text-h) hover:text-(--accent)">
+                      {course.title}
+                    </Link>
                     <div className="text-xs text-(--text)">{course.slug} | {course.category || t('adminUi.courses.uncategorized')}</div>
                   </td>
                   <td className="px-4 py-4 text-(--text)">{course.level || t('adminUi.common.notAvailable')}</td>

@@ -24,7 +24,7 @@ export default function SiteFooter() {
       to: localizedPath(language, "/guides"),
     },
     { label: t("footer.faqs"), to: localizedPath(language, "/faqs") },
-    { label: t("footer.about"), to: localizedPath(language, "/about") },
+    { label: t("footer.contact"), to: localizedPath(language, "/contact") },
   ];
 
   return (

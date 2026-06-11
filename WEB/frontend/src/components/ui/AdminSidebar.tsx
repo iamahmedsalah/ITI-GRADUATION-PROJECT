@@ -4,6 +4,7 @@ import {
   CourseIcon,
   DashboardSquare03Icon,
   Login03Icon,
+  Mail01Icon,
   Route03Icon,
   UserEdit01Icon,
 } from '@hugeicons/core-free-icons';
@@ -16,7 +17,7 @@ type AdminSidebarItem = {
   to: string
   exact?: boolean
   count?: number
-  kind: 'dashboard' | 'users' | 'roadmaps' | 'courses'
+  kind: 'dashboard' | 'users' | 'roadmaps' | 'courses' | 'contact'
 }
 
 type AdminSidebarProps = {
@@ -45,6 +46,7 @@ const iconByKind = {
   users: UserEdit01Icon,
   roadmaps: Route03Icon,
   courses: CourseIcon,
+  contact: Mail01Icon,
 }
 
 function localizedPath(language: string, pathname: string) {

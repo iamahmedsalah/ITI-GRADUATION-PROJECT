@@ -42,6 +42,22 @@ export const resendVerificationLimiter = rateLimit({
   },
 });
 
+export const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.CONTACT_RATE_LIMIT || "5", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many contact requests, try again later.",
+  },
+  keyGenerator: (req) => {
+    return req.body?.email
+      ? String(req.body.email).toLowerCase()
+      : ipKeyGenerator(req.ip);
+  },
+});
+
 // Admin endpoints rate limiters
 export const adminListLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -67,4 +83,4 @@ export const adminPublishLimiter = rateLimit({
   message: { success: false, message: "Too many publish requests, try again later." },
 });
 
-export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };
+export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, contactLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };

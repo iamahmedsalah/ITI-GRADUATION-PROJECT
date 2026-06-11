@@ -51,7 +51,12 @@
       "intermediate": "Intermediate",
       "advanced": "Advanced"
     },
-    "skillRoadmaps": "Skill-based Roadmaps"
+    "skillRoadmaps": "Skill-based Roadmaps",
+    "coursesBadge": "Available courses",
+    "coursesTitle": "Courses from ILMA",
+    "coursesSubtitle": "Explore published courses connected to your roadmap practice.",
+    "loadingCourses": "Loading available courses...",
+    "coursesFallback": "A practical course from the backend catalog."
   },
   "footer": {
     "roadmaps": "Roadmaps",
@@ -67,7 +72,7 @@
     "terms": "Terms",
     "privacy": "Privacy",
     "partnerText": "The top learning resource for roadmaps, guided practice, and career-ready development paths.",
-    "about": "About",
+    "contact": "Contact Us",
     "tags": {
       "devops": "DevOps",
       "kubernetes": "Kubernetes",
@@ -84,11 +89,11 @@
     "answer2": "Yes. The roadmap explorer lets you switch between role and skill filters anytime so you can compare options before you commit.",
     "question3": "Is ILMA available in Arabic and English?",
     "answer3": "Absolutely. The platform respects your language preference and adapts both content direction and interface labels.",
-    "contactPrompt": "Still have questions? Reach out through the About page form."
+    "contactPrompt": "Still have questions? Reach out through the Contact page form."
   },
-  "aboutPage": {
-    "overline": "Who we are",
-    "title": "About ILMA",
+  "contactPage": {
+    "overline": "Contact Us",
+    "title": "Contact ILMA",
     "subtitle": "We build guided learning experiences that help you select the right roadmap and stay on track with clear, modern content.",
     "missionTitle": "Our mission",
     "missionText": "To make career learning easier with smart roadmap filters, practical guidance, and an interface that adapts to your language and theme.",
@@ -107,7 +112,11 @@
       "emailPlaceholder": "Your email address",
       "message": "Message",
       "messagePlaceholder": "Tell us what you need",
-      "submit": "Send message"
+      "submit": "Send message",
+      "sending": "Sending...",
+      "sent": "Sent",
+      "success": "Message sent successfully.",
+      "failed": "Couldn't send your message."
     },
     "socialTitle": "Stay connected",
     "socialText": "Contact us by email or follow us on the social channels below.",
@@ -223,7 +232,77 @@
     "roadmapsSubtitle": "Track the roadmaps you started and continue from your latest progress.",
     "roadmapsLoading": "Loading your roadmaps...",
     "roadmapsEmpty": "You have not started tracking any roadmap yet.",
-    "unknownRoadmap": "Roadmap"
+    "unknownRoadmap": "Roadmap",
+    "avatar": {
+      "choose": "Choose image",
+      "save": "Save image",
+      "upload": "Upload image",
+      "uploading": "Uploading...",
+      "saved": "Profile image updated.",
+      "failed": "Could not update profile image.",
+      "tooLarge": "Profile image must be 3MB or smaller.",
+      "invalidType": "Please choose an image file."
+    },
+    "settings": {
+      "profileTitle": "Profile settings",
+      "profileSubtitle": "Update your visible name and username.",
+      "passwordTitle": "Password settings",
+      "passwordSubtitle": "Change your password with your current credentials.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "saveProfile": "Save profile",
+      "savePassword": "Update password",
+      "saving": "Saving...",
+      "profileSaved": "Profile updated successfully.",
+      "profileFailed": "Could not update profile.",
+      "passwordSaved": "Password updated successfully.",
+      "passwordFailed": "Could not update password."
+    }
+  },
+  "dashboard": {
+    "overline": "Learning dashboard",
+    "title": "Your progress",
+    "subtitle": "Track roadmap progress, course activity, learning time, and your daily login streak.",
+    "loading": "Loading your dashboard...",
+    "continueTitle": "Continue following",
+    "continueSubtitle": "Open a roadmap to continue from your latest progress.",
+    "roadmapsTitle": "Roadmap tracking",
+    "roadmapsSubtitle": "Continue the paths you started and review how much time you have spent.",
+    "coursesTitle": "Course tracking",
+    "coursesSubtitle": "Course progress appears here when you start learning from courses.",
+    "emptyRoadmaps": "You have not started tracking any roadmap yet.",
+    "emptyCourses": "No course progress has been recorded yet.",
+    "unknownCourse": "Course",
+    "stats": {
+      "topicsCompleted": "Topics completed",
+      "currentlyLearning": "Currently learning",
+      "visitStreak": "Visit streak"
+    },
+    "streak": {
+      "current": "Current streak",
+      "longest": "Longest streak",
+      "keepGoing": "Visit every day to keep your streak going."
+    },
+    "activity": {
+      "title": "Learning activity",
+      "empty": "Your learning activity will appear here after you start tracking roadmaps or courses.",
+      "started": "Started {{count}} topic(s) in {{roadmap}}",
+      "completed": "Completed {{count}} topic(s) in {{roadmap}}",
+      "enrolled": "Started learning {{course}}",
+      "courseCompleted": "Completed {{course}}",
+      "login": "Logged in to ILMA",
+      "updated": "Updated learning progress"
+    },
+    "metrics": {
+      "streak": "Login streak",
+      "streakHint": "Longest streak: {{count}} day(s).",
+      "roadmaps": "Roadmaps",
+      "roadmapsHint": "{{count}} completed roadmap(s).",
+      "courses": "Courses",
+      "coursesHint": "{{count}} completed course(s).",
+      "time": "Learning time",
+      "timeHint": "Average roadmap progress: {{count}}%."
+    }
   },
   "auth": {
     "loginFailed": "Login failed.",
@@ -334,6 +413,7 @@
       "users": "Users",
       "roadmaps": "Roadmaps",
       "courses": "Courses",
+      "contactMessages": "Contact",
       "hint": "Manage users, roadmap templates, and courses from one place.",
       "openSidebar": "Open admin sidebar",
       "closeSidebar": "Close admin sidebar",
@@ -394,7 +474,9 @@
       "roadmaps": "Roadmaps",
       "roadmapsHint": "Control templates and publication state.",
       "courses": "Courses",
-      "coursesHint": "Track publishing, featuring, and ownership."
+      "coursesHint": "Track publishing, featuring, and ownership.",
+      "contactMessages": "Contact",
+      "contactMessagesHint": "Unread contact form messages."
     },
     "users": {
       "overline": "Admin management",
@@ -538,6 +620,45 @@
         "renamePrompt": "Update course title",
         "delete": "Delete",
         "deleteConfirm": "Delete course \"{{title}}\"?"
+      },
+      "detail": {
+        "back": "Back to courses",
+        "overline": "Course detail",
+        "duration": "Duration",
+        "enrollments": "Enrollments",
+        "sections": "Course sections",
+        "noSections": "No sections were added to this course."
+      }
+    },
+    "contactMessages": {
+      "overline": "Admin inbox",
+      "title": "Contact messages",
+      "subtitle": "Review contact form requests and send replies from the admin console.",
+      "total": "{{count}} messages",
+      "searchPlaceholder": "Search messages",
+      "loading": "Loading contact messages...",
+      "empty": "No contact messages found.",
+      "reply": "Reply",
+      "replyLabel": "Reply message",
+      "replyPlaceholder": "Write a helpful reply to this visitor",
+      "sendReply": "Send reply",
+      "sendingReply": "Sending...",
+      "replyFailed": "Failed to reply to contact message.",
+      "repliesCount": "{{count}} replies",
+      "filters": {
+        "allStatus": "All statuses"
+      },
+      "status": {
+        "unread": "Unread",
+        "read": "Read",
+        "replied": "Replied"
+      },
+      "table": {
+        "sender": "Sender",
+        "message": "Message",
+        "status": "Status",
+        "createdAt": "Received",
+        "actions": "Actions"
       }
     },
     "roadmapTypes": {
@@ -758,6 +879,13 @@
       "required": "Verification code is required.",
       "length": "Verification code must be 8 characters long.",
       "pattern": "Verification code can only contain letters and numbers."
+    },
+    "contact": {
+      "nameMin": "Name must be at least 2 characters.",
+      "nameMax": "Name must be at most 80 characters.",
+      "nameInvalid": "Name contains invalid characters.",
+      "messageMin": "Message must be at least 10 characters.",
+      "messageMax": "Message must be at most 5000 characters."
     }
   }
 }
