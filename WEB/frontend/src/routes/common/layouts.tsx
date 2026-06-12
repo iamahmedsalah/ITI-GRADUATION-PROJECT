@@ -100,11 +100,11 @@ export function ClientLayout() {
         links={[
           {
             label: t('navbar.roadmap'),
-            to: localizedPath(language, '/roadmaps/frontend'),
+            to: localizedPath(language, '/roadmaps'),
             dropdown: true,
             dropdownItems: [
-              { label: t('landing.roleRoadmaps'), to: localizedPath(language, '/roadmaps/frontend?type=roleBased') },
-              { label: t('landing.skillRoadmaps'), to: localizedPath(language, '/roadmaps/frontend?type=skillBased') },
+              { label: t('landing.roleRoadmaps'), to: localizedPath(language, '/roadmaps?type=roleBased') },
+              { label: t('landing.skillRoadmaps'), to: localizedPath(language, '/roadmaps?type=skillBased') },
             ],
           },
           {

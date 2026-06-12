@@ -41,7 +41,7 @@ export function AdminStatusToggleButton({
   return (
     <button
       type="button"
-      className="admin-status-toggle rounded-squircle"
+      className="admin-status-toggle rounded-squircle items-center gap-2 "
       data-size={size}
       data-tone={active ? 'error' : 'success'}
       {...buttonProps}

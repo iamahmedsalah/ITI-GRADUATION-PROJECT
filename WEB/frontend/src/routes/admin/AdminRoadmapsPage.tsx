@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Cancel02Icon, UserEdit01Icon } from '@hugeicons/core-free-icons'
+import { AiMagicIcon, Cancel02Icon, UserAccountIcon, UserEdit01Icon, UserSettings01Icon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import { createPageVariants } from '../../libs/motionVariants'
 import {
@@ -22,10 +22,34 @@ import { AdminFilterToggleButton, AdminStatusToggleButton } from '../../componen
 import AdminPagination from '../../components/ui/AdminPagination'
 import CustomDropdown from '../../components/ui/CustomDropdown'
 import AdminRoadmapFormModal from '../../components/models/AdminRoadmapFormModal'
+import ConfirmActionModal from '../../components/models/ConfirmActionModal'
 
 type RoleOption = 'student' | 'instructor' | 'admin' | 'jobSeeker' | 'careerSwitcher'
 type LevelOption = 'beginner' | 'intermediate' | 'advanced'
 type TemplateTypeOption = 'roleBased' | 'skillBased'
+type RoadmapSourceKind = NonNullable<AdminRoadmapRow['displaySource']>
+
+const sourceIconByKind = {
+  manual: UserEdit01Icon,
+  ai: AiMagicIcon,
+  admin: UserSettings01Icon,
+  'std-ai': UserAccountIcon,
+} satisfies Record<RoadmapSourceKind, typeof AiMagicIcon>
+
+function getRoadmapSourceKind(roadmap: AdminRoadmapRow): RoadmapSourceKind {
+  return roadmap.displaySource ?? roadmap.source ?? 'manual'
+}
+
+function RoadmapSourceBadge({ roadmap, label }: { roadmap: AdminRoadmapRow; label: string }) {
+  const sourceKind = getRoadmapSourceKind(roadmap)
+
+  return (
+    <span className="inline-flex w-fit items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-soft) px-2 py-1 text-xs font-semibold uppercase text-(--text-h)">
+      <HugeiconsIcon icon={sourceIconByKind[sourceKind]} size={14} className="shrink-0 text-(--accent)" />
+      {label}
+    </span>
+  )
+}
 
 export default function AdminRoadmapsPage() {
   const { direction } = useLanguage()
@@ -44,6 +68,11 @@ export default function AdminRoadmapsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingRoadmap, setEditingRoadmap] = useState<AdminRoadmapRow | null>(null)
+  const [deleteRequest, setDeleteRequest] = useState<{
+    ids: string[]
+    title: string
+    message: string
+  } | null>(null)
 
   const queryKey = useMemo(
     () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, ownership, source, isActive, page],
@@ -81,9 +110,9 @@ export default function AdminRoadmapsPage() {
   ]
   const sourceOptions = [
     { value: '', label: t('adminUi.roadmaps.filters.allSources', 'All sources') },
-    { value: 'manual', label: t('adminUi.roadmaps.sources.manual', 'Manual') },
-    { value: 'ai', label: t('adminUi.roadmaps.sources.ai', 'AI') },
-    { value: 'admin', label: t('adminUi.roadmaps.sources.admin', 'Admin') },
+    { value: 'manual', label: t('adminUi.roadmaps.sources.manual', 'Manual'), icon: UserEdit01Icon },
+    { value: 'ai', label: t('adminUi.roadmaps.sources.ai', 'AI'), icon: AiMagicIcon },
+    { value: 'admin', label: t('adminUi.roadmaps.sources.admin', 'Admin'), icon: UserSettings01Icon },
   ]
 
   const { data, isLoading, isFetching } = useQuery({
@@ -196,6 +225,7 @@ export default function AdminRoadmapsPage() {
         onSubmit={(payload) => createMutation.mutate(payload as Parameters<typeof createAdminRoadmap>[0])}
       />
       <AdminRoadmapFormModal
+        key={editingRoadmap?._id ?? 'closed-roadmap-update'}
         open={Boolean(editingRoadmap)}
         mode="update"
         roadmap={editingRoadmap}
@@ -204,6 +234,20 @@ export default function AdminRoadmapsPage() {
         onSubmit={(payload) => {
           if (!editingRoadmap) return
           updateMutation.mutate({ templateId: editingRoadmap._id, payload })
+        }}
+      />
+      <ConfirmActionModal
+        open={Boolean(deleteRequest)}
+        title={deleteRequest?.title ?? ''}
+        message={deleteRequest?.message ?? ''}
+        confirmLabel={t('adminUi.common.delete', 'Delete')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setDeleteRequest(null)}
+        onConfirm={() => {
+          const ids = deleteRequest?.ids ?? []
+          ids.forEach((id) => deleteMutation.mutate(id))
+          setDeleteRequest(null)
         }}
       />
       <section className="grid gap-4 rounded-3xl border border-(--border) bg-(--surface) p-3 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:gap-5 sm:p-6">
@@ -233,9 +277,14 @@ export default function AdminRoadmapsPage() {
               type="button"
               disabled={deleteMutation.isPending}
               onClick={() => {
-                const confirmed = window.confirm(t('adminUi.common.bulkDeleteConfirm', { count: selectedIds.length }))
-                if (!confirmed) return
-                selectedIds.forEach((id) => deleteMutation.mutate(id))
+                setDeleteRequest({
+                  ids: selectedIds,
+                  title: t('adminUi.roadmaps.actions.deleteSelectedTitle', 'Delete selected roadmaps?'),
+                  message: t('adminUi.common.bulkDeleteConfirm', {
+                    count: selectedIds.length,
+                    defaultValue: `You are about to delete ${selectedIds.length} selected item(s). This cannot be undone.`,
+                  }),
+                })
               }}
               className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.4)] bg-[rgba(226,33,52,0.08)] px-4 py-2 text-sm font-semibold text-(--error)"
             >
@@ -312,7 +361,7 @@ export default function AdminRoadmapsPage() {
                   </div>
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.source', 'Source')}</span>
-                    <span className="wrap-break-word text-(--text-h)">{roadmap.displaySource ?? roadmap.source ?? 'manual'}</span>
+                    <RoadmapSourceBadge roadmap={roadmap} label={roadmap.displaySource ?? roadmap.source ?? 'manual'} />
                   </div>
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.target')}</span>
@@ -348,11 +397,14 @@ export default function AdminRoadmapsPage() {
                     className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
-                      const confirmed = window.confirm(t('adminUi.roadmaps.actions.deleteConfirm', { title: roadmap.title }))
-                      if (!confirmed) {
-                        return
-                      }
-                      deleteMutation.mutate(roadmap._id)
+                      setDeleteRequest({
+                        ids: [roadmap._id],
+                        title: t('adminUi.roadmaps.actions.deleteTitle', 'Delete roadmap?'),
+                        message: t('adminUi.roadmaps.actions.deleteConfirm', {
+                          title: roadmap.title,
+                          defaultValue: `Delete roadmap "${roadmap.title}"? This cannot be undone.`,
+                        }),
+                      })
                     }}
                   >
                     <HugeiconsIcon icon={Cancel02Icon} size={14} />
@@ -423,9 +475,7 @@ export default function AdminRoadmapsPage() {
                   </td>
                   <td className="px-4 py-4 text-(--text)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</td>
                   <td className="px-4 py-4 text-(--text)">
-                    <span className="rounded-md border border-(--border) px-2 py-1 text-xs font-semibold uppercase text-(--text-h)">
-                      {roadmap.displaySource ?? roadmap.source ?? 'manual'}
-                    </span>
+                    <RoadmapSourceBadge roadmap={roadmap} label={roadmap.displaySource ?? roadmap.source ?? 'manual'} />
                     {roadmap.owner ? (
                       <div className="mt-1 text-xs text-(--text)">
                         {roadmap.owner.username || roadmap.owner.email}
@@ -460,11 +510,14 @@ export default function AdminRoadmapsPage() {
                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
                         disabled={deleteMutation.isPending}
                         onClick={() => {
-                          const confirmed = window.confirm(t('adminUi.roadmaps.actions.deleteConfirm', { title: roadmap.title }))
-                          if (!confirmed) {
-                            return
-                          }
-                          deleteMutation.mutate(roadmap._id)
+                          setDeleteRequest({
+                            ids: [roadmap._id],
+                            title: t('adminUi.roadmaps.actions.deleteTitle', 'Delete roadmap?'),
+                            message: t('adminUi.roadmaps.actions.deleteConfirm', {
+                              title: roadmap.title,
+                              defaultValue: `Delete roadmap "${roadmap.title}"? This cannot be undone.`,
+                            }),
+                          })
                         }}
                       >
                         <HugeiconsIcon icon={Cancel02Icon} size={14} />

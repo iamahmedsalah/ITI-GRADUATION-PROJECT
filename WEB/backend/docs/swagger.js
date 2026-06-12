@@ -241,7 +241,7 @@ const swaggerDefinition = {
           estimatedTotalMinutes: { type: "number", minimum: 0 },
           source: { type: "string", enum: ["admin", "ai", "manual"] },
           contentFormat: { type: "string", enum: ["json", "markdown"] },
-          contentMarkdown: { type: "string", maxLength: 50000 },
+          contentMarkdown: { type: "string", maxLength: 5000 },
         },
       },
       UpdateRoadmapTemplateRequest: {
@@ -276,7 +276,7 @@ const swaggerDefinition = {
           estimatedTotalMinutes: { type: "number", minimum: 0 },
           isActive: { type: "boolean" },
           contentFormat: { type: "string", enum: ["json", "markdown"] },
-          contentMarkdown: { type: "string", maxLength: 50000 },
+          contentMarkdown: { type: "string", maxLength: 5000 },
         },
       },
       AdminUpdateUserRequest: {

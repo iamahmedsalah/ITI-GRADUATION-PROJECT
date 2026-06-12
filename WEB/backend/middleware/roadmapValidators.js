@@ -2,6 +2,8 @@ import { z } from "zod";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import UserRoadmap from "../models/user/userRoadmapModel.js";
 
+const ROADMAP_MARKDOWN_MAX_LENGTH = 5000;
+
 const formatZodErrors = (issues) =>
   issues.map((issue) => ({
     field: issue.path.length ? issue.path.join(".") : "body",
@@ -267,7 +269,10 @@ const createRoadmapTemplateSchema = z.object({
     contentMarkdown: z
       .string()
       .trim()
-      .max(50000, "Markdown content must be at most 50000 characters")
+      .max(
+        ROADMAP_MARKDOWN_MAX_LENGTH,
+        `Markdown content must be at most ${ROADMAP_MARKDOWN_MAX_LENGTH} characters`,
+      )
       .optional(),
   }),
   params: z.object({}).passthrough(),
@@ -342,7 +347,10 @@ const updateRoadmapTemplateSchema = z.object({
     contentMarkdown: z
       .string()
       .trim()
-      .max(50000, "Markdown content must be at most 50000 characters")
+      .max(
+        ROADMAP_MARKDOWN_MAX_LENGTH,
+        `Markdown content must be at most ${ROADMAP_MARKDOWN_MAX_LENGTH} characters`,
+      )
       .optional(),
   }),
   params: z.object({

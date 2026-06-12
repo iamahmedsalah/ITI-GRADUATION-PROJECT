@@ -445,13 +445,13 @@ export const createRoadmapTemplate = async (req, res) => {
       });
     }
 
-    const markdownDerivedSteps =
-      contentFormat === "markdown" || (contentMarkdown && !steps?.length)
-        ? parseRoadmapMarkdownToSteps(contentMarkdown)
-        : [];
+    const hasJsonSteps = Array.isArray(steps) && steps.length > 0;
+    const markdownDerivedSteps = !hasJsonSteps && contentMarkdown
+      ? parseRoadmapMarkdownToSteps(contentMarkdown)
+      : [];
 
     const normalizedSteps = ensureUniqueStepKeys(
-      Array.isArray(steps) && steps.length > 0 ? steps : markdownDerivedSteps,
+      hasJsonSteps ? steps : markdownDerivedSteps,
     );
 
     if (!normalizedSteps.length) {

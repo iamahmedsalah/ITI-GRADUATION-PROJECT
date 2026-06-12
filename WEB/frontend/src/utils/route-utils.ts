@@ -33,6 +33,7 @@ export type AuthUser = {
     status: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
     currentPeriodEnd?: string | number | null
   }
+  hasPreferences?: boolean
 }
 
 export type DashboardLoaderData = {
@@ -41,6 +42,7 @@ export type DashboardLoaderData = {
 }
 
 export type ProfileLoaderData = DashboardLoaderData
+export type PreferencesLoaderData = DashboardLoaderData
 
 function redirectToLogin(language: LanguagePref, reason?: string | null) {
   const query = reason ? `?reason=${encodeURIComponent(reason)}` : ''
@@ -130,6 +132,43 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
       const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(user.email)}`
 
       return redirect(verifyPath)
+    }
+
+    if (!user.hasPreferences) {
+      return redirect(`/${language}/preferences`)
+    }
+
+    return {
+      language,
+      user,
+    }
+  } catch {
+    return redirectToLogin(language, consumeLastAuthFailureCode())
+  }
+}
+
+export async function preferencesLoader({ request, params }: LoaderFunctionArgs): Promise<PreferencesLoaderData | Response> {
+  const language = normalizeLanguage(params.language)
+
+  if (params.language !== language) {
+    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
+
+    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  }
+
+  try {
+    const user = await queryClient.fetchQuery({
+      queryKey: authQueryKey,
+      queryFn: fetchCurrentUser,
+      staleTime: 0,
+    })
+
+    if (!user) {
+      return redirectToLogin(language, consumeLastAuthFailureCode())
+    }
+
+    if (!user.isVerified) {
+      return redirect(`/${language}/verify-email?email=${encodeURIComponent(user.email)}`)
     }
 
     return {

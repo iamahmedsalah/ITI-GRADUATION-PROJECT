@@ -100,7 +100,7 @@ const toPublicAdmin = (user) => ({
 const ensureAdminRole = (user) => user?.role === "admin";
 
 const getRoadmapDisplaySource = (template = {}) => {
-  if (template.owner && template.source === "ai") return "student-ai";
+  if (template.owner && template.source === "ai") return "std-ai";
   return template.source || "manual";
 };
 

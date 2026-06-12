@@ -53,6 +53,8 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "1mb";
+
 // Database connection
 if (process.env.NODE_ENV !== "test") {
   dbConfig().catch((error) => {
@@ -121,8 +123,8 @@ app.use(
 );
 
 // Body parser
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: false, limit: requestBodyLimit }));
+app.use(express.json({ limit: requestBodyLimit }));
 app.use(cookieParser());
 
 // Morgan logger

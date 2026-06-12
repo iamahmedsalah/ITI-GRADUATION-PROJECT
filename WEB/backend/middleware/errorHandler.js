@@ -14,6 +14,14 @@ export default function errorHandler(err, req, res, _next) {
     return res.status(400).json({ success: false, message: "Invalid JSON payload." });
   }
 
+  if (err?.type === "entity.too.large") {
+    logger.warn("Request payload too large", { ip: req.ip, url: req.originalUrl });
+    return res.status(413).json({
+      success: false,
+      message: "Request payload is too large. Reduce the pasted content or increase REQUEST_BODY_LIMIT.",
+    });
+  }
+
   if (String(err?.message || "").startsWith("CORS blocked")) {
     logger.warn("Blocked by CORS policy", { origin: req.headers.origin, ip: req.ip });
     return res.status(403).json({ success: false, message: "Origin is not allowed by CORS policy." });

@@ -337,14 +337,14 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                       </NavLink>
                       <div className="grid gap-2 px-3">
                         <Link
-                          to={`/${language}/roadmaps/frontend?type=roleBased`}
+                          to={`/${language}/roadmaps?type=roleBased`}
                           className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) transition hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {t("landing.roleRoadmaps")}
                         </Link>
                         <Link
-                          to={`/${language}/roadmaps/frontend?type=skillBased`}
+                          to={`/${language}/roadmaps?type=skillBased`}
                           className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) transition hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >

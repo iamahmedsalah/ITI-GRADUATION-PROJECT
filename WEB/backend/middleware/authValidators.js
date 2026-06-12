@@ -251,6 +251,44 @@ const avatarUpdateSchema = z.object({
   params: z.object({}).passthrough(),
 });
 
+const listFromInput = z
+  .union([
+    z.array(z.string()),
+    z.string(),
+  ])
+  .optional()
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    const items = Array.isArray(value) ? value : String(value).split(",");
+
+    return items
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  });
+
+const preferencesUpdateSchema = z.object({
+  body: z
+    .object({
+      interests: listFromInput,
+      preferredLanguages: listFromInput,
+      learningGoals: listFromInput,
+      skillLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+      learningPace: z.enum(["slow", "medium", "fast"]).optional(),
+      preferredCategories: listFromInput,
+      preferredDifficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+      weeklyStudyHours: z.coerce
+        .number({ error: "Weekly study hours must be a number." })
+        .min(0, "Weekly study hours cannot be negative.")
+        .max(80, "Weekly study hours must be 80 or less.")
+        .optional(),
+      reminderPreference: z.enum(["email", "push", "none"]).optional(),
+    })
+    .strict()
+    .refine((value) => Object.values(value).some((item) => item !== undefined), "Provide at least one preference field."),
+  params: z.object({}).passthrough(),
+});
+
 export const signupValidation = validateRequest(signupSchema);
 
 export const signupUniquenessValidation = async (req, res, next) => {
@@ -335,3 +373,5 @@ export const profileUpdateValidation = validateRequest(profileUpdateSchema);
 export const updatePasswordValidation = validateRequest(updatePasswordSchema);
 
 export const avatarUpdateValidation = validateRequest(avatarUpdateSchema);
+
+export const preferencesUpdateValidation = validateRequest(preferencesUpdateSchema);

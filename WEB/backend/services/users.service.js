@@ -1,6 +1,7 @@
 import User from "../models/user/userAccountModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
+import UserPreference from "../models/user/userPreferenceModel.js";
 import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import { resolveUserAvatarUrl } from "../config/cloudinary.js";
@@ -42,7 +43,7 @@ const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
 const DEFAULT_SOCIAL_INTENT = "signup";
 const STREAK_TIME_ZONE = "Africa/Cairo";
 
-const toPublicUser = (user) => ({
+const toPublicUser = (user, options = {}) => ({
   _id: user._id,
   username: user.username,
   Fname: user.Fname,
@@ -63,6 +64,7 @@ const toPublicUser = (user) => ({
     status: user.subscription?.status || "inactive",
     currentPeriodEnd: user.subscription?.currentPeriodEnd ?? null,
   },
+  hasPreferences: Boolean(options.hasPreferences),
 });
 
 const getStreakDateKey = (date = new Date()) =>
@@ -1089,7 +1091,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 // GET - Check Auth
-export const checkAuth = (req, res) => {
+export const checkAuth = async (req, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
 
   if (!req.user) {
@@ -1100,11 +1102,63 @@ export const checkAuth = (req, res) => {
     });
   }
 
+  const hasPreferences = await UserPreference.exists({ user: req.user._id });
+
   return res.status(200).json({
     success: true,
     authenticated: true,
-    user: toPublicUser(req.user),
+    user: toPublicUser(req.user, { hasPreferences }),
   });
+};
+
+export const getPreferences = async (req, res) => {
+  try {
+    const preferences = await UserPreference.findOne({ user: req.user._id }).lean();
+
+    return res.status(200).json({
+      success: true,
+      data: preferences ?? null,
+    });
+  } catch (error) {
+    console.error("Get preferences error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not load preferences.",
+    });
+  }
+};
+
+export const updatePreferences = async (req, res) => {
+  try {
+    const preferences = await UserPreference.findOneAndUpdate(
+      { user: req.user._id },
+      {
+        $set: {
+          ...req.body,
+          user: req.user._id,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Preferences saved successfully.",
+      data: preferences,
+      user: toPublicUser(req.user, { hasPreferences: true }),
+    });
+  } catch (error) {
+    console.error("Update preferences error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not save preferences.",
+    });
+  }
 };
 
 export const getDashboardSummary = async (req, res) => {
@@ -1295,11 +1349,12 @@ export const updateProfile = async (req, res) => {
     }
 
     await user.save();
+    const hasPreferences = await UserPreference.exists({ user: user._id });
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: toPublicUser(user),
+      user: toPublicUser(user, { hasPreferences }),
     });
   } catch (error) {
     if (error?.code === 11000) {
@@ -1367,11 +1422,12 @@ export const updateAvatar = async (req, res) => {
 
     user.avatarUrl = avatarUrl;
     await user.save();
+    const hasPreferences = await UserPreference.exists({ user: user._id });
 
     return res.status(200).json({
       success: true,
       message: "Avatar updated successfully.",
-      user: toPublicUser(user),
+      user: toPublicUser(user, { hasPreferences }),
     });
   } catch (error) {
     console.error("Update avatar error:", error);
@@ -1393,8 +1449,10 @@ export default {
   resendPasswordReset,
   resetPassword,
   checkAuth,
+  getPreferences,
   getDashboardSummary,
   updateProfile,
+  updatePreferences,
   updateAvatar,
   updatePassword,
 };

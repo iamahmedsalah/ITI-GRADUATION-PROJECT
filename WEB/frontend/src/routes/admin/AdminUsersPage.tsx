@@ -8,8 +8,8 @@ import {
   CheckmarkCircle01Icon,
   CrownIcon,
   Delete02Icon,
+  UserAccountIcon,
   UserEdit01Icon,
-  UserSquareIcon,
 } from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
 import { createPageVariants } from '../../libs/motionVariants'
@@ -17,6 +17,8 @@ import { deleteAdminUser, fetchAdminUserDetail, fetchAdminUsers, updateAdminUser
 import { AdminFilterToggleButton, AdminStatusToggleButton } from '../../components/ui/AdminActionButtons'
 import AdminPagination from '../../components/ui/AdminPagination'
 import CustomDropdown from '../../components/ui/CustomDropdown'
+import ConfirmActionModal from '../../components/models/ConfirmActionModal'
+import DeactivationReasonModal from '../../components/models/DeactivationReasonModal'
 
 type AdminUserRole = 'student' | 'instructor' | 'admin'
 type AdminSubscriptionPlan = 'free' | 'pro'
@@ -25,6 +27,97 @@ function badgeClass(value: boolean) {
   return value
     ? 'border-[rgba(29,185,84,0.25)] bg-[rgba(29,185,84,0.12)] text-(--success)'
     : 'border-[rgba(226,33,52,0.25)] bg-[rgba(226,33,52,0.12)] text-(--error)'
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function humanizeKey(key: string) {
+  return key
+    .replace(/^_+/, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return 'N/A'
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) {
+    if (!value.length) return 'None'
+    if (value.every((item) => typeof item !== 'object')) {
+      return value.join(', ')
+    }
+    return `${value.length} item${value.length === 1 ? '' : 's'}`
+  }
+  if (isRecord(value)) {
+    const title = value.title ?? value.name ?? value.label
+    return typeof title === 'string' && title ? title : `${Object.keys(value).length} fields`
+  }
+  return String(value)
+}
+
+function DetailFieldSection({
+  title,
+  data,
+  emptyLabel,
+}: {
+  title: string
+  data?: Record<string, unknown> | null
+  emptyLabel: string
+}) {
+  const entries = Object.entries(data ?? {}).filter(
+    ([key, value]) => !['_id', '__v', 'user', 'createdAt', 'updatedAt'].includes(key) && value !== undefined,
+  )
+
+  return (
+    <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+      <h3 className="font-semibold text-(--text-h)">{title}</h3>
+      {entries.length ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {entries.map(([key, value]) => (
+            <div key={key} className="rounded-md bg-(--surface) px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-(--text)">{humanizeKey(key)}</p>
+              <p className="mt-1 wrap-break-word text-sm font-semibold text-(--text-h)">{formatDetailValue(value)}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-(--text)">{emptyLabel}</p>
+      )}
+    </section>
+  )
+}
+
+function StatusCountList({
+  title,
+  items,
+  emptyLabel,
+}: {
+  title: string
+  items?: Array<{ _id: string; count: number }>
+  emptyLabel: string
+}) {
+  return (
+    <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+      <h3 className="font-semibold text-(--text-h)">{title}</h3>
+      {items?.length ? (
+        <div className="mt-3 grid gap-2">
+          {items.map((item) => (
+            <div key={item._id} className="flex items-center justify-between gap-3 rounded-md bg-(--surface) px-3 py-2 text-sm">
+              <span className="text-(--text)">{humanizeKey(item._id)}</span>
+              <span className="font-semibold text-(--text-h)">{item.count}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-(--text)">{emptyLabel}</p>
+      )}
+    </section>
+  )
 }
 
 export default function AdminUsersPage() {
@@ -43,6 +136,16 @@ export default function AdminUsersPage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailUserId, setDetailUserId] = useState('')
+  const [deleteRequest, setDeleteRequest] = useState<{
+    ids: string[]
+    title: string
+    message: string
+  } | null>(null)
+  const [deactivationRequest, setDeactivationRequest] = useState<{
+    ids: string[]
+    title: string
+    message: string
+  } | null>(null)
 
   const queryKey = useMemo(
     () => ['admin', 'users', search, role, isVerified, isActive, subscriptionPlan, page],
@@ -67,8 +170,8 @@ export default function AdminUsersPage() {
   ]
   const subscriptionOptions = [
     { value: '', label: t('adminUi.users.filters.allPlans') },
-    { value: 'free', label: t('adminUi.users.subscription.free') },
-    { value: 'pro', label: t('adminUi.users.subscription.pro') },
+    { value: 'free', label: t('adminUi.users.subscription.free'), icon: CheckmarkCircle01Icon },
+    { value: 'pro', label: t('adminUi.users.subscription.pro'), icon: CrownIcon },
   ]
 
   const { data, isLoading, isFetching } = useQuery({
@@ -139,9 +242,43 @@ export default function AdminUsersPage() {
   })
   const visibleUsers = data?.data ?? []
   const allVisibleSelected = visibleUsers.length > 0 && visibleUsers.every((user) => selectedIds.includes(user._id))
+  const deactivateUsers = (ids: string[], reason: string) => {
+    ids.forEach((userId) => updateMutation.mutate({ userId, payload: { isActive: false, deactivationReason: reason } }))
+    setSelectedIds((previous) => previous.filter((id) => !ids.includes(id)))
+  }
 
   return (
     <motion.main className="px-3 py-4 sm:px-4 sm:py-5 lg:px-8 lg:py-8" variants={pageVariants} initial="hidden" animate="show">
+      <ConfirmActionModal
+        open={Boolean(deleteRequest)}
+        title={deleteRequest?.title ?? ''}
+        message={deleteRequest?.message ?? ''}
+        confirmLabel={t('adminUi.common.delete', 'Delete')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setDeleteRequest(null)}
+        onConfirm={() => {
+          const ids = deleteRequest?.ids ?? []
+          ids.forEach((userId) => deleteMutation.mutate(userId))
+          setSelectedIds((previous) => previous.filter((id) => !ids.includes(id)))
+          setDeleteRequest(null)
+        }}
+      />
+      <DeactivationReasonModal
+        open={Boolean(deactivationRequest)}
+        title={deactivationRequest?.title ?? ''}
+        message={deactivationRequest?.message ?? ''}
+        reasonLabel={t('adminUi.users.actions.deactivationReason', 'Deactivation reason')}
+        reasonPlaceholder={t('adminUi.users.actions.deactivationPlaceholder', 'Explain why this account is being deactivated')}
+        confirmLabel={t('adminUi.users.actions.deactivate', 'Deactivate')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={updateMutation.isPending}
+        onCancel={() => setDeactivationRequest(null)}
+        onConfirm={(reason) => {
+          deactivateUsers(deactivationRequest?.ids ?? [], reason)
+          setDeactivationRequest(null)
+        }}
+      />
       <section className="grid gap-4 rounded-3xl border border-(--border) bg-(--surface) p-3 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:gap-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -173,8 +310,14 @@ export default function AdminUsersPage() {
                 size="md"
                 disabled={updateMutation.isPending}
                 onClick={() => {
-                  selectedIds.forEach((userId) => updateMutation.mutate({ userId, payload: { isActive: false, deactivationReason: 'Bulk admin action' } }))
-                  setSelectedIds([])
+                  setDeactivationRequest({
+                    ids: selectedIds,
+                    title: t('adminUi.users.actions.deactivateSelectedTitle', 'Deactivate selected users?'),
+                    message: t('adminUi.users.actions.deactivateSelectedMessage', {
+                      count: selectedIds.length,
+                      defaultValue: `Add a reason before deactivating ${selectedIds.length} selected user(s).`,
+                    }),
+                  })
                 }}
                 activeLabel={t('adminUi.users.actions.deactivateSelected', { count: selectedIds.length })}
                 inactiveLabel={t('adminUi.users.actions.deactivateSelected', { count: selectedIds.length })}
@@ -182,12 +325,16 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 disabled={deleteMutation.isPending}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.4)] bg-[rgba(226,33,52,0.08)] px-4 py-2 text-sm font-semibold text-(--error) disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-(--error) hover:bg-(--error)/10 px-4 py-2 text-sm font-semibold text-(--error) disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => {
-                  const confirmed = window.confirm(t('adminUi.users.actions.deleteSelectedConfirm', { count: selectedIds.length, defaultValue: `Delete ${selectedIds.length} selected user(s)?` }))
-                  if (!confirmed) return
-                  selectedIds.forEach((userId) => deleteMutation.mutate(userId))
-                  setSelectedIds([])
+                  setDeleteRequest({
+                    ids: selectedIds,
+                    title: t('adminUi.users.actions.deleteSelectedTitle', 'Delete selected users?'),
+                    message: t('adminUi.users.actions.deleteSelectedConfirm', {
+                      count: selectedIds.length,
+                      defaultValue: `Delete ${selectedIds.length} selected user(s)? This cannot be undone.`,
+                    }),
+                  })
                 }}
               >
                 <HugeiconsIcon icon={Delete02Icon} size={16} />
@@ -203,7 +350,7 @@ export default function AdminUsersPage() {
           />
         </div>
 
-        {isFiltersOpen ? <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-5">
+        {isFiltersOpen ? <div className="grid gap-3 rounded-3xl border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-5">
           <input
             value={search}
             onChange={(event) => {
@@ -246,7 +393,7 @@ export default function AdminUsersPage() {
                     className="min-w-0 flex-1 text-left"
                     onClick={() => setDetailUserId(user._id)}
                   >
-                      <HugeiconsIcon  icon={UserSquareIcon} />
+                      <HugeiconsIcon  icon={UserAccountIcon} />
                     <div className="wrap-break-word font-semibold text-(--text-h)">{user.Fname} {user.Lname}</div>
                     <div className="wrap-break-word text-xs text-(--text)">{user.username} | {user.email}</div>
                   </button>
@@ -291,12 +438,12 @@ export default function AdminUsersPage() {
                   </div>
 
                   <div className="grid gap-2 min-[420px]:grid-cols-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${badgeClass(user.isVerified)}`}>
-                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} />
+                    <span className={`inline-flex items-center gap-1.5 rounded-squircle border px-3 py-1 text-xs font-medium ${badgeClass(user.isVerified)}`}>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={22} />
                       {user.isVerified ? t('adminUi.status.verified') : t('adminUi.status.unverified')}
                     </span>
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${badgeClass(user.isActive)}`}>
-                      <HugeiconsIcon icon={UserEdit01Icon} size={14} />
+                    <span className={`inline-flex items-center gap-1.5 rounded-squircle border px-3 py-1 text-xs font-medium ${badgeClass(user.isActive)}`}>
+                      <HugeiconsIcon icon={UserEdit01Icon} size={22} />
                       {user.isActive ? t('adminUi.status.active') : t('adminUi.status.inactive')}
                     </span>
                   </div>
@@ -325,18 +472,22 @@ export default function AdminUsersPage() {
                     disabled={updateMutation.isPending}
                     onClick={() => {
                       const nextActive = !user.isActive
-                      let deactivationReason = ''
 
                       if (!nextActive) {
-                        deactivationReason = window.prompt(t('adminUi.users.actions.deactivationPrompt')) ?? ''
+                        setDeactivationRequest({
+                          ids: [user._id],
+                          title: t('adminUi.users.actions.deactivateTitle', 'Deactivate user?'),
+                          message: t('adminUi.users.actions.deactivateMessage', {
+                            name: `${user.Fname} ${user.Lname}`,
+                            defaultValue: `Add a reason before deactivating ${user.Fname} ${user.Lname}.`,
+                          }),
+                        })
+                        return
                       }
 
                       updateMutation.mutate({
                         userId: user._id,
-                        payload: {
-                          isActive: nextActive,
-                          deactivationReason: deactivationReason.trim() || undefined,
-                        },
+                        payload: { isActive: nextActive },
                       })
                     }}
                     activeLabel={t('adminUi.users.actions.deactivate')}
@@ -404,7 +555,7 @@ export default function AdminUsersPage() {
                       className="flex items-center gap-3 text-left"
                       onClick={() => setDetailUserId(user._id)}
                     >
-                      <HugeiconsIcon  icon={UserSquareIcon} />
+                      <HugeiconsIcon  icon={UserAccountIcon} />
                       <div className="font-semibold text-(--text-h)">{user.Fname} {user.Lname}</div>
                     </button>
                     <div className="text-xs text-(--text)">{user.username} | {user.email}</div>
@@ -429,11 +580,7 @@ export default function AdminUsersPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="grid gap-2">
-                      <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-(--border) px-3 py-1 text-xs font-semibold text-(--text-h)">
-                        <HugeiconsIcon icon={CrownIcon} size={14} />
-                        {user.subscription?.plan === 'pro' ? t('adminUi.users.subscription.pro') : t('adminUi.users.subscription.free')}
-                      </span>
+                    <div className="flex items-center gap-2">
                       <CustomDropdown<AdminSubscriptionPlan>
                         value={planDrafts[user._id] ?? ((user.subscription?.plan || 'free') as AdminSubscriptionPlan)}
                         options={subscriptionOptions.filter((option) => option.value !== '') as { value: AdminSubscriptionPlan; label: string }[]}
@@ -454,12 +601,12 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap gap-2">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${badgeClass(user.isVerified)}`}>
-                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} />
+                      <span className={`inline-flex items-center gap-1.5 rounded-squircle border px-3 py-1 text-xs font-medium ${badgeClass(user.isVerified)}`}>
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={22} />
                         {t('adminUi.users.emailStatus')}: {user.isVerified ? t('adminUi.status.verified') : t('adminUi.status.unverified')}
                       </span>
-                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${badgeClass(user.isActive)}`}>
-                        <HugeiconsIcon icon={UserEdit01Icon} size={14} />
+                      <span className={`inline-flex items-center gap-1.5 rounded-squircle border px-3 py-1 text-xs font-medium ${badgeClass(user.isActive)}`}>
+                        <HugeiconsIcon icon={UserEdit01Icon} size={22} />
                         {t('adminUi.users.accountStatus')}: {user.isActive ? t('adminUi.status.active') : t('adminUi.status.inactive')}
                       </span>
                     </div>
@@ -484,18 +631,22 @@ export default function AdminUsersPage() {
                         disabled={updateMutation.isPending}
                         onClick={() => {
                           const nextActive = !user.isActive
-                          let deactivationReason = ''
 
                           if (!nextActive) {
-                            deactivationReason = window.prompt(t('adminUi.users.actions.deactivationPrompt')) ?? ''
+                            setDeactivationRequest({
+                              ids: [user._id],
+                              title: t('adminUi.users.actions.deactivateTitle', 'Deactivate user?'),
+                              message: t('adminUi.users.actions.deactivateMessage', {
+                                name: `${user.Fname} ${user.Lname}`,
+                                defaultValue: `Add a reason before deactivating ${user.Fname} ${user.Lname}.`,
+                              }),
+                            })
+                            return
                           }
 
                           updateMutation.mutate({
                             userId: user._id,
-                            payload: {
-                              isActive: nextActive,
-                              deactivationReason: deactivationReason.trim() || undefined,
-                            },
+                            payload: { isActive: nextActive },
                           })
                         }}
                         activeLabel={t('adminUi.users.actions.deactivate')}
@@ -589,16 +740,42 @@ export default function AdminUsersPage() {
                   </section>
                 </div>
 
-                <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
-                  <h3 className="font-semibold text-(--text-h)">{t('adminUi.users.detail.profile')}</h3>
-                  <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-(--surface) p-3 text-xs leading-5 text-(--text)">
-                    {JSON.stringify({
-                      profile: detailQuery.data.profile,
-                      preferences: detailQuery.data.preferences,
-                      stats: detailQuery.data.stats,
-                    }, null, 2)}
-                  </pre>
-                </section>
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <DetailFieldSection
+                    title={t('adminUi.users.detail.profileData', 'Profile')}
+                    data={detailQuery.data.profile}
+                    emptyLabel={t('adminUi.users.detail.emptyProfile', 'No profile data has been saved yet.')}
+                  />
+                  <DetailFieldSection
+                    title={t('adminUi.users.detail.preferencesData', 'Preferences')}
+                    data={detailQuery.data.preferences}
+                    emptyLabel={t('adminUi.users.detail.emptyPreferences', 'No learning preferences have been saved yet.')}
+                  />
+                </div>
+
+                <div className="grid gap-5 lg:grid-cols-3">
+                  <StatusCountList
+                    title={t('adminUi.users.detail.roadmapStats', 'Roadmap stats')}
+                    items={detailQuery.data.stats?.roadmapsByStatus}
+                    emptyLabel={t('adminUi.users.detail.emptyRoadmapStats', 'No roadmap stats yet.')}
+                  />
+                  <StatusCountList
+                    title={t('adminUi.users.detail.courseStats', 'Course stats')}
+                    items={detailQuery.data.stats?.coursesByStatus}
+                    emptyLabel={t('adminUi.users.detail.emptyCourseStats', 'No course stats yet.')}
+                  />
+                  <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                    <h3 className="font-semibold text-(--text-h)">{t('adminUi.users.detail.activity', 'Activity')}</h3>
+                    <div className="mt-3 rounded-md bg-(--surface) px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-(--text)">
+                        {t('adminUi.users.detail.activityCount', 'Activity count')}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-(--text-h)">
+                        {detailQuery.data.stats?.activityCount ?? 0}
+                      </p>
+                    </div>
+                  </section>
+                </div>
               </div>
             ) : (
               <p className="mt-6 text-sm text-(--text)">{t('adminUi.common.noData')}</p>

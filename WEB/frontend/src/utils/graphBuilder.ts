@@ -20,11 +20,50 @@ function getCompletedDepsStatus(
     .every((d) => progressMap.get(d) === 'completed')
 }
 
+function getNodePosition(index: number, totalSteps: number) {
+  const NODE_HEIGHT = 60
+
+  if (totalSteps >= 25) {
+    const columns =
+      totalSteps >= 500
+        ? 10
+        : totalSteps >= 250
+          ? 8
+          : totalSteps >= 120
+            ? 6
+            : totalSteps >= 90
+              ? 4
+              : totalSteps >= 50
+                ? 3
+                : 2
+    const COLUMN_GAP = totalSteps >= 250 ? 290 : 320
+    const ROW_GAP = totalSteps >= 250 ? 105 : 120
+    const row = Math.floor(index / columns)
+    const rawColumn = index % columns
+    const column = row % 2 === 0 ? rawColumn : columns - 1 - rawColumn
+
+    return {
+      x: (column - (columns - 1) / 2) * COLUMN_GAP,
+      y: row * ROW_GAP,
+    }
+  }
+
+  const ROW_GAP = 100
+  const BRANCH_OFFSET = 280
+  const isCenter = index % 3 === 0
+  const side = index % 2 === 0 ? -1 : 1
+
+  return {
+    x: isCenter ? 0 : side * BRANCH_OFFSET,
+    y: index * (NODE_HEIGHT + ROW_GAP),
+  }
+}
+
 /**
  * Improved graph builder:
- * - Vertical trunk for the main critical path
- * - Alternating side branches for non-milestone steps
- * - Consistent spacing and centred layout
+ * - Compact multi-column layout for large imported roadmaps
+ * - Zigzag path for smaller roadmaps
+ * - Dependency-aware step order before positioning
  */
 export function createGraph(
   steps: RoadmapStep[],
@@ -33,10 +72,6 @@ export function createGraph(
   onSelect: (stepKey: string) => void,
   lockDependencies = true,
 ): { nodes: Node<StepNodeData>[]; edges: Edge[] } {
-  const NODE_HEIGHT = 60
-  const ROW_GAP = 100       // vertical gap between rows
-  const BRANCH_OFFSET = 280 // horizontal offset for side branches
-
   const knownKeys = new Set(steps.map((s) => s.stepKey))
 
   /**
@@ -46,14 +81,10 @@ export function createGraph(
    * This creates a zigzag flow that's easy to follow.
    */
   const nodes: Node<StepNodeData>[] = steps.map((step, index) => {
-    const isCenter = index % 3 === 0
-    const side = index % 2 === 0 ? -1 : 1
-    const x = isCenter ? 0 : side * BRANCH_OFFSET
-
     return {
       id: step.stepKey,
       type: 'roadmapStep',
-      position: { x, y: index * (NODE_HEIGHT + ROW_GAP) },
+      position: getNodePosition(index, steps.length),
       data: {
         step,
         selected: step.stepKey === selectedStepKey,
@@ -111,9 +142,37 @@ export function createGraph(
   return { nodes, edges }
 }
 
+function sortStepsByDependencies(steps: RoadmapStep[]) {
+  const orderedSteps = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  const stepByKey = new Map(orderedSteps.map((step) => [step.stepKey, step]))
+  const visited = new Set<string>()
+  const visiting = new Set<string>()
+  const sorted: RoadmapStep[] = []
+
+  const visit = (step: RoadmapStep) => {
+    if (visited.has(step.stepKey)) return
+    if (visiting.has(step.stepKey)) return
+
+    visiting.add(step.stepKey)
+
+    ;(step.dependsOn ?? [])
+      .map((dependency) => stepByKey.get(dependency))
+      .filter(Boolean)
+      .sort((a, b) => ((a as RoadmapStep).order ?? 0) - ((b as RoadmapStep).order ?? 0))
+      .forEach((dependency) => visit(dependency as RoadmapStep))
+
+    visiting.delete(step.stepKey)
+    visited.add(step.stepKey)
+    sorted.push(step)
+  }
+
+  orderedSteps.forEach(visit)
+
+  return sorted
+}
+
 export function normalizeSteps(template: { steps?: RoadmapStep[] }) {
-  const steps = [...(template.steps ?? [])]
-  return steps.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  return sortStepsByDependencies(template.steps ?? [])
 }
 
 export function calculateProgress(
