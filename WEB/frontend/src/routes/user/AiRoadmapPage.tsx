@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -22,6 +23,8 @@ import {
 } from '../../libs/ai-api'
 import { createGraph, normalizeSteps } from '../../utils/graphBuilder'
 import type { RoadmapStep, StepStatus } from '../../types/roadmap'
+import { authQueryKey, fetchCurrentUser } from '../../libs/react-query'
+import { useLanguage } from '../../context/LanguageContext'
 
 const emptyProgressMap = new Map<string, StepStatus>()
 
@@ -169,6 +172,7 @@ function StepPreviewPanel({
 
 export default function AiRoadmapPage() {
   const { t } = useTranslation()
+  const { language } = useLanguage()
   const queryClient = useQueryClient()
   const [prompt, setPrompt] = useState('Become a React frontend developer in 8 weeks')
   const [targetLevel, setTargetLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner')
@@ -177,12 +181,20 @@ export default function AiRoadmapPage() {
   const [draft, setDraft] = useState<AiRoadmapDraft | null>(null)
   const [selectedStepKey, setSelectedStepKey] = useState('')
   const [isPanelOpen, setIsPanelOpen] = useState(true)
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false)
   const [explanations, setExplanations] = useState<Record<string, TopicExplanationContent>>({})
+
+  const authQuery = useQuery({
+    queryKey: authQueryKey,
+    queryFn: fetchCurrentUser,
+    staleTime: 0,
+  })
 
   const accessQuery = useQuery({
     queryKey: ['ai', 'feature-access'],
     queryFn: fetchAiFeatureAccess,
     staleTime: 30_000,
+    enabled: Boolean(authQuery.data),
   })
 
   const generateMutation = useMutation({
@@ -241,11 +253,16 @@ export default function AiRoadmapPage() {
   )
 
   const access = accessQuery.data
+  const isAuthenticated = Boolean(authQuery.data)
   const canSave = Boolean(access?.capabilities.canSaveRoadmap)
   const canExplain = Boolean(access?.capabilities.canExplainTopic)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!isAuthenticated) {
+      setIsLoginPromptOpen(true)
+      return
+    }
     generateMutation.mutate({
       prompt,
       targetLevel,
@@ -336,7 +353,7 @@ export default function AiRoadmapPage() {
               </div>
               <button
                 type="submit"
-                disabled={generateMutation.isPending || !access?.capabilities.canGenerateDraft}
+                disabled={generateMutation.isPending || (isAuthenticated && !access?.capabilities.canGenerateDraft)}
                 className="inline-flex w-fit items-center gap-2 rounded-squircle bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <HugeiconsIcon icon={AiBrain03Icon} size={18} />
@@ -351,15 +368,21 @@ export default function AiRoadmapPage() {
               {t('aiRoadmap.planTitle')}
             </div>
             <p className="text-sm leading-6 text-(--text)">
-              {access?.subscription.isSubscriber ? t('aiRoadmap.proPlan') : t('aiRoadmap.freePlan')}
+              {!isAuthenticated
+                ? t('aiRoadmap.guestPlan')
+                : access?.subscription.isSubscriber
+                  ? t('aiRoadmap.proPlan')
+                  : t('aiRoadmap.freePlan')}
             </p>
-            <div className="rounded-squircle bg-(--surface) px-3 py-2 text-sm text-(--text)">
-              {t('aiRoadmap.draftsLeft', {
-                count: access?.usage.draftsRemaining ?? 0,
-                limit: access?.usage.freeDraftLimit ?? 0,
-              })}
-            </div>
-            {!access?.capabilities.canGenerateDraft ? (
+            {isAuthenticated ? (
+              <div className="rounded-squircle bg-(--surface) px-3 py-2 text-sm text-(--text)">
+                {t('aiRoadmap.draftsLeft', {
+                  count: access?.usage.draftsRemaining ?? 0,
+                  limit: access?.usage.draftLimit ?? access?.usage.freeDraftLimit ?? 0,
+                })}
+              </div>
+            ) : null}
+            {isAuthenticated && access && !access.capabilities.canGenerateDraft ? (
               <p className="rounded-md border border-(--border) px-3 py-2 text-sm text-(--text)">
                 {t('aiRoadmap.limitReached')}
               </p>
@@ -418,6 +441,34 @@ export default function AiRoadmapPage() {
           </section>
         ) : null}
       </div>
+      {isLoginPromptOpen ? (
+        <div className="fixed inset-0 z-60 grid place-items-center bg-black/70 px-4">
+          <section className="grid max-w-md gap-4 rounded-3xl border border-(--border) bg-(--surface) p-6 text-(--text-h) shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-(--accent)">
+              <HugeiconsIcon icon={AiMagicIcon} size={18} />
+              {t('aiRoadmap.loginRequiredTitle')}
+            </div>
+            <p className="text-sm leading-7 text-(--text)">
+              {t('aiRoadmap.loginRequiredText')}
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h)"
+                onClick={() => setIsLoginPromptOpen(false)}
+              >
+                {t('aiRoadmap.cancel')}
+              </button>
+              <Link
+                to={`/${language}/login`}
+                className="rounded-squircle bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white"
+              >
+                {t('navbar.login')}
+              </Link>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   )
 }

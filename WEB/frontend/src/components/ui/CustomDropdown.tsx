@@ -224,7 +224,7 @@ export default function CustomDropdown<TValue extends string = string>({
           aria-labelledby={label ? `${dropdownId}-label` : undefined}
           style={menuStyle}
           className={[
-            'fixed z-50 max-h-60 overflow-auto rounded-xl',
+            'fixed z-[100] max-h-60 overflow-auto rounded-xl',
             'border border-(--border) bg-(--surface) p-1 shadow-(--shadow)',
           ].join(' ')}
         >

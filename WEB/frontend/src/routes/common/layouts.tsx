@@ -98,8 +98,25 @@ export function ClientLayout() {
       <Navbar
         language={language}
         links={[
-          { label: t('navbar.roadmap'), to: localizedPath(language, '/roadmaps/frontend'), dropdown: true },
-          { label: t('navbar.ai'), to: localizedPath(language, '/ai') },
+          {
+            label: t('navbar.roadmap'),
+            to: localizedPath(language, '/roadmaps/frontend'),
+            dropdown: true,
+            dropdownItems: [
+              { label: t('landing.roleRoadmaps'), to: localizedPath(language, '/roadmaps/frontend?type=roleBased') },
+              { label: t('landing.skillRoadmaps'), to: localizedPath(language, '/roadmaps/frontend?type=skillBased') },
+            ],
+          },
+          {
+            label: t('navbar.ai'),
+            to: localizedPath(language, '/ai'),
+            dropdown: true,
+            dropdownItems: [
+              { label: t('navbar.aiRoadmapBuilder'), to: localizedPath(language, '/ai') },
+              { label: t('navbar.aiChatbot'), disabled: true },
+            ],
+          },
+          { label: t('navbar.upgrade', 'Upgrade'), to: localizedPath(language, '/upgrade') },
         ]}
       />
 

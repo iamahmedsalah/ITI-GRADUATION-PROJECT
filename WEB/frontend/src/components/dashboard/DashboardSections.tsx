@@ -1,14 +1,24 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Activity01Icon,
+  Alert02Icon,
   AiMagicIcon,
+  CrownIcon,
+  Delete02Icon,
   MoreVerticalIcon,
   Route03Icon,
+  UserSettings01Icon,
   ZapIcon,
 } from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
+import { deleteUserRoadmap } from '../../libs/roadmaps-api'
+import { deleteDashboardActivity } from '../../libs/user-api'
+import CustomDropdown from '../ui/CustomDropdown'
 import type {
   AiRecommendationCourse,
   AiRecommendationNextStep,
@@ -94,27 +104,100 @@ export function StreakCard({ current, longest }: { current: number; longest: num
 export function ContinueRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
   const { language } = useLanguage()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
   const progress = Math.round(roadmap.progressPercent ?? 0)
+  const roadmapPath = `/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`
+  const deleteMutation = useMutation({
+    mutationFn: deleteUserRoadmap,
+    onSuccess: async () => {
+      toast.success(t('dashboard.roadmaps.deleted'))
+      setIsMenuOpen(false)
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('dashboard.roadmaps.deleteFailed'))
+    },
+  })
 
   return (
-    <Link
-      to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
-      className="group rounded-lg border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)"
-    >
+    <article className={['group relative rounded-lg border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
       <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
+        <Link to={roadmapPath} className="min-w-0 flex-1">
           <h3 className="truncate text-lg font-semibold text-(--text-h)">{roadmap.template?.title ?? t('profile.unknownRoadmap')}</h3>
           <p className="mt-1 text-xs uppercase tracking-[0.14em] text-(--text)">{roadmap.status ?? 'assigned'}</p>
-        </div>
+        </Link>
         <div className="flex items-center gap-3 text-sm text-(--text)">
           <span>{progress}%</span>
-          <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
+          <button
+            type="button"
+            className="grid size-8 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface-2) hover:text-(--text-h)"
+            aria-label={t('dashboard.roadmaps.openActions')}
+            onClick={() => setIsMenuOpen((value) => !value)}
+          >
+            <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
+          </button>
         </div>
       </div>
       <div className="mt-4 h-1.5 rounded-full bg-(--surface-3)">
         <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: progressWidth(progress) }} />
       </div>
-    </Link>
+      {isMenuOpen ? (
+        <div className="absolute right-3 top-12 z-90 grid min-w-40 gap-1 rounded-squircle border border-(--border) bg-(--surface-2) p-2 shadow-(--shadow)">
+          <button
+            type="button"
+            disabled={deleteMutation.isPending}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => setIsConfirmDeleteOpen(true)}
+          >
+            <HugeiconsIcon icon={Delete02Icon} size={16} />
+            {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
+          </button>
+        </div>
+      ) : null}
+      {isConfirmDeleteOpen ? (
+        <div className="fixed inset-0 z-120 grid place-items-center bg-black/70 px-4 py-8">
+          <section className="w-full max-w-md rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
+            <div className="flex items-start gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
+                <HugeiconsIcon icon={Alert02Icon} size={22} />
+              </span>
+              <div>
+                <h2 className="text-xl font-semibold text-(--text-h)">
+                  {t('dashboard.roadmaps.confirmDeleteTitle', 'Delete roadmap?')}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-(--text)">
+                  {t('dashboard.roadmaps.confirmDeleteSingleText', {
+                    roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
+                    defaultValue: 'This roadmap will be removed from your learning list.',
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2)"
+                onClick={() => setIsConfirmDeleteOpen(false)}
+              >
+                {t('adminUi.common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.35)] px-4 py-2 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:opacity-60"
+                onClick={() => deleteMutation.mutate(roadmap._id)}
+              >
+                <HugeiconsIcon icon={Delete02Icon} size={16} />
+                {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </article>
   )
 }
 
@@ -127,26 +210,51 @@ function activityTitle(activity: DashboardActivity, t: (key: string, options?: R
   if (activity.type === 'roadmap_step_complete') return t('dashboard.activity.completed', { count, roadmap: roadmapTitle })
   if (activity.type === 'course_enroll') return t('dashboard.activity.enrolled', { course: courseTitle })
   if (activity.type === 'course_complete') return t('dashboard.activity.courseCompleted', { course: courseTitle })
+  if (activity.type === 'ai_roadmap_draft') return t('dashboard.activity.aiDraft', { defaultValue: 'Generated an AI roadmap draft' })
+  if (activity.type === 'ai_roadmap_save') return t('dashboard.activity.aiSave', { defaultValue: 'Saved an AI roadmap' })
+  if (activity.type === 'ai_topic_explain') return t('dashboard.activity.aiExplain', { defaultValue: 'Asked AI to explain a topic' })
   if (activity.type === 'login') return t('dashboard.activity.login')
 
   return t('dashboard.activity.updated')
 }
 
-export function ActivityItem({ activity }: { activity: DashboardActivity }) {
+function activityTone(activity: DashboardActivity) {
+  if (activity.type.startsWith('ai_')) return 'border-(--accent-border) bg-(--accent-bg)'
+  if (activity.type.startsWith('roadmap_')) return 'border-[rgba(80,160,255,0.35)] bg-[rgba(80,160,255,0.08)]'
+  if (activity.type.startsWith('course_') || activity.type === 'lesson_complete') return 'border-[rgba(245,155,35,0.35)] bg-[rgba(245,155,35,0.08)]'
+  return 'border-(--border) bg-(--surface-2)'
+}
+
+export function ActivityItem({
+  activity,
+  isDeleting,
+  onDelete,
+}: {
+  activity: DashboardActivity
+  isDeleting?: boolean
+  onDelete?: () => void
+}) {
   const { t } = useTranslation()
   const tags = activity.roadmap?.template?.tags?.slice(0, 3) ?? []
+  const occurredLabel = activity.occurredAt || activity.createdAt
+    ? new Date(activity.occurredAt ?? activity.createdAt ?? '').toLocaleDateString()
+    : ''
 
   return (
-    <article className="border-b border-(--border) py-4 last:border-b-0">
+    <article className="relative border-b border-(--border) py-4 last:border-b-0">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-squircle bg-(--surface-2) text-(--accent)">
+        <span className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-squircle border text-(--accent) ${activityTone(activity)}`}>
           <HugeiconsIcon icon={Activity01Icon} size={17} />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm leading-6 text-(--text-h)">
             {activityTitle(activity, t)}{' '}
             <span className="text-(--text)">{relativeTime(activity.occurredAt ?? activity.createdAt)}</span>
           </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-(--text)">
+            <span className="rounded-md bg-(--surface-2) px-2 py-1">{activity.type.replaceAll('_', ' ')}</span>
+            {occurredLabel ? <span className="rounded-md bg-(--surface-2) px-2 py-1">{occurredLabel}</span> : null}
+          </div>
           {tags.length ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {tags.map((tag) => (
@@ -157,6 +265,17 @@ export function ActivityItem({ activity }: { activity: DashboardActivity }) {
             </div>
           ) : null}
         </div>
+        {onDelete ? (
+          <button
+            type="button"
+            disabled={isDeleting}
+            className="grid size-8 shrink-0 place-items-center rounded-squircle text-(--text) transition hover:bg-[rgba(226,33,52,0.08)] hover:text-(--error) disabled:opacity-50"
+            aria-label={t('dashboard.activity.delete', 'Delete activity')}
+            onClick={onDelete}
+          >
+            <HugeiconsIcon icon={Delete02Icon} size={16} />
+          </button>
+        ) : null}
       </div>
     </article>
   )
@@ -164,6 +283,7 @@ export function ActivityItem({ activity }: { activity: DashboardActivity }) {
 
 export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoadmap[] }) {
   const { t } = useTranslation()
+  const { language } = useLanguage()
 
   return (
     <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
@@ -172,7 +292,13 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.continueTitle')}</h2>
           <p className="mt-2 text-sm text-(--text)">{t('dashboard.continueSubtitle')}</p>
         </div>
-        <HugeiconsIcon icon={Route03Icon} size={20} className="text-(--accent)" />
+        <Link
+          to={`/${language}/my-roadmaps`}
+          className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)"
+        >
+          <HugeiconsIcon icon={Route03Icon} size={18} className="text-(--accent)" />
+          {t('dashboard.roadmaps.viewAll')}
+        </Link>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {roadmaps.length ? (
@@ -343,15 +469,94 @@ export function LearningActivitySection({
   isLoading: boolean
 }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  type ActivityDateFilter = 'all' | 'today' | 'week' | 'month' | 'older'
+  const [dateFilter, setDateFilter] = useState<ActivityDateFilter>('all')
+  const [activityFilterClock] = useState(() => {
+    const now = Date.now()
+    const startOfToday = new Date(now)
+    startOfToday.setHours(0, 0, 0, 0)
+
+    return {
+      now,
+      startOfToday: startOfToday.getTime(),
+    }
+  })
+  const deleteActivityMutation = useMutation({
+    mutationFn: deleteDashboardActivity,
+    onSuccess: async () => {
+      toast.success(t('dashboard.activity.deleted', 'Activity deleted.'))
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('dashboard.activity.deleteFailed', 'Could not delete activity.'))
+    },
+  })
+  const filteredActivities = useMemo(() => {
+    return activities.filter((activity) => {
+      const timestamp = new Date(activity.occurredAt ?? activity.createdAt ?? 0).getTime()
+
+      if (!timestamp) return dateFilter === 'all'
+      if (dateFilter === 'today') return timestamp >= activityFilterClock.startOfToday
+      if (dateFilter === 'week') return activityFilterClock.now - timestamp <= 7 * 86400000
+      if (dateFilter === 'month') return activityFilterClock.now - timestamp <= 30 * 86400000
+      if (dateFilter === 'older') return activityFilterClock.now - timestamp > 30 * 86400000
+      return true
+    })
+  }, [activities, activityFilterClock, dateFilter])
+  const roadmapEvents = activities.filter((activity) => activity.type.startsWith('roadmap_')).length
+  const courseEvents = activities.filter((activity) => activity.type.startsWith('course_') || activity.type === 'lesson_complete').length
+  const aiEvents = activities.filter((activity) => activity.type.startsWith('ai_')).length
+  const dateOptions: Array<{ value: ActivityDateFilter; label: string }> = [
+    { value: 'all', label: t('dashboard.activity.filters.all', 'All activity') },
+    { value: 'today', label: t('dashboard.activity.filters.today', 'Today') },
+    { value: 'week', label: t('dashboard.activity.filters.week', 'Last 7 days') },
+    { value: 'month', label: t('dashboard.activity.filters.month', 'Last 30 days') },
+    { value: 'older', label: t('dashboard.activity.filters.older', 'Older') },
+  ]
 
   return (
     <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.activity.title')}</h2>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.activity.title')}</h2>
+          <p className="mt-2 text-sm text-(--text)">
+            {t('dashboard.activity.subtitle', 'Track recent roadmap, course, AI, and login activity.')}
+          </p>
+        </div>
+        <CustomDropdown
+          value={dateFilter}
+          options={dateOptions}
+          onChange={setDateFilter}
+          className="w-full sm:w-44"
+          buttonClassName="bg-(--surface-2)"
+        />
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-4">
+        {[
+          { label: t('dashboard.activity.metrics.total', 'Total'), value: activities.length },
+          { label: t('dashboard.activity.metrics.roadmaps', 'Roadmaps'), value: roadmapEvents },
+          { label: t('dashboard.activity.metrics.courses', 'Courses'), value: courseEvents },
+          { label: t('dashboard.activity.metrics.ai', 'AI'), value: aiEvents },
+        ].map((metric) => (
+          <div key={metric.label} className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2">
+            <p className="text-xs uppercase tracking-[0.12em] text-(--text)">{metric.label}</p>
+            <p className="mt-1 text-lg font-semibold text-(--text-h)">{metric.value}</p>
+          </div>
+        ))}
+      </div>
       <div className="mt-4">
         {isLoading ? (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.loading')}</p>
-        ) : activities.length ? (
-          activities.map((activity) => <ActivityItem key={activity._id} activity={activity} />)
+        ) : filteredActivities.length ? (
+          filteredActivities.map((activity) => (
+            <ActivityItem
+              key={activity._id}
+              activity={activity}
+              isDeleting={deleteActivityMutation.isPending}
+              onDelete={() => deleteActivityMutation.mutate(activity._id)}
+            />
+          ))
         ) : (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.activity.empty')}</p>
         )}
@@ -371,12 +576,13 @@ export function SubscriptionSection({
   }
 }) {
   const { t } = useTranslation()
+  const { language } = useLanguage()
 
   const plan = subscription?.plan ?? 'free'
   const status = subscription?.status ?? 'inactive'
-const currentPeriodEnd = subscription?.currentPeriodEnd
-  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
-  : null
+  const currentPeriodEnd = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+    : null
   const isPro = plan === 'pro' && ['active', 'trialing'].includes(status)
 
   return (
@@ -410,12 +616,49 @@ const currentPeriodEnd = subscription?.currentPeriodEnd
 
         {!isPro && (
           <Link
-            to="/pricing"
-            className="mt-4 inline-flex rounded-squircle bg-(--accent) px-4 py-2 text-sm font-semibold text-white"
+            to={`/${language}/upgrade`}
+            className="mt-4 inline-flex items-center gap-2 rounded-squircle bg-(--accent) px-4 py-2 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
           >
+            <HugeiconsIcon icon={CrownIcon} size={17} />
             {t('dashboard.subscription.upgrade', 'Upgrade to Pro')}
           </Link>
         )}
+      </div>
+    </section>
+  )
+}
+
+export function PreferencesPreviewSection() {
+  const { t } = useTranslation()
+  const preferenceItems = [
+    t('dashboard.preferences.items.interests', 'Interests and target roles'),
+    t('dashboard.preferences.items.level', 'Current skill level'),
+    t('dashboard.preferences.items.schedule', 'Weekly study time'),
+  ]
+
+  return (
+    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
+            {t('dashboard.preferences.title', 'Preferences')}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-(--text)">
+            {t(
+              'dashboard.preferences.subtitle',
+              'Soon this will tune recommendations by interests, level, goal, study schedule, and preferred resources.',
+            )}
+          </p>
+        </div>
+        <HugeiconsIcon icon={UserSettings01Icon} size={20} className="text-(--accent)" />
+      </div>
+      <div className="mt-4 grid gap-2">
+        {preferenceItems.map((item) => (
+          <div key={item} className="flex items-center gap-2 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm text-(--text-h)">
+            <span className="size-1.5 rounded-full bg-(--accent)" />
+            {item}
+          </div>
+        ))}
       </div>
     </section>
   )

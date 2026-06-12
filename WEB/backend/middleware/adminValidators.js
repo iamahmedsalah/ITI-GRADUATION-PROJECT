@@ -71,6 +71,7 @@ const usersListSchema = z.object({
     role: z.enum(["student", "instructor", "admin"]).optional(),
     isVerified: z.enum(["true", "false"]).optional(),
     isActive: z.enum(["true", "false"]).optional(),
+    subscriptionPlan: z.enum(["free", "pro"]).optional(),
   }),
 });
 
@@ -88,6 +89,10 @@ const updateUserSchema = z
       role: z.enum(["student", "instructor", "admin"]).optional(),
       isVerified: z.boolean().optional(),
       isActive: z.boolean().optional(),
+      subscriptionPlan: z.enum(["free", "pro"]).optional(),
+      subscriptionStatus: z
+        .enum(["inactive", "active", "trialing", "pastDue", "canceled"])
+        .optional(),
       deactivationReason: z
         .string()
         .trim()
@@ -100,19 +105,21 @@ const updateUserSchema = z
     query: z.object({}).passthrough(),
   })
   .superRefine((payload, ctx) => {
-    const { role, isVerified, isActive, deactivationReason } = payload.body;
+    const { role, isVerified, isActive, subscriptionPlan, subscriptionStatus, deactivationReason } = payload.body;
 
     if (
       role === undefined &&
       isVerified === undefined &&
       isActive === undefined &&
+      subscriptionPlan === undefined &&
+      subscriptionStatus === undefined &&
       deactivationReason === undefined
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["body"],
         message:
-          "Provide at least one field to update: role, isVerified, isActive, deactivationReason.",
+          "Provide at least one field to update: role, isVerified, isActive, subscriptionPlan, subscriptionStatus, deactivationReason.",
       });
     }
   });
@@ -127,6 +134,8 @@ const roadmapsListSchema = z.object({
       .optional(),
     targetLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
     templateType: z.enum(["roleBased", "skillBased"]).optional(),
+    source: z.enum(["admin", "ai", "manual"]).optional(),
+    ownership: z.enum(["admin", "student"]).optional(),
     isActive: z.enum(["true", "false"]).optional(),
   }),
 });

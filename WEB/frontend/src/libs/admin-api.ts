@@ -63,9 +63,51 @@ export type AdminUserRow = {
   role: string
   isVerified: boolean
   isActive: boolean
+  subscription?: {
+    plan?: 'free' | 'pro'
+    status?: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
+    currentPeriodEnd?: string | number | null
+  }
   lastLogin?: string | number | null
   deactivatedAt?: string | null
   deactivationReason?: string | null
+}
+
+export type AdminUserDetail = {
+  user: AdminUserRow & {
+    currentRoadmap?: {
+      status?: string
+      progressPercent?: number
+      template?: { title?: string; slug?: string }
+    } | null
+    createdAt?: string
+    updatedAt?: string
+  }
+  profile?: Record<string, unknown> | null
+  preferences?: Record<string, unknown> | null
+  roadmaps?: Array<{
+    _id: string
+    status?: string
+    progressPercent?: number
+    template?: { title?: string; slug?: string; targetLevel?: string; templateType?: string; source?: string }
+  }>
+  courses?: Array<{
+    _id: string
+    status?: string
+    progressPercent?: number
+    course?: { title?: string; slug?: string; level?: string; category?: string; durationMinutes?: number }
+  }>
+  activities?: Array<{
+    _id: string
+    type?: string
+    occurredAt?: string | number
+    createdAt?: string | number
+  }>
+  stats?: {
+    roadmapsByStatus?: Array<{ _id: string; count: number }>
+    coursesByStatus?: Array<{ _id: string; count: number }>
+    activityCount?: number
+  }
 }
 
 export type AdminRoadmapRow = {
@@ -77,6 +119,14 @@ export type AdminRoadmapRow = {
   targetRole?: string
   targetLevel?: string
   templateType?: 'roleBased' | 'skillBased'
+  source?: 'admin' | 'ai' | 'manual'
+  displaySource?: 'admin' | 'ai' | 'manual' | 'student-ai'
+  owner?: {
+    username?: string
+    email?: string
+    Fname?: string
+    Lname?: string
+  } | null
   isActive: boolean
   assignedUsers?: number
   stepProgressRecords?: number
@@ -95,7 +145,19 @@ export type AdminRoadmapStep = {
 
 export type AdminRoadmapDetail = AdminRoadmapRow & {
   steps?: AdminRoadmapStep[]
-  createdBy?: { username?: string; email?: string; role?: string } | null
+  createdBy?: { username?: string; email?: string; role?: string; Fname?: string; Lname?: string } | null
+  assignedUsersList?: Array<{
+    _id: string
+    status?: string
+    progressPercent?: number
+    updatedAt?: string
+    user?: {
+      username?: string
+      Fname?: string
+      Lname?: string
+      email?: string
+    } | null
+  }>
 }
 
 export type AdminAiRoadmapDraft = {
@@ -247,6 +309,7 @@ export async function fetchAdminUsers(params: {
   role?: string
   isVerified?: string
   isActive?: string
+  subscriptionPlan?: string
   page?: number
   limit?: number
 }) {
@@ -265,12 +328,27 @@ export async function fetchAdminUsers(params: {
   }
 }
 
+export async function fetchAdminUserDetail(userId: string) {
+  const { response, data } = await apiGet<AdminListResponse<AdminUserDetail>>(
+    `/admin/users/${userId}`,
+    { data: undefined },
+  )
+
+  if (!response.ok || !data.data) {
+    return null
+  }
+
+  return data.data
+}
+
 export async function updateAdminUser(
   userId: string,
   payload: Partial<{
     role: 'student' | 'instructor' | 'admin'
     isVerified: boolean
     isActive: boolean
+    subscriptionPlan: 'free' | 'pro'
+    subscriptionStatus: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
     deactivationReason: string
   }>,
 ) {
@@ -291,11 +369,29 @@ export async function updateAdminUser(
   }
 }
 
+export async function deleteAdminUser(userId: string) {
+  const { response, data } = await apiRequest<AdminMutationResponse<AdminUserRow>>(
+    `/admin/users/${userId}`,
+    {},
+    {
+      method: 'DELETE',
+    },
+  )
+
+  return {
+    ok: response.ok,
+    message: data.message ?? (response.ok ? 'User deleted successfully.' : 'Failed to delete user.'),
+    data: data.data ?? null,
+  }
+}
+
 export async function fetchAdminRoadmaps(params: {
   q?: string
   targetRole?: string
   targetLevel?: string
   templateType?: string
+  source?: string
+  ownership?: string
   isActive?: string
   page?: number
   limit?: number

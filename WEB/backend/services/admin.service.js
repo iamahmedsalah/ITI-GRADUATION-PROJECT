@@ -99,6 +99,11 @@ const toPublicAdmin = (user) => ({
 
 const ensureAdminRole = (user) => user?.role === "admin";
 
+const getRoadmapDisplaySource = (template = {}) => {
+  if (template.owner && template.source === "ai") return "student-ai";
+  return template.source || "manual";
+};
+
 export const adminLogin = async (req, res) => {
   const body = req.body ?? {};
   const identifier = body.identifier || body.email || body.username;
@@ -724,7 +729,7 @@ export const createCourseByAdmin = async (req, res) => {
 };
 
 export const getAdminUsers = async (req, res) => {
-  const { q, role, isVerified, isActive, page, limit } = req.query;
+  const { q, role, isVerified, isActive, subscriptionPlan, page, limit } = req.query;
 
   try {
     const { skip, ...pagination } = normalizePagination(page, limit);
@@ -734,6 +739,7 @@ export const getAdminUsers = async (req, res) => {
     if (isVerified !== undefined)
       query.isVerified = parseBooleanQuery(isVerified);
     if (isActive !== undefined) query.isActive = parseBooleanQuery(isActive);
+    if (subscriptionPlan) query["subscription.plan"] = subscriptionPlan;
 
     if (q) {
       const safeRegex = new RegExp(escapeRegex(q), "i");
@@ -748,7 +754,7 @@ export const getAdminUsers = async (req, res) => {
     const [users, total] = await Promise.all([
       User.find(query)
         .select(
-          "_id username Fname Lname email role isVerified isActive lastLogin deactivatedAt deactivationReason createdAt updatedAt",
+          "_id username Fname Lname email role isVerified isActive subscription lastLogin deactivatedAt deactivationReason createdAt updatedAt",
         )
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -784,7 +790,7 @@ export const getAdminUserById = async (req, res) => {
   try {
     const user = await User.findById(userId)
       .select(
-        "_id username Fname Lname email role isVerified isActive currentRoadmap lastLogin deactivatedAt deactivatedBy deactivationReason createdAt updatedAt",
+        "_id username Fname Lname email role isVerified isActive subscription currentRoadmap lastLogin deactivatedAt deactivatedBy deactivationReason createdAt updatedAt",
       )
       .populate({
         path: "currentRoadmap",
@@ -801,10 +807,18 @@ export const getAdminUserById = async (req, res) => {
       });
     }
 
-    const [profile, preferences, roadmapStats, courseStats, activityCount] =
+    const [profile, preferences, roadmaps, courses, roadmapStats, courseStats, activities] =
       await Promise.all([
         UserProfile.findOne({ user: userId }).lean(),
         UserPreference.findOne({ user: userId }).lean(),
+        UserRoadmap.find({ user: userId })
+          .populate("template", "title slug targetLevel templateType source visibility estimatedTotalMinutes")
+          .sort({ updatedAt: -1 })
+          .lean(),
+        UserCourseProgress.find({ user: userId })
+          .populate("course", "title slug level category durationMinutes thumbnailUrl")
+          .sort({ updatedAt: -1 })
+          .lean(),
         UserRoadmap.aggregate([
           { $match: { user: user._id } },
           {
@@ -823,7 +837,16 @@ export const getAdminUserById = async (req, res) => {
             },
           },
         ]),
-        UserActivity.countDocuments({ user: user._id }),
+        UserActivity.find({ user: userId })
+          .populate("course", "title slug")
+          .populate({
+            path: "roadmap",
+            select: "template progressPercent",
+            populate: { path: "template", select: "title slug" },
+          })
+          .sort({ occurredAt: -1, createdAt: -1 })
+          .limit(10)
+          .lean(),
       ]);
 
     return res.status(200).json({
@@ -833,10 +856,13 @@ export const getAdminUserById = async (req, res) => {
         user,
         profile,
         preferences,
+        roadmaps,
+        courses,
+        activities,
         stats: {
           roadmapsByStatus: roadmapStats,
           coursesByStatus: courseStats,
-          activityCount,
+          activityCount: activities.length,
         },
       },
     });
@@ -852,7 +878,7 @@ export const getAdminUserById = async (req, res) => {
 
 export const updateUserByAdmin = async (req, res) => {
   const { userId } = req.params;
-  const { role, isVerified, isActive, deactivationReason } = req.body;
+  const { role, isVerified, isActive, subscriptionPlan, subscriptionStatus, deactivationReason } = req.body;
   const adminId = req.user._id;
 
   try {
@@ -912,10 +938,21 @@ export const updateUserByAdmin = async (req, res) => {
       role: user.role,
       isVerified: user.isVerified,
       isActive: user.isActive,
+      subscription: user.subscription,
     };
 
     if (role !== undefined) user.role = role;
     if (isVerified !== undefined) user.isVerified = isVerified;
+    if (subscriptionPlan !== undefined || subscriptionStatus !== undefined) {
+      const nextPlan = subscriptionPlan || user.subscription?.plan || "free";
+      user.subscription = {
+        plan: nextPlan,
+        status:
+          subscriptionStatus ||
+          (nextPlan === "pro" ? "active" : "inactive"),
+        currentPeriodEnd: user.subscription?.currentPeriodEnd,
+      };
+    }
 
     if (isActive !== undefined) {
       user.isActive = isActive;
@@ -951,6 +988,7 @@ export const updateUserByAdmin = async (req, res) => {
             role: user.role,
             isVerified: user.isVerified,
             isActive: user.isActive,
+            subscription: user.subscription,
           },
         },
       });
@@ -970,6 +1008,7 @@ export const updateUserByAdmin = async (req, res) => {
         role: user.role,
         isVerified: user.isVerified,
         isActive: user.isActive,
+        subscription: user.subscription,
         deactivatedAt: user.deactivatedAt,
         deactivationReason: user.deactivationReason,
       },
@@ -984,8 +1023,108 @@ export const updateUserByAdmin = async (req, res) => {
   }
 };
 
+export const deleteUserByAdmin = async (req, res) => {
+  const { userId } = req.params;
+  const adminId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    if (String(adminId) === String(user._id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own admin account.",
+      });
+    }
+
+    if (user.role === "admin" && user.isActive !== false) {
+      const otherActiveAdmins = await User.countDocuments({
+        role: "admin",
+        isActive: true,
+        _id: { $ne: user._id },
+      });
+
+      if (otherActiveAdmins === 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This action is not allowed because the platform must keep at least one active admin.",
+        });
+      }
+    }
+
+    const [userRoadmaps, ownedTemplates] = await Promise.all([
+      UserRoadmap.find({ user: user._id }).select("_id").lean(),
+      RoadmapTemplate.find({ owner: user._id }).select("_id").lean(),
+    ]);
+    const userRoadmapIds = userRoadmaps.map((roadmap) => roadmap._id);
+    const ownedTemplateIds = ownedTemplates.map((template) => template._id);
+
+    await Promise.all([
+      UserProfile.deleteMany({ user: user._id }),
+      UserPreference.deleteMany({ user: user._id }),
+      UserActivity.deleteMany({ user: user._id }),
+      UserCourseProgress.deleteMany({ user: user._id }),
+      UserRoadmapStepProgress.deleteMany({
+        $or: [
+          { user: user._id },
+          { roadmap: { $in: userRoadmapIds } },
+          { template: { $in: ownedTemplateIds } },
+        ],
+      }),
+      UserRoadmap.deleteMany({ user: user._id }),
+      RoadmapTemplate.deleteMany({ owner: user._id }),
+    ]);
+
+    await User.deleteOne({ _id: user._id });
+
+    try {
+      await logAdminAction({
+        req,
+        adminId,
+        action: "admin.user.delete",
+        targetType: "user",
+        targetId: user._id,
+        metadata: {
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          deletedRoadmaps: userRoadmapIds.length,
+          deletedOwnedTemplates: ownedTemplateIds.length,
+        },
+      });
+    } catch (logError) {
+      console.error("Failed to log admin action:", logError);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully.",
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Admin delete user error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete user.",
+      error: error.message,
+    });
+  }
+};
+
 export const getAdminRoadmaps = async (req, res) => {
-  const { q, targetRole, targetLevel, templateType, isActive, page, limit } = req.query;
+  const { q, targetRole, targetLevel, templateType, source, ownership, isActive, page, limit } = req.query;
 
   try {
     const { skip, ...pagination } = normalizePagination(page, limit);
@@ -993,8 +1132,20 @@ export const getAdminRoadmaps = async (req, res) => {
 
     if (targetRole) query.targetRole = targetRole;
     if (targetLevel) query.targetLevel = targetLevel;
+    if (source) query.source = source;
+    if (ownership === "student") {
+      query.owner = { $exists: true, $ne: null };
+    } else if (ownership === "admin") {
+      query.$and = [
+        ...(query.$and || []),
+        { $or: [{ owner: { $exists: false } }, { owner: null }] },
+      ];
+    }
     if (templateType === "roleBased") {
-      query.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+      query.$and = [
+        ...(query.$and || []),
+        { $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] },
+      ];
     } else if (templateType) {
       query.templateType = templateType;
     }
@@ -1013,6 +1164,7 @@ export const getAdminRoadmaps = async (req, res) => {
     const [templates, total] = await Promise.all([
       RoadmapTemplate.find(query)
         .populate("createdBy", "username email role")
+        .populate("owner", "username email Fname Lname")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(pagination.limit)
@@ -1032,6 +1184,7 @@ export const getAdminRoadmaps = async (req, res) => {
 
     const data = templates.map((template) => ({
       ...template,
+      displaySource: getRoadmapDisplaySource(template),
       assignedUsers: assignmentsMap.get(String(template._id)) || 0,
     }));
 
@@ -1063,11 +1216,17 @@ export const getAdminRoadmapById = async (req, res) => {
   const { templateId } = req.params;
 
   try {
-    const [template, assignments, stepProgressCount] = await Promise.all([
+    const [template, assignments, assignedRoadmaps, stepProgressCount] = await Promise.all([
       RoadmapTemplate.findById(templateId)
-        .populate("createdBy", "username email role")
+        .populate("createdBy", "username email role Fname Lname")
+        .populate("owner", "username email Fname Lname")
         .lean(),
       UserRoadmap.countDocuments({ template: templateId }),
+      UserRoadmap.find({ template: templateId })
+        .populate("user", "username Fname Lname email")
+        .select("user status progressPercent updatedAt")
+        .sort({ updatedAt: -1 })
+        .lean(),
       UserRoadmapStepProgress.countDocuments({ template: templateId }),
     ]);
 
@@ -1083,7 +1242,17 @@ export const getAdminRoadmapById = async (req, res) => {
       message: "Roadmap template retrieved successfully.",
       data: {
         ...template,
+        displaySource: getRoadmapDisplaySource(template),
         assignedUsers: assignments,
+        assignedUsersList: assignedRoadmaps
+          .filter((roadmap) => roadmap.user)
+          .map((roadmap) => ({
+            _id: roadmap._id,
+            status: roadmap.status,
+            progressPercent: roadmap.progressPercent,
+            updatedAt: roadmap.updatedAt,
+            user: roadmap.user,
+          })),
         totalStepProgressRecords: stepProgressCount,
       },
     });

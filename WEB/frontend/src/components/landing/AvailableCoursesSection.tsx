@@ -61,7 +61,7 @@ export default function AvailableCoursesSection() {
   }
 
   return (
-    <section className="mt-16">
+    <section id="courses" className="mt-16 scroll-mt-24">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">{t('landing.coursesBadge')}</p>

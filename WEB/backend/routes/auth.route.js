@@ -30,6 +30,7 @@ import {
   checkAuth,
   refreshAuth,
   getDashboardSummary,
+  deleteUserActivity,
   updateProfile,
   updatePassword,
   updateAvatar,
@@ -249,6 +250,7 @@ router.post("/logout", logout);
  */
 router.get("/check-auth", protect, checkAuth);
 router.get("/dashboard-summary", protect, getDashboardSummary);
+router.delete("/activities/:activityId", protect, deleteUserActivity);
 router.patch("/profile", protect, profileUpdateValidation, updateProfile);
 router.patch("/profile/avatar", protect, avatarUpdateValidation, updateAvatar);
 router.patch("/password", protect, updatePasswordValidation, updatePassword);

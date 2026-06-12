@@ -11,6 +11,7 @@ import {
   ContinueFollowingSection,
   DashboardStat,
   LearningActivitySection,
+  PreferencesPreviewSection,
   StreakCard,
   SubscriptionSection
 } from '../../components/dashboard/DashboardSections'
@@ -56,23 +57,28 @@ function DashboardPage() {
           <DashboardStat value={`${streak.current}d`} label={t('dashboard.stats.visitStreak')} />
         </motion.div>
 
-        <motion.div variants={staggerContainerVariants} className="grid gap-6 lg:grid-cols-[0.95fr_1.35fr]">
-          <motion.div variants={cardVariants}>
-            <StreakCard current={streak.current} longest={streak.longest} />
-          </motion.div>
-          <motion.div variants={cardVariants}>
-            <ContinueFollowingSection roadmaps={continueRoadmaps} />
-          </motion.div>
-        </motion.div>
+        <motion.div variants={staggerContainerVariants} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
+          <div className="grid gap-6">
+            <motion.div variants={cardVariants}>
+              <ContinueFollowingSection roadmaps={continueRoadmaps} />
+            </motion.div>
+            <motion.div variants={cardVariants}>
+              <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
+            </motion.div>
+          </div>
 
-        <motion.div variants={cardVariants}>
-          <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
+          <div className="grid gap-6">
+            <motion.div variants={cardVariants}>
+              <StreakCard current={streak.current} longest={streak.longest} />
+            </motion.div>
+            <motion.div variants={cardVariants}>
+              <SubscriptionSection subscription={user.subscription} />
+            </motion.div>
+            <motion.div variants={cardVariants}>
+              <PreferencesPreviewSection />
+            </motion.div>
+          </div>
         </motion.div>
-
-        <motion.div variants={cardVariants}>
-          <SubscriptionSection subscription={user.subscription} />
-        </motion.div>
-
 
         <motion.div variants={cardVariants}>
           <LearningActivitySection activities={summary?.activities ?? []} isLoading={summaryQuery.isLoading} />

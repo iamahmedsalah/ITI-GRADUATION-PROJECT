@@ -376,6 +376,44 @@ export const getUserRoadmaps = async (req, res) => {
   }
 };
 
+export const deleteUserRoadmap = async (req, res) => {
+  const userId = req.user._id;
+  const { roadmapId } = req.params;
+
+  try {
+    const roadmap = await UserRoadmap.findOne({
+      _id: roadmapId,
+      user: userId,
+    });
+
+    if (!roadmap) {
+      return res.status(404).json({
+        success: false,
+        message: "Roadmap not found.",
+      });
+    }
+
+    await UserRoadmapStepProgress.deleteMany({
+      user: userId,
+      roadmap: roadmap._id,
+    });
+    await UserRoadmap.deleteOne({ _id: roadmap._id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Roadmap deleted successfully.",
+      data: { _id: roadmap._id },
+    });
+  } catch (error) {
+    console.error("Delete user roadmap error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete roadmap.",
+      error: error.message,
+    });
+  }
+};
+
 //  ROADMAP TEMPLATE SERVICES
 
 export const createRoadmapTemplate = async (req, res) => {

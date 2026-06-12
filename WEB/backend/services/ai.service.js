@@ -27,6 +27,12 @@ const FREE_AI_ROADMAP_DRAFT_LIMIT = clamp(
   25,
 );
 
+const PRO_AI_ROADMAP_DRAFT_LIMIT = clamp(
+  parseIntegerEnv(process.env.AI_PRO_ROADMAP_DRAFT_LIMIT, 10),
+  0,
+  50,
+);
+
 const toId = (value) => {
   if (!value) return "";
   if (typeof value === "string") return value;
@@ -82,32 +88,36 @@ const getAiSubscription = (user = {}) => {
   };
 };
 
-const getAiUsage = async (userId) => {
+const getAiDraftLimit = (subscription) =>
+  subscription?.isSubscriber ? PRO_AI_ROADMAP_DRAFT_LIMIT : FREE_AI_ROADMAP_DRAFT_LIMIT;
+
+const getAiUsage = async (userId, subscription) => {
   const periodStart = getMonthlyUsageStart();
   const draftsUsed = await UserActivity.countDocuments({
     user: userId,
     type: "ai_roadmap_draft",
     occurredAt: { $gte: periodStart },
   });
+  const draftLimit = getAiDraftLimit(subscription);
 
   return {
     periodStart: periodStart.toISOString(),
     draftsUsed,
-    freeDraftLimit: FREE_AI_ROADMAP_DRAFT_LIMIT,
-    draftsRemaining: Math.max(FREE_AI_ROADMAP_DRAFT_LIMIT - draftsUsed, 0),
+    draftLimit,
+    freeDraftLimit: draftLimit,
+    draftsRemaining: Math.max(draftLimit - draftsUsed, 0),
   };
 };
 
 const buildAiAccessPayload = async (user) => {
   const subscription = getAiSubscription(user);
-  const usage = await getAiUsage(user._id);
+  const usage = await getAiUsage(user._id, subscription);
 
   return {
     subscription,
     usage,
     capabilities: {
-      canGenerateDraft:
-        subscription.isSubscriber || usage.draftsUsed < usage.freeDraftLimit,
+      canGenerateDraft: usage.draftsUsed < usage.draftLimit,
       canSaveRoadmap: subscription.isSubscriber,
       canExplainTopic: subscription.isSubscriber,
     },

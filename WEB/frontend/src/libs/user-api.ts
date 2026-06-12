@@ -38,6 +38,9 @@ export type DashboardActivity = {
     | 'roadmap_start'
     | 'roadmap_step_complete'
     | 'roadmap_complete'
+    | 'ai_roadmap_draft'
+    | 'ai_roadmap_save'
+    | 'ai_topic_explain'
     | 'rating'
     | 'quiz_attempt'
   metadata?: Record<string, unknown>
@@ -182,6 +185,7 @@ type UserMutationResponse = {
   success?: boolean
   message?: string
   user?: AuthUser
+  data?: unknown
   errors?: Array<{ field?: string; message?: string }>
 }
 
@@ -217,6 +221,22 @@ export async function fetchAiRecommendations(limit = 6) {
   }
 
   return data.data
+}
+
+export async function deleteDashboardActivity(activityId: string) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    `/auth/activities/${activityId}`,
+    emptyMutationResponse,
+    {
+      method: 'DELETE',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not delete activity.'))
+  }
+
+  return true
 }
 
 export async function updateCurrentUserProfile(input: ProfileUpdateInput) {

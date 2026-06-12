@@ -36,6 +36,8 @@ export default function AdminRoadmapsPage() {
   const [targetRole, setTargetRole] = useState('')
   const [targetLevel, setTargetLevel] = useState('')
   const [templateType, setTemplateType] = useState('')
+  const [ownership, setOwnership] = useState('')
+  const [source, setSource] = useState('')
   const [isActive, setIsActive] = useState('')
   const [page, setPage] = useState(1)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
@@ -44,8 +46,8 @@ export default function AdminRoadmapsPage() {
   const [editingRoadmap, setEditingRoadmap] = useState<AdminRoadmapRow | null>(null)
 
   const queryKey = useMemo(
-    () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, isActive, page],
-    [search, targetRole, targetLevel, templateType, isActive, page],
+    () => ['admin', 'roadmaps', search, targetRole, targetLevel, templateType, ownership, source, isActive, page],
+    [search, targetRole, targetLevel, templateType, ownership, source, isActive, page],
   )
 
   const roleOptions = [
@@ -72,6 +74,17 @@ export default function AdminRoadmapsPage() {
     { value: 'true', label: t('adminUi.status.active') },
     { value: 'false', label: t('adminUi.status.inactive') },
   ]
+  const ownershipOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allOwners', 'All creators') },
+    { value: 'admin', label: t('adminUi.roadmaps.filters.adminCreated', 'Admin-created') },
+    { value: 'student', label: t('adminUi.roadmaps.filters.studentCreated', 'Student-created') },
+  ]
+  const sourceOptions = [
+    { value: '', label: t('adminUi.roadmaps.filters.allSources', 'All sources') },
+    { value: 'manual', label: t('adminUi.roadmaps.sources.manual', 'Manual') },
+    { value: 'ai', label: t('adminUi.roadmaps.sources.ai', 'AI') },
+    { value: 'admin', label: t('adminUi.roadmaps.sources.admin', 'Admin') },
+  ]
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey,
@@ -81,6 +94,8 @@ export default function AdminRoadmapsPage() {
         targetRole: targetRole || undefined,
         targetLevel: targetLevel || undefined,
         templateType: templateType || undefined,
+        ownership: ownership || undefined,
+        source: source || undefined,
         isActive: isActive || undefined,
         page,
         limit: 10,
@@ -236,7 +251,7 @@ export default function AdminRoadmapsPage() {
           />
         </div>
 
-        {isFiltersOpen ? <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-5">
+        {isFiltersOpen ? <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-muted) p-4 md:grid-cols-4 xl:grid-cols-7">
           <input
             value={search}
             onChange={(event) => {
@@ -249,6 +264,8 @@ export default function AdminRoadmapsPage() {
           <CustomDropdown value={targetRole} options={roleOptions} onChange={(value) => { setTargetRole(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
           <CustomDropdown value={targetLevel} options={levelOptions} onChange={(value) => { setTargetLevel(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
           <CustomDropdown value={templateType} options={typeOptions} onChange={(value) => { setTemplateType(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+          <CustomDropdown value={ownership} options={ownershipOptions} onChange={(value) => { setOwnership(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
+          <CustomDropdown value={source} options={sourceOptions} onChange={(value) => { setSource(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
           <CustomDropdown value={isActive} options={activeOptions} onChange={(value) => { setIsActive(value); setPage(1) }} buttonClassName="bg-(--surface-muted)! px-4! py-3!" />
         </div> : null}
 
@@ -292,6 +309,10 @@ export default function AdminRoadmapsPage() {
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.type')}</span>
                     <span className="wrap-break-word text-(--text-h)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</span>
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.source', 'Source')}</span>
+                    <span className="wrap-break-word text-(--text-h)">{roadmap.displaySource ?? roadmap.source ?? 'manual'}</span>
                   </div>
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.target')}</span>
@@ -367,6 +388,7 @@ export default function AdminRoadmapsPage() {
                 </th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.template')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.type')}</th>
+                <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.source', 'Source')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.target')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.status')}</th>
                 <th className="px-4 py-3 font-medium">{t('adminUi.roadmaps.table.assigned')}</th>
@@ -375,7 +397,7 @@ export default function AdminRoadmapsPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={7}>{t('adminUi.roadmaps.loading')}</td></tr>
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={8}>{t('adminUi.roadmaps.loading')}</td></tr>
               ) : visibleRoadmaps.length ? visibleRoadmaps.map((roadmap) => (
                 <tr key={roadmap._id} className="border-t border-(--border)">
                   <td className="px-4 py-4">
@@ -400,6 +422,16 @@ export default function AdminRoadmapsPage() {
                     <div className="text-xs text-(--text)">{roadmap.slug}</div>
                   </td>
                   <td className="px-4 py-4 text-(--text)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</td>
+                  <td className="px-4 py-4 text-(--text)">
+                    <span className="rounded-md border border-(--border) px-2 py-1 text-xs font-semibold uppercase text-(--text-h)">
+                      {roadmap.displaySource ?? roadmap.source ?? 'manual'}
+                    </span>
+                    {roadmap.owner ? (
+                      <div className="mt-1 text-xs text-(--text)">
+                        {roadmap.owner.username || roadmap.owner.email}
+                      </div>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.targetRole || t('adminUi.common.any')} | {roadmap.targetLevel || t('adminUi.common.any')}</td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.isActive ? t('adminUi.status.active') : t('adminUi.status.inactive')}</td>
                   <td className="px-4 py-4 text-(--text)">{roadmap.assignedUsers ?? 0}</td>
@@ -442,7 +474,7 @@ export default function AdminRoadmapsPage() {
                   </td>
                 </tr>
               )) : (
-                <tr><td className="px-4 py-6 text-(--text)" colSpan={7}>{t('adminUi.roadmaps.empty')}</td></tr>
+                <tr><td className="px-4 py-6 text-(--text)" colSpan={8}>{t('adminUi.roadmaps.empty')}</td></tr>
               )}
             </tbody>
             </table>

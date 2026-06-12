@@ -20,7 +20,11 @@
     "roadmaps": "خرائط الطريق",
     "logout": "تسجيل الخروج",
     "openMenu": "فتح قائمة التنقل",
-    "closeMenu": "إغلاق قائمة التنقل"
+    "closeMenu": "إغلاق قائمة التنقل",
+    "courses": "Courses",
+    "aiRoadmapBuilder": "AI roadmap builder",
+    "aiChatbot": "AI Chatbot",
+    "upgrade": "Upgrade"
   },
   "layout": {
     "footerDescription": "منصة تعلم محلية تدعم العربية والإنجليزية مع تبديل اللغة والوضع وتخطيط موحد.",
@@ -308,10 +312,10 @@
     "saved": "AI roadmap saved to your account.",
     "saveFailed": "Could not save AI roadmap.",
     "planTitle": "AI plan",
-    "freePlan": "Free users can generate limited monthly drafts.",
+    "freePlan": "Free users can generate 3 AI roadmaps each month.",
     "proPlan": "Pro plan active. Saving roadmaps and topic explanations are enabled.",
-    "draftsLeft": "{{count}} of {{limit}} free draft(s) left this month.",
-    "limitReached": "Your free draft limit is used. Upgrade to keep generating.",
+    "draftsLeft": "{{count}} of {{limit}} AI roadmap(s) left this month.",
+    "limitReached": "Your monthly AI roadmap limit is used. Upgrade to keep generating.",
     "topicLabel": "Selected topic",
     "explainTopic": "Explain topic",
     "explaining": "Explaining...",
@@ -319,7 +323,11 @@
     "proOnly": "Pro only",
     "keyPoints": "Key points",
     "practice": "Practice",
-    "commonMistakes": "Common mistakes"
+    "commonMistakes": "Common mistakes",
+    "guestPlan": "Preview the AI builder, then sign in to generate a roadmap.",
+    "loginRequiredTitle": "Log in to start",
+    "loginRequiredText": "Create or sign in to your account before generating an AI roadmap.",
+    "cancel": "Cancel"
   },
   "roadmapDetail": {
     "backToRoadmaps": "العودة إلى كل خرائط الطريق",
@@ -478,6 +486,24 @@
       "coursesHint": "{{count}} دورة مكتملة.",
       "time": "وقت التعلم",
       "timeHint": "متوسط تقدم خرائط الطريق: {{count}}٪."
+    },
+    "roadmaps": {
+      "overline": "Your learning paths",
+      "title": "My roadmaps",
+      "viewAll": "View all",
+      "openActions": "Open roadmap actions",
+      "open": "Open",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleted": "Roadmap deleted.",
+      "deleteFailed": "Could not delete roadmap.",
+      "deleteSelected": "Delete selected ({{count}})",
+      "search": "Search your roadmaps",
+      "allStatuses": "All statuses",
+      "tableRoadmap": "Roadmap",
+      "tableStatus": "Status",
+      "tableProgress": "Progress",
+      "tableActions": "Actions"
     }
   },
   "auth": {
@@ -563,7 +589,8 @@
       "close": "إغلاق",
       "selectAll": "تحديد الكل",
       "deleteSelected": "حذف المحدد ({{count}})",
-      "bulkDeleteConfirm": "حذف {{count}} عنصر محدد؟"
+      "bulkDeleteConfirm": "حذف {{count}} عنصر محدد؟",
+      "loading": "Loading..."
     },
     "roles": {
       "student": "طالب",
@@ -668,14 +695,16 @@
       "filters": {
         "allRoles": "كل الأدوار",
         "allVerification": "كل حالات التحقق",
-        "allStatus": "كل الحالات"
+        "allStatus": "كل الحالات",
+        "allPlans": "All plans"
       },
       "table": {
         "user": "المستخدم",
         "role": "الدور",
         "status": "الحالة",
         "lastLogin": "آخر تسجيل دخول",
-        "actions": "الإجراءات"
+        "actions": "الإجراءات",
+        "subscription": "Subscription"
       },
       "actions": {
         "saveRole": "حفظ الدور",
@@ -685,6 +714,16 @@
         "deactivate": "تعطيل",
         "deactivationPrompt": "سبب التعطيل (اختياري)",
         "deactivateSelected": "تعطيل المحدد ({{count}})"
+      },
+      "subscription": {
+        "free": "Free",
+        "pro": "Pro"
+      },
+      "detail": {
+        "title": "User details",
+        "profile": "Profile and preferences",
+        "roadmaps": "Roadmaps",
+        "courses": "Courses"
       }
     },
     "roadmaps": {

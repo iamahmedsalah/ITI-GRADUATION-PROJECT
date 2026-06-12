@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AiMagicIcon,
+  CrownIcon,
   DashboardSquare03Icon,
   Login02Icon,
   Login03Icon,
@@ -24,13 +25,18 @@ import {
   logoutCurrentUser,
 } from "../../libs/react-query";
 import AccountMenu from "../ui/AccountMenu";
-import RoadmapFilterMenu from "./RoadmapFilterMenu";
 
 type NavbarLink = {
   label: string;
   to: string;
   exact?: boolean;
   dropdown?: boolean;
+  dropdownItems?: Array<{
+    label: string;
+    to?: string;
+    disabled?: boolean;
+    icon?: typeof AiMagicIcon;
+  }>;
 };
 
 type NavbarProps = {
@@ -164,10 +170,50 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
 
         <nav className="hidden flex-1 items-center gap-1 lg:flex">
           {primaryLinks.map((link) => {
-            const isRoadmapDropdown =
-              link.dropdown && link.to.includes("/roadmaps");
-            if (isRoadmapDropdown) {
-              return <RoadmapFilterMenu key={link.label} />;
+            if (link.dropdownItems?.length) {
+              return (
+                <div key={link.label} className="group relative">
+                  <NavLink
+                    to={link.to}
+                    end={link.exact ?? false}
+                    className={navClassName}
+                  >
+                    {link.to.includes("/ai") ? (
+                      <HugeiconsIcon icon={AiMagicIcon} size={18} />
+                    ) : link.to.includes("/upgrade") ? (
+                      <HugeiconsIcon icon={CrownIcon} size={18} />
+                    ) : link.to.includes("/roadmaps") ? (
+                      <HugeiconsIcon icon={Route03Icon} size={18} />
+                    ) : null}
+                    <span>{link.label}</span>
+                    <span className="text-[10px] leading-none opacity-80">&#9662;</span>
+                  </NavLink>
+                  <div className="invisible absolute left-0 top-full z-50 min-w-58 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100">
+                    <div className="rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+                      {link.dropdownItems.map((item) =>
+                        item.disabled || !item.to ? (
+                          <span
+                            key={item.label}
+                            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-(--text) opacity-60"
+                          >
+                            {item.icon ? <HugeiconsIcon icon={item.icon} size={17} /> : null}
+                            {item.label}
+                          </span>
+                        ) : (
+                          <Link
+                            key={item.label}
+                            to={item.to}
+                            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-(--text-h) transition hover:bg-(--surface-2)"
+                          >
+                            {item.icon ? <HugeiconsIcon icon={item.icon} size={17} /> : null}
+                            {item.label}
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
             }
 
             return (
@@ -179,6 +225,8 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
               >
                 {link.to.includes("/ai") ? (
                   <HugeiconsIcon icon={AiMagicIcon} size={18} />
+                ) : link.to.includes("/upgrade") ? (
+                  <HugeiconsIcon icon={CrownIcon} size={18} />
                 ) : null}
                 <span>{link.label}</span>
                 {link.dropdown ? (
@@ -220,7 +268,7 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
           <>
             <button
               type="button"
-              className="grid size-10 place-items-center rounded-2xl border border-(--border) bg-(--surface) text-(--text-secondary) transition-colors hover:bg-(--surface-2) hover:text-(--text-h) lg:hidden"
+              className="grid size-10 cursor-pointer place-items-center rounded-2xl border border-(--border) bg-(--surface) text-(--text-secondary) transition-colors hover:bg-(--surface-2) hover:text-(--text-h) lg:hidden"
               aria-label={
                 isMobileMenuOpen ? t("navbar.closeMenu") : t("navbar.openMenu")
               }
@@ -327,6 +375,8 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                         icon={
                           link.to.includes("/ai")
                             ? AiMagicIcon
+                            : link.to.includes("/upgrade")
+                            ? CrownIcon
                             : link.to.includes("roadmap")
                             ? Route03Icon
                             : DashboardSquare03Icon

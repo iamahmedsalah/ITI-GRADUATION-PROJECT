@@ -4,6 +4,7 @@ import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import { resolveUserAvatarUrl } from "../config/cloudinary.js";
+import mongoose from "mongoose";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { customAlphabet } from "nanoid";
@@ -1143,7 +1144,7 @@ export const getDashboardSummary = async (req, res) => {
         },
       })
       .sort({ occurredAt: -1, createdAt: -1 })
-      .limit(8)
+      .limit(30)
       .lean();
 
     const timeByRoadmapId = new Map(
@@ -1217,6 +1218,43 @@ export const getDashboardSummary = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Could not load dashboard summary.",
+    });
+  }
+};
+
+export const deleteUserActivity = async (req, res) => {
+  const { activityId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(activityId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Activity ID must be valid.",
+    });
+  }
+
+  try {
+    const deletedActivity = await UserActivity.findOneAndDelete({
+      _id: activityId,
+      user: req.user._id,
+    }).lean();
+
+    if (!deletedActivity) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Activity deleted successfully.",
+      data: deletedActivity,
+    });
+  } catch (error) {
+    console.error("Delete user activity error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not delete activity.",
     });
   }
 };

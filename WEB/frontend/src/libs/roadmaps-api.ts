@@ -269,3 +269,17 @@ export async function updateRoadmapStepStatus(
 
   return data.data
 }
+
+export async function deleteUserRoadmap(roadmapId: string) {
+  const { response, data } = await apiRequest<{ success?: boolean; message?: string }>(
+    `/roadmaps/${roadmapId}`,
+    {},
+    { method: 'DELETE' },
+  )
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Could not delete this roadmap.')
+  }
+
+  return true
+}

@@ -13,6 +13,7 @@ import {
 } from "../middleware/roadmapValidators.js";
 import {
   assignRoadmapToUser,
+  deleteUserRoadmap,
   updateStepProgress,
   getRoadmapProgress,
   getUserRoadmaps,
@@ -447,6 +448,8 @@ router.get("/", getUserRoadmaps);
  *           $ref: '#/components/schemas/ObjectId'
  */
 router.get("/:roadmapId", getRoadmapProgress);
+
+router.delete("/:roadmapId", validateRoadmapExists, deleteUserRoadmap);
 
 // PUT - Update step progress
 /**

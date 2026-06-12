@@ -12,7 +12,11 @@
     "login": "Login",
     "signup": "Sign Up",
     "roadmap": "Roadmap",
+    "courses": "Courses",
     "ai": "AI",
+    "aiRoadmapBuilder": "AI roadmap builder",
+    "aiChatbot": "AI Chatbot",
+    "upgrade": "Upgrade",
     "account": "Account",
     "accountMenu": "Open account menu",
     "signedInAs": "Signed in as",
@@ -308,15 +312,19 @@
     "saved": "AI roadmap saved to your account.",
     "saveFailed": "Could not save AI roadmap.",
     "planTitle": "AI plan",
-    "freePlan": "Free users can generate limited monthly drafts.",
+    "freePlan": "Free users can generate 3 AI roadmaps each month.",
+    "guestPlan": "Preview the AI builder, then sign in to generate a roadmap.",
     "proPlan": "Pro plan active. Saving roadmaps and topic explanations are enabled.",
-    "draftsLeft": "{{count}} of {{limit}} free draft(s) left this month.",
-    "limitReached": "Your free draft limit is used. Upgrade to keep generating.",
+    "draftsLeft": "{{count}} of {{limit}} AI roadmap(s) left this month.",
+    "limitReached": "Your monthly AI roadmap limit is used. Upgrade to keep generating.",
     "topicLabel": "Selected topic",
     "explainTopic": "Explain topic",
     "explaining": "Explaining...",
     "explainFailed": "Could not explain this topic.",
     "proOnly": "Pro only",
+    "loginRequiredTitle": "Log in to start",
+    "loginRequiredText": "Create or sign in to your account before generating an AI roadmap.",
+    "cancel": "Cancel",
     "keyPoints": "Key points",
     "practice": "Practice",
     "commonMistakes": "Common mistakes"
@@ -430,6 +438,24 @@
     "emptyRoadmaps": "You have not started tracking any roadmap yet.",
     "emptyCourses": "No course progress has been recorded yet.",
     "unknownCourse": "Course",
+    "roadmaps": {
+      "overline": "Your learning paths",
+      "title": "My roadmaps",
+      "viewAll": "View all",
+      "openActions": "Open roadmap actions",
+      "open": "Open",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleted": "Roadmap deleted.",
+      "deleteFailed": "Could not delete roadmap.",
+      "deleteSelected": "Delete selected ({{count}})",
+      "search": "Search your roadmaps",
+      "allStatuses": "All statuses",
+      "tableRoadmap": "Roadmap",
+      "tableStatus": "Status",
+      "tableProgress": "Progress",
+      "tableActions": "Actions"
+    },
     "ai": {
       "title": "AI recommendations",
       "subtitle": "Personalized next steps from your roadmaps, courses, progress, and preferences.",
@@ -550,6 +576,7 @@
     },
     "common": {
       "refreshing": "Refreshing...",
+      "loading": "Loading...",
       "creating": "Creating...",
       "noData": "No data",
       "any": "Any",
@@ -668,14 +695,26 @@
       "filters": {
         "allRoles": "All roles",
         "allVerification": "All verification",
-        "allStatus": "All status"
+        "allStatus": "All status",
+        "allPlans": "All plans"
+      },
+      "subscription": {
+        "free": "Free",
+        "pro": "Pro"
       },
       "table": {
         "user": "User",
         "role": "Role",
+        "subscription": "Subscription",
         "status": "Status",
         "lastLogin": "Last login",
         "actions": "Actions"
+      },
+      "detail": {
+        "title": "User details",
+        "profile": "Profile and preferences",
+        "roadmaps": "Roadmaps",
+        "courses": "Courses"
       },
       "actions": {
         "saveRole": "Save role",

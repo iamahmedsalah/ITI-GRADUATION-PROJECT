@@ -34,6 +34,7 @@ import {
   getAdminUsers,
   getAdminUserById,
   updateUserByAdmin,
+  deleteUserByAdmin,
   getAdminRoadmaps,
   getAdminRoadmapById,
   updateRoadmapByAdmin,
@@ -294,6 +295,12 @@ router.patch(
   adminWriteLimiter,
   adminUpdateUserValidation,
   updateUserByAdmin,
+);
+router.delete(
+  "/users/:userId",
+  adminWriteLimiter,
+  adminUserIdValidation,
+  deleteUserByAdmin,
 );
 
 /**

@@ -38,12 +38,14 @@ import {
   GuidePage,
   HomePage,
   LoginPage,
+  MyRoadmapsPage,
   NotFound,
   ProfilePage,
   ResetPasswordPage,
   RoadmapPage,
   RoadmapsPage,
   SignupPage,
+  UpgradePage,
   VerifyEmailPage,
 } from "./utils/routes.lazy";
 
@@ -102,8 +104,11 @@ export const appRouter = createBrowserRouter([
               },
               {
                 path: "ai",
-                loader: dashboardLoader,
                 element: <AiRoadmapPage />,
+              },
+              {
+                path: "upgrade",
+                element: <UpgradePage />,
               },
               {
                 path: "profile",
@@ -113,6 +118,11 @@ export const appRouter = createBrowserRouter([
               {
                 path: "roadmaps/frontend",
                 element: <RoadmapsPage />,
+              },
+              {
+                path: "my-roadmaps",
+                loader: dashboardLoader,
+                element: <MyRoadmapsPage />,
               },
               {
                 path: "faqs",

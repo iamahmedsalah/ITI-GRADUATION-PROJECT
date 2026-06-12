@@ -246,6 +246,16 @@ textarea{
   resize:none;
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .admin-checkbox {
   width: 22px;
   height: 22px;

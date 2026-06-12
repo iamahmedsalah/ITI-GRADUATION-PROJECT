@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +9,7 @@ export default function AdminRoadmapDetailPage() {
   const { templateId = '' } = useParams()
   const { language } = useLanguage()
   const { t } = useTranslation()
+  const [showAssignedUsers, setShowAssignedUsers] = useState(false)
 
   const { data: roadmap, isLoading } = useQuery({
     queryKey: ['admin', 'roadmaps', 'detail', templateId],
@@ -37,11 +39,18 @@ export default function AdminRoadmapDetailPage() {
               </span>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <article className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <button
+                type="button"
+                className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-left transition hover:border-(--accent-border)"
+                onClick={() => setShowAssignedUsers((value) => !value)}
+              >
                 <p className="text-xs uppercase tracking-[0.16em] text-(--text)">{t('adminUi.roadmaps.detail.assigned')}</p>
                 <p className="mt-2 text-3xl font-bold text-(--text-h)">{roadmap.assignedUsers ?? 0}</p>
-              </article>
+                <p className="mt-1 text-xs text-(--accent)">
+                  {showAssignedUsers ? t('adminUi.common.hide', 'Hide') : t('adminUi.common.view', 'View')}
+                </p>
+              </button>
               <article className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-(--text)">{t('adminUi.roadmaps.detail.steps')}</p>
                 <p className="mt-2 text-3xl font-bold text-(--text-h)">{roadmap.steps?.length ?? 0}</p>
@@ -50,7 +59,46 @@ export default function AdminRoadmapDetailPage() {
                 <p className="text-xs uppercase tracking-[0.16em] text-(--text)">{t('adminUi.roadmaps.detail.stepProgress')}</p>
                 <p className="mt-2 text-3xl font-bold text-(--text-h)">{roadmap.totalStepProgressRecords ?? 0}</p>
               </article>
+              <article className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-(--text)">{t('adminUi.roadmaps.table.source', 'Source')}</p>
+                <p className="mt-2 text-lg font-bold uppercase text-(--text-h)">{roadmap.displaySource ?? roadmap.source ?? 'manual'}</p>
+                <p className="mt-1 truncate text-xs text-(--text)">
+                  {roadmap.owner
+                    ? roadmap.owner.username || roadmap.owner.email
+                    : roadmap.createdBy?.username || roadmap.createdBy?.email || t('adminUi.common.notAvailable')}
+                </p>
+              </article>
             </div>
+
+            {showAssignedUsers ? (
+              <section className="rounded-2xl border border-(--border) bg-(--surface-2) p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-base font-semibold text-(--text-h)">
+                    {t('adminUi.roadmaps.detail.assignedUsers', 'Assigned users')}
+                  </h2>
+                  <span className="text-sm text-(--text)">{roadmap.assignedUsersList?.length ?? 0}</span>
+                </div>
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  {roadmap.assignedUsersList?.length ? roadmap.assignedUsersList.map((assignment) => (
+                    <article key={assignment._id} className="rounded-squircle border border-(--border) bg-(--surface) p-3">
+                      <p className="font-semibold text-(--text-h)">
+                        {assignment.user?.Fname} {assignment.user?.Lname}
+                      </p>
+                      <p className="mt-1 text-xs text-(--text)">
+                        {assignment.user?.username} | {assignment.user?.email}
+                      </p>
+                      <p className="mt-2 text-xs text-(--text)">
+                        {assignment.status ?? 'assigned'} | {Math.round(assignment.progressPercent ?? 0)}%
+                      </p>
+                    </article>
+                  )) : (
+                    <p className="rounded-squircle border border-(--border) bg-(--surface) p-4 text-sm text-(--text) md:col-span-2">
+                      {t('adminUi.roadmaps.detail.noAssignedUsers', 'No assigned users yet.')}
+                    </p>
+                  )}
+                </div>
+              </section>
+            ) : null}
 
             <div className="overflow-hidden rounded-2xl border border-(--border)">
               <table className="min-w-full border-separate border-spacing-0 text-sm">

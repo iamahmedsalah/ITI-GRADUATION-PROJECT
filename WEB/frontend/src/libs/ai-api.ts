@@ -10,6 +10,7 @@ export type AiFeatureAccess = {
   usage: {
     periodStart: string
     draftsUsed: number
+    draftLimit: number
     freeDraftLimit: number
     draftsRemaining: number
   }
