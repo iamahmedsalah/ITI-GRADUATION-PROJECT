@@ -30,6 +30,7 @@ import {
   AdminRoadmapDetailPage,
   AdminRoadmapsPage,
   AdminUsersPage,
+  AiRoadmapPage,
   ContactPage,
   DashboardPage,
   FaqsPage,
@@ -98,6 +99,11 @@ export const appRouter = createBrowserRouter([
                 path: "dashboard",
                 loader: dashboardLoader,
                 element: <DashboardPage />,
+              },
+              {
+                path: "ai",
+                loader: dashboardLoader,
+                element: <AiRoadmapPage />,
               },
               {
                 path: "profile",

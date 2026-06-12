@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import crypto from "crypto";
 import Course from "../models/course/courseModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
@@ -14,6 +15,17 @@ const LEVEL_RANK = {
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const parseIntegerEnv = (value, fallback) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const FREE_AI_ROADMAP_DRAFT_LIMIT = clamp(
+  parseIntegerEnv(process.env.AI_FREE_ROADMAP_DRAFT_LIMIT, 3),
+  0,
+  25,
+);
 
 const toId = (value) => {
   if (!value) return "";
@@ -55,10 +67,82 @@ const titleCase = (value = "") =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
+const getMonthlyUsageStart = (date = new Date()) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+
+const getAiSubscription = (user = {}) => {
+  const plan = user.subscription?.plan || "free";
+  const status = user.subscription?.status || "inactive";
+  const isSubscriber = plan === "pro" && ["active", "trialing"].includes(status);
+
+  return {
+    plan,
+    status,
+    isSubscriber,
+  };
+};
+
+const getAiUsage = async (userId) => {
+  const periodStart = getMonthlyUsageStart();
+  const draftsUsed = await UserActivity.countDocuments({
+    user: userId,
+    type: "ai_roadmap_draft",
+    occurredAt: { $gte: periodStart },
+  });
+
+  return {
+    periodStart: periodStart.toISOString(),
+    draftsUsed,
+    freeDraftLimit: FREE_AI_ROADMAP_DRAFT_LIMIT,
+    draftsRemaining: Math.max(FREE_AI_ROADMAP_DRAFT_LIMIT - draftsUsed, 0),
+  };
+};
+
+const buildAiAccessPayload = async (user) => {
+  const subscription = getAiSubscription(user);
+  const usage = await getAiUsage(user._id);
+
+  return {
+    subscription,
+    usage,
+    capabilities: {
+      canGenerateDraft:
+        subscription.isSubscriber || usage.draftsUsed < usage.freeDraftLimit,
+      canSaveRoadmap: subscription.isSubscriber,
+      canExplainTopic: subscription.isSubscriber,
+    },
+  };
+};
+
+const ensureAiSubscriber = (user) => {
+  const subscription = getAiSubscription(user);
+
+  if (!subscription.isSubscriber) {
+    const error = new Error("This AI feature requires an active Pro subscription.");
+    error.status = 402;
+    throw error;
+  }
+
+  return subscription;
+};
+
+const recordAiActivity = async (userId, type, metadata = {}) => {
+  try {
+    await UserActivity.create({
+      user: userId,
+      type,
+      metadata,
+      occurredAt: new Date(),
+    });
+  } catch (error) {
+    console.warn("Unable to record AI activity:", error.message);
+  }
+};
+
 const getAiConfig = () => ({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, ""),
-  model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+  apiKey: process.env.AI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: (process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, ""),
+  model: process.env.AI_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini",
 });
 
 const createAiClient = () => {
@@ -752,6 +836,71 @@ const buildRoadmapDraftPrompt = ({
   }),
 });
 
+const createAiRoadmapDraft = async ({
+  goal,
+  targetRole = "student",
+  targetLevel = "beginner",
+  templateType = "skillBased",
+  durationWeeks = 8,
+  weeklyStudyHours = 6,
+}) => {
+  const normalizedGoal = String(goal || "").trim();
+  const normalizedLevel = ["beginner", "intermediate", "advanced"].includes(targetLevel)
+    ? targetLevel
+    : "beginner";
+  const normalizedTemplateType = templateType === "roleBased" ? "roleBased" : "skillBased";
+  const parsedDurationWeeks = clamp(parseInt(durationWeeks, 10) || 8, 4, 12);
+  const parsedWeeklyStudyHours = clamp(parseInt(weeklyStudyHours, 10) || 6, 1, 30);
+  const prompt = buildRoadmapDraftPrompt({
+    goal: normalizedGoal,
+    targetRole,
+    targetLevel: normalizedLevel,
+    templateType: normalizedTemplateType,
+    durationWeeks: parsedDurationWeeks,
+    weeklyStudyHours: parsedWeeklyStudyHours,
+  });
+  const { json: aiDraft, model } = await callAiJson({
+    system: prompt.system,
+    user: prompt.user,
+  });
+  const title = String(aiDraft.title || titleCase(normalizedGoal))
+    .trim()
+    .slice(0, 120);
+  const steps = sanitizeAiSteps(aiDraft.steps);
+
+  if (steps.length < 4) {
+    throw new Error("AI response must include at least 4 roadmap steps.");
+  }
+
+  const estimatedTotalMinutes = steps.reduce(
+    (total, step) => total + step.estimatedMinutes,
+    0,
+  );
+
+  return {
+    engine: "ai-roadmap-draft-v1",
+    model,
+    generatedAt: new Date().toISOString(),
+    draft: {
+      title,
+      slug: slugify(aiDraft.slug || title),
+      goal: normalizedGoal,
+      description:
+        String(aiDraft.description || "").trim().slice(0, 2000) ||
+        `A ${parsedDurationWeeks}-week ${normalizedLevel} roadmap for ${normalizedGoal}.`,
+      targetRole,
+      targetLevel: normalizedLevel,
+      templateType: normalizedTemplateType,
+      tags: normalizeList(aiDraft.tags).slice(0, 10),
+      source: "ai",
+      contentFormat: "markdown",
+      contentMarkdown: stepsToMarkdown(steps),
+      steps,
+      estimatedTotalMinutes,
+    },
+  };
+};
+
 export const generateAiRoadmapDraft = async (req, res) => {
   const {
     goal,
@@ -763,64 +912,19 @@ export const generateAiRoadmapDraft = async (req, res) => {
   } = req.body;
 
   try {
-    const normalizedGoal = String(goal || "").trim();
-    const normalizedLevel = ["beginner", "intermediate", "advanced"].includes(targetLevel)
-      ? targetLevel
-      : "beginner";
-    const normalizedTemplateType = templateType === "skillBased" ? "skillBased" : "roleBased";
-    const parsedDurationWeeks = clamp(parseInt(durationWeeks, 10) || 8, 4, 12);
-    const parsedWeeklyStudyHours = clamp(parseInt(weeklyStudyHours, 10) || 6, 1, 30);
-    const prompt = buildRoadmapDraftPrompt({
-      goal: normalizedGoal,
+    const draftPayload = await createAiRoadmapDraft({
+      goal,
       targetRole,
-      targetLevel: normalizedLevel,
-      templateType: normalizedTemplateType,
-      durationWeeks: parsedDurationWeeks,
-      weeklyStudyHours: parsedWeeklyStudyHours,
+      targetLevel,
+      templateType,
+      durationWeeks,
+      weeklyStudyHours,
     });
-    const { json: aiDraft, model } = await callAiJson({
-      system: prompt.system,
-      user: prompt.user,
-    });
-    const title = String(aiDraft.title || titleCase(normalizedGoal))
-      .trim()
-      .slice(0, 120);
-    const steps = sanitizeAiSteps(aiDraft.steps);
-
-    if (steps.length < 4) {
-      throw new Error("AI response must include at least 4 roadmap steps.");
-    }
-
-    const estimatedTotalMinutes = steps.reduce(
-      (total, step) => total + step.estimatedMinutes,
-      0,
-    );
 
     return res.status(200).json({
       success: true,
       message: "AI roadmap draft generated successfully.",
-      data: {
-        engine: "ai-roadmap-draft-v1",
-        model,
-        generatedAt: new Date().toISOString(),
-        draft: {
-          title,
-          slug: slugify(aiDraft.slug || title),
-          goal: normalizedGoal,
-          description:
-            String(aiDraft.description || "").trim().slice(0, 2000) ||
-            `A ${parsedDurationWeeks}-week ${normalizedLevel} roadmap for ${normalizedGoal}.`,
-          targetRole,
-          targetLevel: normalizedLevel,
-          templateType: normalizedTemplateType,
-          tags: normalizeList(aiDraft.tags).slice(0, 10),
-          source: "ai",
-          contentFormat: "markdown",
-          contentMarkdown: stepsToMarkdown(steps),
-          steps,
-          estimatedTotalMinutes,
-        },
-      },
+      data: draftPayload,
     });
   } catch (error) {
     console.error("AI roadmap draft error:", {
@@ -835,7 +939,266 @@ export const generateAiRoadmapDraft = async (req, res) => {
   }
 };
 
+const createPrivateAiSlug = async (baseSlug, userId) => {
+  const ownerPart = String(userId).slice(-6);
+  const randomPart = crypto.randomUUID().slice(0, 8);
+  const base = slugify(baseSlug).slice(0, 56);
+  let slug = `${base}-${ownerPart}-${randomPart}`;
+  let attempt = 0;
+
+  while (await RoadmapTemplate.exists({ slug })) {
+    attempt += 1;
+    slug = `${base}-${ownerPart}-${randomPart}-${attempt}`;
+  }
+
+  return slug;
+};
+
+const createStepProgressRecords = (userId, roadmap, template) =>
+  (template.steps || []).map((step) => ({
+    user: userId,
+    roadmap: roadmap._id,
+    template: template._id,
+    stepKey: step.stepKey,
+    course: step.course,
+    status: "notStarted",
+  }));
+
+export const getAiFeatureAccess = async (req, res) => {
+  try {
+    const access = await buildAiAccessPayload(req.user);
+
+    return res.status(200).json({
+      success: true,
+      message: "AI feature access retrieved successfully.",
+      data: access,
+    });
+  } catch (error) {
+    console.error("AI feature access error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load AI feature access.",
+      error: error.message,
+    });
+  }
+};
+
+export const generateUserAiRoadmapDraft = async (req, res) => {
+  const userId = req.user._id;
+  const {
+    prompt,
+    targetLevel = "beginner",
+    durationWeeks = 8,
+    weeklyStudyHours = 6,
+  } = req.body;
+
+  try {
+    const access = await buildAiAccessPayload(req.user);
+
+    if (!access.capabilities.canGenerateDraft) {
+      return res.status(402).json({
+        success: false,
+        message: "Your free AI roadmap draft limit has been used this month.",
+        data: access,
+      });
+    }
+
+    const draftPayload = await createAiRoadmapDraft({
+      goal: prompt,
+      targetRole: "student",
+      targetLevel,
+      templateType: "skillBased",
+      durationWeeks,
+      weeklyStudyHours,
+    });
+
+    await recordAiActivity(userId, "ai_roadmap_draft", {
+      prompt: String(prompt || "").slice(0, 300),
+      title: draftPayload.draft.title,
+    });
+
+    const nextAccess = await buildAiAccessPayload(req.user);
+
+    return res.status(200).json({
+      success: true,
+      message: "AI roadmap generated successfully.",
+      data: {
+        ...draftPayload,
+        access: nextAccess,
+      },
+    });
+  } catch (error) {
+    console.error("User AI roadmap draft error:", {
+      status: error.status || 500,
+      message: sanitizeAiProviderMessage(error.message),
+    });
+    return res.status(error.status || 500).json({
+      success: false,
+      message: "Failed to generate AI roadmap.",
+      error: sanitizeAiProviderMessage(error.message),
+    });
+  }
+};
+
+export const saveUserAiRoadmap = async (req, res) => {
+  const userId = req.user._id;
+  const { draft } = req.body;
+
+  try {
+    ensureAiSubscriber(req.user);
+
+    const title = String(draft.title || "").trim().slice(0, 120);
+    const goal = String(draft.goal || title).trim().slice(0, 300);
+    const steps = sanitizeAiSteps(draft.steps);
+
+    if (!title || !goal || steps.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: "A saved AI roadmap must include a title, goal, and at least 4 steps.",
+      });
+    }
+
+    const template = await RoadmapTemplate.create({
+      title,
+      slug: await createPrivateAiSlug(draft.slug || title, userId),
+      goal,
+      description: String(draft.description || "").trim().slice(0, 2000),
+      targetRole: "student",
+      targetLevel: ["beginner", "intermediate", "advanced"].includes(draft.targetLevel)
+        ? draft.targetLevel
+        : "beginner",
+      templateType: draft.templateType === "roleBased" ? "roleBased" : "skillBased",
+      tags: normalizeList(draft.tags).slice(0, 10),
+      steps,
+      estimatedTotalMinutes:
+        parseInt(draft.estimatedTotalMinutes, 10) ||
+        steps.reduce((total, step) => total + step.estimatedMinutes, 0),
+      source: "ai",
+      contentFormat: "markdown",
+      contentMarkdown: stepsToMarkdown(steps),
+      createdBy: userId,
+      owner: userId,
+      visibility: "private",
+      isActive: true,
+    });
+
+    const roadmap = await UserRoadmap.create({
+      user: userId,
+      template: template._id,
+      status: "assigned",
+    });
+
+    const progressRecords = createStepProgressRecords(userId, roadmap, template);
+
+    if (progressRecords.length) {
+      await UserRoadmapStepProgress.insertMany(progressRecords);
+    }
+
+    await recordAiActivity(userId, "ai_roadmap_save", {
+      templateId: template._id,
+      roadmapId: roadmap._id,
+      topicsCount: progressRecords.length,
+    });
+
+    const populatedRoadmap = await UserRoadmap.findById(roadmap._id)
+      .populate("template", "title slug description targetLevel templateType source visibility")
+      .select("-__v");
+
+    return res.status(201).json({
+      success: true,
+      message: "AI roadmap saved successfully.",
+      data: {
+        template,
+        roadmap: populatedRoadmap,
+      },
+    });
+  } catch (error) {
+    console.error("Save AI roadmap error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 402
+          ? error.message
+          : "Failed to save AI roadmap.",
+      error: error.message,
+    });
+  }
+};
+
+export const explainAiRoadmapTopic = async (req, res) => {
+  const userId = req.user._id;
+  const { roadmapTitle, roadmapGoal, stepTitle, stepDescription } = req.body;
+
+  try {
+    ensureAiSubscriber(req.user);
+
+    const { json, model } = await callAiJson({
+      maxTokens: 1400,
+      system:
+        "You explain software learning topics clearly for a student. Return only valid JSON with concise, practical guidance.",
+      user: JSON.stringify({
+        task: "Explain this roadmap topic.",
+        roadmapTitle,
+        roadmapGoal,
+        topic: {
+          title: stepTitle,
+          description: stepDescription,
+        },
+        responseShape: {
+          summary: "2-4 sentence explanation",
+          keyPoints: ["3 to 5 short bullets"],
+          practice: ["2 to 4 practical exercises"],
+          commonMistakes: ["2 to 4 short warnings"],
+        },
+      }),
+    });
+
+    await recordAiActivity(userId, "ai_topic_explain", {
+      roadmapTitle: String(roadmapTitle || "").slice(0, 120),
+      stepTitle: String(stepTitle || "").slice(0, 120),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "AI topic explanation generated successfully.",
+      data: {
+        model,
+        generatedAt: new Date().toISOString(),
+        explanation: {
+          summary: String(json.summary || "").trim().slice(0, 1200),
+          keyPoints: Array.isArray(json.keyPoints)
+            ? json.keyPoints.map((item) => String(item).trim()).filter(Boolean).slice(0, 5)
+            : [],
+          practice: Array.isArray(json.practice)
+            ? json.practice.map((item) => String(item).trim()).filter(Boolean).slice(0, 4)
+            : [],
+          commonMistakes: Array.isArray(json.commonMistakes)
+            ? json.commonMistakes.map((item) => String(item).trim()).filter(Boolean).slice(0, 4)
+            : [],
+        },
+      },
+    });
+  } catch (error) {
+    console.error("AI topic explanation error:", {
+      status: error.status || 500,
+      message: sanitizeAiProviderMessage(error.message),
+    });
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 402
+          ? error.message
+          : "Failed to explain this topic.",
+      error: sanitizeAiProviderMessage(error.message),
+    });
+  }
+};
+
 export default {
   getAiRecommendations,
   generateAiRoadmapDraft,
+  getAiFeatureAccess,
+  generateUserAiRoadmapDraft,
+  saveUserAiRoadmap,
+  explainAiRoadmapTopic,
 };

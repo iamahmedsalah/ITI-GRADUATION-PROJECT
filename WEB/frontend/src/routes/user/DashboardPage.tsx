@@ -12,6 +12,7 @@ import {
   DashboardStat,
   LearningActivitySection,
   StreakCard,
+  SubscriptionSection
 } from '../../components/dashboard/DashboardSections'
 
 function DashboardPage() {
@@ -67,6 +68,11 @@ function DashboardPage() {
         <motion.div variants={cardVariants}>
           <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
         </motion.div>
+
+        <motion.div variants={cardVariants}>
+          <SubscriptionSection subscription={user.subscription} />
+        </motion.div>
+
 
         <motion.div variants={cardVariants}>
           <LearningActivitySection activities={summary?.activities ?? []} isLoading={summaryQuery.isLoading} />

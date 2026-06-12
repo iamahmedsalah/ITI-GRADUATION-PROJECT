@@ -108,6 +108,21 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserRoadmap",
     },
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["free", "pro"],
+        default: "free",
+        index: true,
+      },
+      status: {
+        type: String,
+        enum: ["inactive", "active", "trialing", "pastDue", "canceled"],
+        default: "inactive",
+        index: true,
+      },
+      currentPeriodEnd: Date,
+    },
   },
   { timestamps: true }
 );

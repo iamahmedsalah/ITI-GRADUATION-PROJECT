@@ -99,7 +99,7 @@ export function ClientLayout() {
         language={language}
         links={[
           { label: t('navbar.roadmap'), to: localizedPath(language, '/roadmaps/frontend'), dropdown: true },
-          { label: t('navbar.ai'), to: localizedPath(language, '/dashboard'), dropdown: true },
+          { label: t('navbar.ai'), to: localizedPath(language, '/ai') },
         ]}
       />
 

@@ -28,6 +28,11 @@ export type AuthUser = {
     longest: number
     lastLoginDate?: string | number | null
   }
+  subscription?: {
+    plan: 'free' | 'pro'
+    status: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
+    currentPeriodEnd?: string | number | null
+  }
 }
 
 export type DashboardLoaderData = {

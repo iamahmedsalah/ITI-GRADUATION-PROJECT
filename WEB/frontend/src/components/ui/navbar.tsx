@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  AiMagicIcon,
   DashboardSquare03Icon,
   Login02Icon,
   Login03Icon,
@@ -176,6 +177,9 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                 end={link.exact ?? false}
                 className={navClassName}
               >
+                {link.to.includes("/ai") ? (
+                  <HugeiconsIcon icon={AiMagicIcon} size={18} />
+                ) : null}
                 <span>{link.label}</span>
                 {link.dropdown ? (
                   <span className="text-[10px] leading-none opacity-80">
@@ -321,7 +325,9 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                     <span className="grid size-8 place-items-center rounded-2xl bg-[linear-gradient(135deg,rgba(29,185,84,0.18),rgba(10,140,70,0.08))] text-(--text-h)">
                       <HugeiconsIcon
                         icon={
-                          link.to.includes("roadmap")
+                          link.to.includes("/ai")
+                            ? AiMagicIcon
+                            : link.to.includes("roadmap")
                             ? Route03Icon
                             : DashboardSquare03Icon
                         }

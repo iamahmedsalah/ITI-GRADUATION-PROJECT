@@ -57,6 +57,11 @@ const toPublicUser = (user) => ({
     longest: user.loginStreak?.longest ?? 0,
     lastLoginDate: user.loginStreak?.lastLoginDate ?? null,
   },
+  subscription: {
+    plan: user.subscription?.plan || "free",
+    status: user.subscription?.status || "inactive",
+    currentPeriodEnd: user.subscription?.currentPeriodEnd ?? null,
+  },
 });
 
 const getStreakDateKey = (date = new Date()) =>

@@ -105,6 +105,11 @@ const createServiceError = (status, message) => {
   return error;
 };
 
+const publicTemplateFilter = () => ({
+  isActive: true,
+  $or: [{ visibility: "public" }, { visibility: { $exists: false } }],
+});
+
 const logRoadmapActivity = async (userId, type, roadmapId, metadata = {}) => {
   try {
     await UserActivity.create({
@@ -351,7 +356,7 @@ export const getUserRoadmaps = async (req, res) => {
 
   try {
     const roadmaps = await UserRoadmap.find({ user: userId })
-      .populate("template", "title description")
+      .populate("template", "title slug description targetLevel templateType source visibility")
       .select("-__v")
       .sort({ createdAt: -1 });
 
@@ -481,7 +486,7 @@ export const getRoadmapTemplate = async (req, res) => {
   try {
     const template = await RoadmapTemplate.findOne({
       _id: templateId,
-      isActive: true,
+      ...publicTemplateFilter(),
     })
       .populate("createdBy", "username email Fname Lname")
       .select("-__v");
@@ -513,7 +518,7 @@ export const getRoadmapTemplateBySlug = async (req, res) => {
   try {
     const template = await RoadmapTemplate.findOne({
       slug: String(slug).trim().toLowerCase(),
-      isActive: true,
+      ...publicTemplateFilter(),
     })
       .populate("createdBy", "username email Fname Lname")
       .select("-__v");
@@ -539,13 +544,51 @@ export const getRoadmapTemplateBySlug = async (req, res) => {
   }
 };
 
+export const getMyRoadmapTemplateBySlug = async (req, res) => {
+  const { slug } = req.params;
+  const userId = req.user._id;
+
+  try {
+    const template = await RoadmapTemplate.findOne({
+      slug: String(slug).trim().toLowerCase(),
+      isActive: true,
+      $or: [
+        { visibility: "public" },
+        { visibility: { $exists: false } },
+        { owner: userId, visibility: "private" },
+      ],
+    })
+      .populate("createdBy", "username email Fname Lname")
+      .select("-__v");
+
+    if (!template) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Roadmap template not found." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Roadmap template retrieved successfully.",
+      data: template,
+    });
+  } catch (error) {
+    console.error("Get my roadmap template by slug error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch roadmap template.",
+      error: error.message,
+    });
+  }
+};
+
 export const getRoadmapTopic = async (req, res) => {
   const { templateId, stepKey } = req.params;
 
   try {
     const template = await RoadmapTemplate.findOne({
       _id: templateId,
-      isActive: true,
+      ...publicTemplateFilter(),
     }).select("title slug steps");
 
     if (!template) {
@@ -588,7 +631,7 @@ export const getAllRoadmapTemplates = async (req, res) => {
   const { targetLevel, targetRole, templateType, page = 1, limit = 10 } = req.query;
 
   try {
-    const query = { isActive: true };
+    const query = publicTemplateFilter();
 
     if (targetLevel) query.targetLevel = targetLevel;
     if (targetRole) query.targetRole = targetRole;
@@ -641,7 +684,7 @@ export const searchRoadmapsAndTopics = async (req, res) => {
   try {
     const queryText = String(q).trim();
     const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
-    const baseFilters = { isActive: true };
+    const baseFilters = publicTemplateFilter();
 
     if (targetLevel) baseFilters.targetLevel = targetLevel;
     if (targetRole) baseFilters.targetRole = targetRole;
@@ -655,7 +698,7 @@ export const searchRoadmapsAndTopics = async (req, res) => {
 
     if (queryText) {
       const safeRegex = new RegExp(escapeRegex(queryText), "i");
-      roadmapQuery.$or = [
+      const searchFilters = [
         { title: safeRegex },
         { goal: safeRegex },
         { description: safeRegex },
@@ -663,6 +706,7 @@ export const searchRoadmapsAndTopics = async (req, res) => {
         { "steps.title": safeRegex },
         { "steps.description": safeRegex },
       ];
+      roadmapQuery.$and = [...(roadmapQuery.$and || []), { $or: searchFilters }];
     }
 
     const roadmaps = await RoadmapTemplate.find(roadmapQuery)

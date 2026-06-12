@@ -31,6 +31,7 @@ export function createGraph(
   selectedStepKey: string,
   progressMap: Map<string, StepStatus>,
   onSelect: (stepKey: string) => void,
+  lockDependencies = true,
 ): { nodes: Node<StepNodeData>[]; edges: Edge[] } {
   const NODE_HEIGHT = 60
   const ROW_GAP = 100       // vertical gap between rows
@@ -57,7 +58,7 @@ export function createGraph(
         step,
         selected: step.stepKey === selectedStepKey,
         status: progressMap.get(step.stepKey) ?? 'notStarted',
-        isLocked: !getCompletedDepsStatus(step, progressMap, knownKeys),
+        isLocked: lockDependencies && !getCompletedDepsStatus(step, progressMap, knownKeys),
         completedDeps: getCompletedDepsStatus(step, progressMap, knownKeys),
         onSelect,
       },

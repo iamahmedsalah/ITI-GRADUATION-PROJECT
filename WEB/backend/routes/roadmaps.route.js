@@ -20,6 +20,7 @@ import {
   getRoadmapTemplate,
   getAllRoadmapTemplates,
   getRoadmapTemplateBySlug,
+  getMyRoadmapTemplateBySlug,
   getRoadmapTopic,
   searchRoadmapsAndTopics,
   updateRoadmapTemplate,
@@ -156,6 +157,8 @@ router.get("/templates/:templateId/topics/:stepKey", getRoadmapTopic);
 
 // ALL PROTECTED ROUTES BELOW
 router.use(protect);
+
+router.get("/my-templates/by-slug/:slug", getMyRoadmapTemplateBySlug);
 
 //  ROADMAP TEMPLATES - PROTECTED ROUTES (Admin only)
 

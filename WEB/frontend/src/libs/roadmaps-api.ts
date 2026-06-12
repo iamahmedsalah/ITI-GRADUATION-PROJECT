@@ -190,7 +190,16 @@ export async function fetchRoadmapTemplateBySlug(slug: string) {
   )
 
   if (!response.ok) {
-    return null
+    const privateResult = await apiGet<RoadmapTemplateResponse>(
+      `/roadmaps/my-templates/by-slug/${encodeURIComponent(normalizedSlug)}`,
+      emptyTemplateResponse,
+    )
+
+    if (!privateResult.response.ok) {
+      return null
+    }
+
+    return privateResult.data.data ?? null
   }
 
   return data.data ?? null

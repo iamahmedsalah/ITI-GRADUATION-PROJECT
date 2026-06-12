@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Activity01Icon, MoreVerticalIcon, Route03Icon, ZapIcon } from '@hugeicons/core-free-icons'
+import {
+  Activity01Icon,
+  AiMagicIcon,
+  MoreVerticalIcon,
+  Route03Icon,
+  ZapIcon,
+} from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
 import type {
   AiRecommendationCourse,
@@ -300,7 +306,7 @@ export function AiRecommendationsSection({
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.ai.title')}</h2>
           <p className="mt-2 text-sm text-(--text)">{t('dashboard.ai.subtitle')}</p>
         </div>
-        <HugeiconsIcon icon={ZapIcon} size={20} className="text-(--accent)" />
+        <HugeiconsIcon icon={AiMagicIcon} size={20} className="text-(--accent)" />
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {isLoading ? (
@@ -348,6 +354,67 @@ export function LearningActivitySection({
           activities.map((activity) => <ActivityItem key={activity._id} activity={activity} />)
         ) : (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.activity.empty')}</p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+
+export function SubscriptionSection({
+  subscription,
+}: {
+  subscription?: {
+    plan?: 'free' | 'pro'
+    status?: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
+    currentPeriodEnd?: string | number | Date | null
+  }
+}) {
+  const { t } = useTranslation()
+
+  const plan = subscription?.plan ?? 'free'
+  const status = subscription?.status ?? 'inactive'
+const currentPeriodEnd = subscription?.currentPeriodEnd
+  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+  : null
+  const isPro = plan === 'pro' && ['active', 'trialing'].includes(status)
+
+  return (
+    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
+        {t('dashboard.subscription.title', 'Subscription')}
+      </h2>
+
+      <div className="mt-4 rounded-lg border border-(--border) bg-(--surface-2) p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-lg font-semibold text-(--text-h)">
+              {isPro ? t('dashboard.subscription.pro', 'Pro Plan') : t('dashboard.subscription.free', 'Free Plan')}
+            </p>
+
+            <p className="mt-1 text-sm text-(--text)">
+              {t('dashboard.subscription.status', 'Status')}: {status}
+            </p>
+
+            {currentPeriodEnd && (
+              <p className="mt-1 text-sm text-(--text)">
+                {t('dashboard.subscription.renewsAt', 'Current period ends')}: {currentPeriodEnd}
+              </p>
+            )}
+          </div>
+
+          <span className="rounded-full border border-(--border) px-3 py-1 text-xs font-semibold uppercase text-(--accent)">
+            {plan}
+          </span>
+        </div>
+
+        {!isPro && (
+          <Link
+            to="/pricing"
+            className="mt-4 inline-flex rounded-squircle bg-(--accent) px-4 py-2 text-sm font-semibold text-white"
+          >
+            {t('dashboard.subscription.upgrade', 'Upgrade to Pro')}
+          </Link>
         )}
       </div>
     </section>
