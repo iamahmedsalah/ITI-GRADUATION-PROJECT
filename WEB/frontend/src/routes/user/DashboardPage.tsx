@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useLoaderData } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -12,9 +13,12 @@ import {
   DashboardStat,
   LearningActivitySection,
   PreferencesPreviewSection,
+  SavedRoadmapsSection,
   StreakCard,
   SubscriptionSection
 } from '../../components/dashboard/DashboardSections'
+
+const LearningConstellation = lazy(() => import('../../components/dashboard/LearningConstellation'))
 
 function DashboardPage() {
   const { language, direction } = useLanguage()
@@ -35,7 +39,8 @@ function DashboardPage() {
   const summary = summaryQuery.data
   const streak = summary?.streak ?? user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null }
   const currentlyLearning = (summary?.totals.activeRoadmaps ?? 0) + (summary?.totals.activeCourses ?? 0)
-  const continueRoadmaps = summary?.roadmaps?.slice(0, 4) ?? []
+  const savedRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status === 'assigned').slice(0, 4) ?? []
+  const continueRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status !== 'assigned').slice(0, 4) ?? []
 
   return (
     <motion.main className="px-6 py-8 sm:px-8" variants={pageVariants} initial="hidden" animate="show">
@@ -57,8 +62,23 @@ function DashboardPage() {
           <DashboardStat value={`${streak.current}d`} label={t('dashboard.stats.visitStreak')} />
         </motion.div>
 
+        <motion.div variants={cardVariants}>
+          <Suspense fallback={<div className="min-h-[23rem] border-y border-(--border) bg-[#101311]" />}>
+            <LearningConstellation
+              roadmaps={summary?.roadmaps ?? []}
+              courses={summary?.courses ?? []}
+              recommendations={recommendationsQuery.data}
+            />
+          </Suspense>
+        </motion.div>
+
         <motion.div variants={staggerContainerVariants} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
           <div className="grid gap-6">
+            {savedRoadmaps.length ? (
+              <motion.div variants={cardVariants}>
+                <SavedRoadmapsSection roadmaps={savedRoadmaps} />
+              </motion.div>
+            ) : null}
             <motion.div variants={cardVariants}>
               <ContinueFollowingSection roadmaps={continueRoadmaps} />
             </motion.div>

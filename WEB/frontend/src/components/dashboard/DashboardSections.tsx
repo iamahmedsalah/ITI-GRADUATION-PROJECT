@@ -12,6 +12,7 @@ import {
   Delete02Icon,
   MoreVerticalIcon,
   Route03Icon,
+  StarIcon,
   UserSettings01Icon,
   ZapIcon,
 } from '@hugeicons/core-free-icons';
@@ -198,6 +199,146 @@ export function ContinueRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) 
         </div>
       ) : null}
     </article>
+  )
+}
+
+function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+  const queryClient = useQueryClient()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
+  const roadmapPath = `/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`
+  const deleteMutation = useMutation({
+    mutationFn: deleteUserRoadmap,
+    onSuccess: async () => {
+      toast.success(t('dashboard.roadmaps.deleted'))
+      setIsMenuOpen(false)
+      setIsConfirmDeleteOpen(false)
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('dashboard.roadmaps.deleteFailed'))
+    },
+  })
+
+  return (
+    <article className={['relative flex items-center justify-between gap-3 rounded-lg border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
+      <Link to={roadmapPath} className="min-w-0 flex-1">
+        <span className="block truncate text-base font-semibold text-(--text-h)">
+          {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+        </span>
+        <span className="mt-1 block text-xs uppercase tracking-[0.14em] text-(--text)">
+          {roadmap.template?.targetLevel ?? t('dashboard.roadmaps.starred', 'Starred')}
+        </span>
+      </Link>
+
+      <span className="grid size-9 shrink-0 place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent)">
+        <HugeiconsIcon icon={StarIcon} size={17} />
+      </span>
+
+      <button
+        type="button"
+        className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface) hover:text-(--text-h)"
+        aria-label={t('dashboard.roadmaps.openActions')}
+        onClick={() => setIsMenuOpen((value) => !value)}
+      >
+        <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
+      </button>
+
+      {isMenuOpen ? (
+        <div className="absolute right-3 top-12 z-90 grid min-w-44 gap-1 rounded-squircle border border-(--border) bg-(--surface) p-2 shadow-(--shadow)">
+          <button
+            type="button"
+            disabled={deleteMutation.isPending}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => setIsConfirmDeleteOpen(true)}
+          >
+            <HugeiconsIcon icon={Delete02Icon} size={16} />
+            {deleteMutation.isPending
+              ? t('dashboard.roadmaps.deleting')
+              : t('dashboard.roadmaps.unstar', 'Remove')}
+          </button>
+        </div>
+      ) : null}
+
+      {isConfirmDeleteOpen ? (
+        <div className="fixed inset-0 z-120 grid place-items-center bg-black/70 px-4 py-8">
+          <section className="w-full max-w-md rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
+            <div className="flex items-start gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
+                <HugeiconsIcon icon={Alert02Icon} size={22} />
+              </span>
+              <div>
+                <h2 className="text-xl font-semibold text-(--text-h)">
+                  {t('dashboard.roadmaps.confirmUnstarTitle', 'Remove starred roadmap?')}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-(--text)">
+                  {t('dashboard.roadmaps.confirmUnstarText', {
+                    roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
+                    defaultValue: 'This roadmap will be removed from your starred roadmaps.',
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2)"
+                onClick={() => setIsConfirmDeleteOpen(false)}
+              >
+                {t('adminUi.common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.35)] px-4 py-2 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:opacity-60"
+                onClick={() => deleteMutation.mutate(roadmap._id)}
+              >
+                <HugeiconsIcon icon={Delete02Icon} size={16} />
+                {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.unstar', 'Remove star')}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
+export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[] }) {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+
+  if (!roadmaps.length) return null
+
+  return (
+    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
+            {t('dashboard.savedRoadmaps.title', { defaultValue: 'Starred roadmaps' })}
+          </h2>
+          <p className="mt-2 text-sm text-(--text)">
+            {t('dashboard.savedRoadmaps.subtitle', { defaultValue: 'Roadmaps starred in your profile and ready to start.' })}
+          </p>
+        </div>
+        <Link
+          to={`/${language}/my-roadmaps?status=assigned`}
+          className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)"
+        >
+          <HugeiconsIcon icon={StarIcon} size={18} className="text-(--accent)" />
+          {t('dashboard.savedRoadmaps.viewAll', 'View all')}
+        </Link>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        {roadmaps.map((roadmap) => (
+          <StarredRoadmapCard key={roadmap._id} roadmap={roadmap} />
+        ))}
+      </div>
+    </section>
   )
 }
 

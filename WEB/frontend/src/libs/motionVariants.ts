@@ -96,6 +96,74 @@ export function createListItemVariants(direction: MotionDirection): Variants {
   };
 }
 
+export function createPreferenceStepVariants(direction: MotionDirection): Variants {
+  const directionSign = direction === "rtl" ? -1 : 1;
+
+  return {
+    enter: (slideDirection = 1) => ({
+      opacity: 0,
+      x: slideDirection * directionSign * 56,
+      y: 12,
+      scale: 0.98,
+      filter: "blur(10px)",
+    }),
+    center: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.42,
+        ease: [0.22, 1, 0.36, 1],
+        when: "beforeChildren",
+        staggerChildren: 0.06,
+      },
+    },
+    exit: (slideDirection = 1) => ({
+      opacity: 0,
+      x: slideDirection * directionSign * -44,
+      y: -8,
+      scale: 0.985,
+      filter: "blur(8px)",
+      transition: {
+        duration: 0.24,
+        ease: [0.4, 0, 1, 1],
+      },
+    }),
+  };
+}
+
+export const preferenceStepItemVariants: Variants = {
+  enter: {
+    opacity: 0,
+    y: 12,
+  },
+  center: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    transition: {
+      duration: 0.18,
+      ease: "easeOut",
+    },
+  },
+};
+
+export const preferenceProgressTransition = {
+  type: "spring",
+  stiffness: 150,
+  damping: 24,
+  mass: 0.7,
+} as const;
+
 export function getCardHoverShift(direction: MotionDirection) {
   return direction === "rtl" ? -8 : 8;
 }

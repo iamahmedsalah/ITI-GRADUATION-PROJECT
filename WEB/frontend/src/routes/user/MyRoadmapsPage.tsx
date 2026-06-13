@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon, Route03Icon } from '@hugeicons/core-free-icons'
+import { Delete02Icon, Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import { deleteUserRoadmap, fetchUserRoadmaps } from '../../libs/roadmaps-api'
 import CustomDropdown, { type DropdownOption } from '../../components/ui/CustomDropdown'
@@ -15,7 +15,7 @@ type RoadmapTypeFilter = '' | 'roleBased' | 'skillBased'
 
 const statusOptions: DropdownOption<RoadmapStatusFilter>[] = [
   { value: '', label: 'All statuses' },
-  { value: 'assigned', label: 'assigned' },
+  { value: 'assigned', label: 'Starred' },
   { value: 'inProgress', label: 'inProgress' },
   { value: 'paused', label: 'paused' },
   { value: 'completed', label: 'completed' },
@@ -30,8 +30,10 @@ const typeOptions: DropdownOption<RoadmapTypeFilter>[] = [
 export default function MyRoadmapsPage() {
   const { t } = useTranslation()
   const { language } = useLanguage()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<RoadmapStatusFilter>('')
+  const initialStatus = searchParams.get('status') === 'assigned' ? 'assigned' : ''
+  const [status, setStatus] = useState<RoadmapStatusFilter>(initialStatus)
   const [type, setType] = useState<RoadmapTypeFilter>('')
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -70,6 +72,8 @@ export default function MyRoadmapsPage() {
   }, [roadmapsQuery.data, search, status, type])
 
   const allSelected = roadmaps.length > 0 && roadmaps.every((roadmap) => selectedIds.includes(roadmap._id))
+  const statusLabel = (value?: string) =>
+    value === 'assigned' ? t('dashboard.roadmaps.starred', 'Starred') : value ?? 'assigned'
 
   return (
     <main className="min-h-screen bg-(--bg) px-4 py-6 text-(--text-h) sm:px-6 lg:px-8">
@@ -105,7 +109,16 @@ export default function MyRoadmapsPage() {
           />
           <CustomDropdown
             value={status}
-            onChange={setStatus}
+            onChange={(value) => {
+              setStatus(value)
+              const nextParams = new URLSearchParams(searchParams)
+              if (value) {
+                nextParams.set('status', value)
+              } else {
+                nextParams.delete('status')
+              }
+              setSearchParams(nextParams, { replace: true })
+            }}
             options={statusOptions.map((option) =>
               option.value === ''
                 ? { ...option, label: t('dashboard.roadmaps.allStatuses') }
@@ -177,7 +190,7 @@ export default function MyRoadmapsPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <span className="grid size-9 place-items-center rounded-squircle bg-(--surface-2) text-(--accent)">
-                            <HugeiconsIcon icon={Route03Icon} size={18} />
+                            <HugeiconsIcon icon={roadmap.status === 'assigned' ? StarIcon : Route03Icon} size={18} />
                           </span>
                           <div className="min-w-0">
                             <Link
@@ -195,7 +208,7 @@ export default function MyRoadmapsPage() {
                           ? t('landing.skillRoadmaps')
                           : t('landing.roleRoadmaps')}
                       </td>
-                      <td className="px-4 py-4 text-(--text)">{roadmap.status ?? 'assigned'}</td>
+                      <td className="px-4 py-4 text-(--text)">{statusLabel(roadmap.status)}</td>
                       <td className="px-4 py-4 text-(--text-h)">{progress}%</td>
                     </tr>
                   )

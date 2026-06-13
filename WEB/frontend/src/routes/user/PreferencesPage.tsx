@@ -7,7 +7,14 @@ import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AiMagicIcon, UserSettings01Icon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
-import { createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
+import {
+  createHeroLineVariants,
+  createPageVariants,
+  createPreferenceStepVariants,
+  createStaggerContainerVariants,
+  preferenceProgressTransition,
+  preferenceStepItemVariants,
+} from '../../libs/motionVariants'
 import type { PreferencesLoaderData } from '../../utils/route-utils'
 import { authQueryKey } from '../../libs/react-query'
 import {
@@ -111,7 +118,7 @@ function ReviewRow({ label, children }: { label: string; children: ReactNode }) 
 
 function PreferencesForm({ initialPreferences }: { initialPreferences: UserPreferences | null }) {
   const { t } = useTranslation()
-  const { language } = useLanguage()
+  const { language, direction } = useLanguage()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [step, setStep] = useState(0)
@@ -402,6 +409,7 @@ function PreferencesForm({ initialPreferences }: { initialPreferences: UserPrefe
   const isLastStep = step === steps.length - 1
   const currentStep = steps[step]
   const progress = ((step + 1) / steps.length) * 100
+  const preferenceStepVariants = useMemo(() => createPreferenceStepVariants(direction), [direction])
 
   return (
     <form
@@ -436,7 +444,7 @@ function PreferencesForm({ initialPreferences }: { initialPreferences: UserPrefe
             className="h-full rounded-full bg-(--gd-primary)"
             initial={false}
             animate={{ width: `${progress}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+            transition={preferenceProgressTransition}
           />
         </div>
       </div>
@@ -446,24 +454,26 @@ function PreferencesForm({ initialPreferences }: { initialPreferences: UserPrefe
           <motion.div
             key={step}
             custom={slideDirection}
-            initial={{ opacity: 0, x: slideDirection > 0 ? 42 : -42 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: slideDirection > 0 ? -42 : 42 }}
-            transition={{ duration: 0.24, ease: 'easeOut' }}
+            variants={preferenceStepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
             className="grid min-h-[360px] content-start gap-6"
           >
-            <div>
+            <motion.div variants={preferenceStepItemVariants}>
               <p className="text-xs font-semibold uppercase text-(--accent)">{currentStep.eyebrow}</p>
               <h2 className="mt-3 text-3xl font-semibold text-(--text-h)">{currentStep.title}</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-(--text)">{currentStep.copy}</p>
-            </div>
+            </motion.div>
 
-            {currentStep.content}
+            <motion.div variants={preferenceStepItemVariants}>
+              {currentStep.content}
+            </motion.div>
 
             {fieldError ? (
-              <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
+              <motion.p variants={preferenceStepItemVariants} className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
                 {fieldError}
-              </p>
+              </motion.p>
             ) : null}
           </motion.div>
         </AnimatePresence>

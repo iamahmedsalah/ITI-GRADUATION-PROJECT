@@ -83,6 +83,7 @@ type UserRoadmapsResponse = {
 
 type AssignRoadmapResponse = {
   success?: boolean
+  message?: string
   data?: UserRoadmap
 }
 
@@ -223,7 +224,7 @@ export async function assignRoadmap(templateId: string) {
   )
 
   if (!response.ok || !data.data) {
-    throw new Error('Could not start tracking this roadmap.')
+    throw new Error(data.message ?? 'Could not start tracking this roadmap.')
   }
 
   return data.data

@@ -1,11 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Route03Icon } from '@hugeicons/core-free-icons'
+import { Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useLanguage } from '../../context/LanguageContext'
-import { fetchRoadmapTemplates, searchRoadmaps, type RoadmapTemplate } from '../../libs/roadmaps-api'
+import {
+  assignRoadmap,
+  deleteUserRoadmap,
+  fetchRoadmapTemplates,
+  fetchUserRoadmaps,
+  searchRoadmaps,
+  type RoadmapTemplate,
+} from '../../libs/roadmaps-api'
 import {SeparatorRoadmaps,SeparatorCourses} from '../ui/saparator'
 import AvailableCoursesSection from './AvailableCoursesSection'
 
@@ -38,26 +46,80 @@ type RoadmapCardProps = {
 export function RoadmapCard({ roadmap }: RoadmapCardProps) {
   const { language } = useLanguage()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const tags = roadmap.tags?.slice(0, 2) ?? []
+  const userRoadmapsQuery = useQuery({
+    queryKey: ['roadmaps', 'mine'],
+    queryFn: fetchUserRoadmaps,
+    retry: false,
+    staleTime: 10_000,
+  })
+  const starredRoadmap = (userRoadmapsQuery.data ?? []).find(
+    (userRoadmap) => userRoadmap.status === 'assigned' && userRoadmap.template?._id === roadmap._id,
+  )
+  const isStarred = Boolean(starredRoadmap)
+  const starMutation = useMutation({
+    mutationFn: async () => {
+      if (starredRoadmap?._id) {
+        await deleteUserRoadmap(starredRoadmap._id)
+        return true
+      }
+
+      await assignRoadmap(roadmap._id)
+      return true
+    },
+    onSuccess: async () => {
+      toast.success(
+        isStarred
+          ? t('landing.unstarredRoadmap', { defaultValue: 'Roadmap removed from starred.' })
+          : t('landing.savedRoadmap', { defaultValue: 'Roadmap starred in your profile.' }),
+      )
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('landing.saveFailed', { defaultValue: 'Could not save roadmap.' }))
+    },
+  })
 
   return (
-    <Link
-      to={`/${language}/roadmaps/${roadmap.slug}`}
-      className="group flex min-h-16 items-center justify-between gap-4 rounded-squircle border border-(--border) bg-(--surface) px-5 py-4 text-left text-(--text-h) shadow-(--shadow) transition duration-200 hover:-translate-y-1 hover:border-(--accent-border) hover:bg-(--surface-soft-hover)"
-    >
-      <span className="min-w-0">
+    <article className="group flex min-h-16 items-center justify-between gap-3 rounded-squircle border border-(--border) bg-(--surface) px-4 py-4 text-left text-(--text-h) shadow-(--shadow) transition duration-200 hover:-translate-y-1 hover:border-(--accent-border) hover:bg-(--surface-soft-hover)">
+      <Link to={`/${language}/roadmaps/${roadmap.slug}`} className="min-w-0 flex-1">
         <span className="block truncate text-lg font-medium text-(--text-h)">{roadmap.title}</span>
         <span className="mt-1 flex flex-wrap gap-2 text-xs text-(--text)">
-          <span>{t(`landing.levels.${roadmap.targetLevel ?? 'roadmap'}`, { defaultValue: formatLevel(roadmap.targetLevel) })}</span>
-          {tags.map((tag) => (
-            <span key={tag}>#{tag}</span>
-          ))}
+          <span>
+            {t(`landing.levels.${roadmap.targetLevel ?? 'roadmap'}`, { defaultValue: formatLevel(roadmap.targetLevel) })}
+          </span>
+          {tags.map((tag) => <span key={tag}>#{tag}</span>)}
         </span>
-      </span>
-      <span className="grid size-8 shrink-0 place-items-center rounded-squircle border border-(--border) text-(--text) transition group-hover:border-(--accent-border) group-hover:text-(--accent)">
+      </Link>
+      <button
+        type="button"
+        disabled={starMutation.isPending}
+        className={[
+          'grid size-9 shrink-0 cursor-pointer place-items-center rounded-squircle border transition disabled:cursor-not-allowed disabled:opacity-60',
+          isStarred
+            ? 'border-(--accent-border) bg-(--accent-bg) text-(--accent)'
+            : 'border-(--border) text-(--text) hover:border-(--accent-border) hover:bg-(--accent-bg) hover:text-(--accent)',
+        ].join(' ')}
+        aria-label={isStarred
+          ? t('landing.unstar', { defaultValue: 'Unstar roadmap' })
+          : t('landing.save', { defaultValue: 'Star roadmap' })}
+        title={isStarred
+          ? t('landing.unstar', { defaultValue: 'Unstar roadmap' })
+          : t('landing.save', { defaultValue: 'Star roadmap' })}
+        onClick={() => starMutation.mutate()}
+      >
+        <HugeiconsIcon icon={StarIcon} size={17} />
+      </button>
+      <Link
+        to={`/${language}/roadmaps/${roadmap.slug}`}
+        className="grid size-9 shrink-0 place-items-center rounded-squircle border border-(--border) text-(--text) transition group-hover:border-(--accent-border) group-hover:text-(--accent)"
+        aria-label={roadmap.title}
+      >
         <HugeiconsIcon icon={Route03Icon} size={17} />
-      </span>
-    </Link>
+      </Link>
+    </article>
   )
 }
 

@@ -257,6 +257,56 @@ const courseIdParamsSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
+const optionalUrlSchema = z
+  .string()
+  .trim()
+  .url("Invalid URL")
+  .optional();
+
+const courseLessonSchema = z.object({
+  lessonKey: z
+    .string({ error: "Lesson key is required." })
+    .trim()
+    .min(1, "Lesson key cannot be empty")
+    .max(80, "Lesson key must be at most 80 characters"),
+  title: z
+    .string({ error: "Lesson title is required." })
+    .trim()
+    .min(3, "Lesson title must be at least 3 characters")
+    .max(150, "Lesson title must be at most 150 characters"),
+  summary: z.string().trim().max(1000, "Lesson summary must be at most 1000 characters").optional(),
+  durationMinutes: z
+    .number({ error: "Lesson duration must be a number." })
+    .min(0, "Lesson duration cannot be negative")
+    .optional(),
+  videoUrl: optionalUrlSchema,
+  resourceUrl: optionalUrlSchema,
+  isPreview: z.boolean().optional(),
+  order: z
+    .number({ error: "Lesson order must be a number." })
+    .min(0, "Lesson order cannot be negative")
+    .optional(),
+});
+
+const courseSectionSchema = z.object({
+  sectionKey: z
+    .string({ error: "Section key is required." })
+    .trim()
+    .min(1, "Section key cannot be empty")
+    .max(80, "Section key must be at most 80 characters"),
+  title: z
+    .string({ error: "Section title is required." })
+    .trim()
+    .min(3, "Section title must be at least 3 characters")
+    .max(150, "Section title must be at most 150 characters"),
+  description: z.string().trim().max(1000, "Section description must be at most 1000 characters").optional(),
+  order: z
+    .number({ error: "Section order must be a number." })
+    .min(0, "Section order cannot be negative")
+    .optional(),
+  lessons: z.array(courseLessonSchema).optional(),
+});
+
 const createCourseSchema = z.object({
   body: z.object({
     title: z.string().trim().min(3).max(200),
@@ -277,9 +327,9 @@ const createCourseSchema = z.object({
     thumbnailUrl: imageInputSchema.optional(),
     bannerUrl: imageInputSchema.optional(),
     durationMinutes: z.number({ error: "Duration must be a number." }).min(0).optional(),
-    sections: z.array(z.any()).optional(),
-    prerequisites: z.array(z.string().trim()).optional(),
-    learningOutcomes: z.array(z.string().trim()).optional(),
+    sections: z.array(courseSectionSchema).optional(),
+    prerequisites: z.array(z.string().trim().max(200)).optional(),
+    learningOutcomes: z.array(z.string().trim().max(300)).optional(),
     isPublished: z.boolean().optional(),
     isFeatured: z.boolean().optional(),
     roadmapTemplate: objectIdSchema.optional(),
@@ -303,9 +353,15 @@ const updateCourseSchema = z
       description: z.string().trim().min(10).max(5000).optional(),
       shortDescription: z.string().trim().max(300).optional(),
       level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+      language: z.string().trim().max(10).optional(),
+      tags: z.array(z.string().trim().toLowerCase()).optional(),
       category: z.string().trim().max(120).optional(),
       thumbnailUrl: imageInputSchema.optional(),
       bannerUrl: imageInputSchema.optional(),
+      durationMinutes: z.number({ error: "Duration must be a number." }).min(0).optional(),
+      sections: z.array(courseSectionSchema).optional(),
+      prerequisites: z.array(z.string().trim().max(200)).optional(),
+      learningOutcomes: z.array(z.string().trim().max(300)).optional(),
       isPublished: z.boolean().optional(),
       isFeatured: z.boolean().optional(),
       instructor: objectIdSchema.optional(),

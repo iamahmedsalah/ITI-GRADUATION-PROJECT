@@ -196,6 +196,7 @@ export type AdminCourseRow = {
   description?: string
   shortDescription?: string
   level?: string
+  language?: string
   category?: string
   isPublished: boolean
   isFeatured: boolean
@@ -581,9 +582,15 @@ export async function createAdminCourse(payload: {
   description: string
   shortDescription?: string
   level?: 'beginner' | 'intermediate' | 'advanced'
+  language?: string
+  tags?: string[]
   category?: string
   thumbnailUrl?: string | null
   bannerUrl?: string | null
+  durationMinutes?: number
+  sections?: AdminCourseRow['sections']
+  prerequisites?: string[]
+  learningOutcomes?: string[]
   isPublished?: boolean
   isFeatured?: boolean
 }) {
@@ -608,9 +615,15 @@ export async function updateAdminCourse(
     description: string
     shortDescription: string
     level: 'beginner' | 'intermediate' | 'advanced'
+    language: string
+    tags: string[]
     category: string
     thumbnailUrl: string | null
     bannerUrl: string | null
+    durationMinutes: number
+    sections: AdminCourseRow['sections']
+    prerequisites: string[]
+    learningOutcomes: string[]
     isPublished: boolean
     isFeatured: boolean
   }>,
