@@ -50,7 +50,7 @@ export const DashboardPage = lazy(() => import("../routes/user/DashboardPage"));
 export const AiRoadmapPage = lazy(() => import("../routes/user/AiRoadmapPage"));
 export const UpgradePage = lazy(() => import("../routes/user/UpgradePage"));
 export const ProfilePage = lazy(() => import("../routes/user/ProfilePage"));
-export const RoadmapsPage = lazy(() => import("../routes/user/RoadmapsPage"));
+export const PreferencesPage = lazy(() => import("../routes/user/PreferencesPage"));
 export const MyRoadmapsPage = lazy(() => import("../routes/user/MyRoadmapsPage"));
 export const FaqsPage = lazy(() => import("../routes/user/FaqsPage"));
 export const ContactPage = lazy(() => import("../routes/user/ContactUsPage"));

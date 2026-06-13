@@ -120,7 +120,7 @@ export type AdminRoadmapRow = {
   targetLevel?: string
   templateType?: 'roleBased' | 'skillBased'
   source?: 'admin' | 'ai' | 'manual'
-  displaySource?: 'admin' | 'ai' | 'manual' | 'student-ai'
+  displaySource?: 'admin' | 'ai' | 'manual' | 'std-ai'
   owner?: {
     username?: string
     email?: string
@@ -173,7 +173,7 @@ export type AdminAiRoadmapDraft = {
     templateType?: 'roleBased' | 'skillBased'
     tags?: string[]
     source: 'ai'
-    contentFormat: 'markdown'
+    contentFormat: 'markdown' | 'json'
     contentMarkdown: string
     steps?: Array<{
       stepKey: string
@@ -445,8 +445,8 @@ export async function createAdminRoadmap(payload: {
   }>
   source?: 'admin' | 'ai' | 'manual'
   estimatedTotalMinutes?: number
-  contentFormat: 'markdown'
-  contentMarkdown: string
+  contentFormat?: 'markdown' | 'json'
+  contentMarkdown?: string
 }) {
   const { response, data } = await apiPost<AdminMutationResponse<AdminRoadmapRow>>(
     '/admin/roadmaps/templates',

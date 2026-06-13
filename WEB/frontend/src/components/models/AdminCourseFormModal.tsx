@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -55,21 +55,6 @@ export default function AdminCourseFormModal({
     { value: 'intermediate' as const, label: t('adminUi.levels.intermediate') },
     { value: 'advanced' as const, label: t('adminUi.levels.advanced') },
   ]
-
-  useEffect(() => {
-    if (!open) return
-    
-    setTitle(course?.title ?? '')
-    setSlug(course?.slug ?? '')
-    setDescription(course?.description ?? '')
-    setShortDescription(course?.shortDescription ?? '')
-    setLevel((course?.level as CourseLevel) ?? 'beginner')
-    setCategory(course?.category ?? '')
-    setThumbnailUrl(course?.thumbnailUrl ?? null)
-    setBannerUrl(course?.bannerUrl ?? null)
-    setPublished(course?.isPublished ?? false)
-    setFeatured(course?.isFeatured ?? false)
-  }, [course, open])
 
   const readImageFile = (file: File) =>
     new Promise<string>((resolve, reject) => {

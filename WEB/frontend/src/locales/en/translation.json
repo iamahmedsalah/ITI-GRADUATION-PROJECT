@@ -1,7 +1,8 @@
 {
   "siteTitle": "Ilma - AI-Powered Recommendation Learning",
-  "title": "Hello World",
-  "description": "Description",
+  "siteDescription": "AI-powered recommendation learning platform.",
+  "siteName": "Ilma",
+  "ogImageAlt": "Ilma platform logo",
   "logo": "ILMA",
   "subtitle": "Localization is ready with English and Arabic.",
   "language": "Language",

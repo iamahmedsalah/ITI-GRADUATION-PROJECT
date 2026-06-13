@@ -3,6 +3,7 @@ import crypto from "crypto";
 import Course from "../models/course/courseModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
+import UserAiUsage from "../models/user/userAiUsageModel.js";
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserPreference from "../models/user/userPreferenceModel.js";
 import UserRoadmap from "../models/user/userRoadmapModel.js";
@@ -33,6 +34,13 @@ const PRO_AI_ROADMAP_DRAFT_LIMIT = clamp(
   50,
 );
 
+const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash";
+const GEMINI_DEFAULT_FALLBACK_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3-flash-preview",
+];
+const GEMINI_THINKING_LEVELS = new Set(["MINIMAL", "LOW", "MEDIUM", "HIGH"]);
+
 const toId = (value) => {
   if (!value) return "";
   if (typeof value === "string") return value;
@@ -57,6 +65,12 @@ const normalizeList = (values = []) =>
     : [];
 
 const unique = (values = []) => [...new Set(values.filter(Boolean))];
+
+const parseCsvEnv = (value = "") =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const parseLimit = (value) => clamp(parseInt(value, 10) || 6, 1, 12);
 
@@ -93,18 +107,28 @@ const getAiDraftLimit = (subscription) =>
 
 const getAiUsage = async (userId, subscription) => {
   const periodStart = getMonthlyUsageStart();
-  const draftsUsed = await UserActivity.countDocuments({
-    user: userId,
-    type: "ai_roadmap_draft",
-    occurredAt: { $gte: periodStart },
-  });
+  const [usage, activityDraftsUsed] = await Promise.all([
+    UserAiUsage.findOne({
+      user: userId,
+      type: "ai_roadmap_draft",
+      periodStart,
+    }).lean(),
+    UserActivity.countDocuments({
+      user: userId,
+      type: "ai_roadmap_draft",
+      occurredAt: { $gte: periodStart },
+    }),
+  ]);
+  const draftsUsed = Math.max(usage?.count || 0, activityDraftsUsed);
   const draftLimit = getAiDraftLimit(subscription);
 
   return {
     periodStart: periodStart.toISOString(),
     draftsUsed,
     draftLimit,
-    freeDraftLimit: draftLimit,
+    planDraftLimit: draftLimit,
+    freeDraftLimit: FREE_AI_ROADMAP_DRAFT_LIMIT,
+    proDraftLimit: PRO_AI_ROADMAP_DRAFT_LIMIT,
     draftsRemaining: Math.max(draftLimit - draftsUsed, 0),
   };
 };
@@ -149,26 +173,143 @@ const recordAiActivity = async (userId, type, metadata = {}) => {
   }
 };
 
-const getAiConfig = () => ({
-  apiKey: process.env.AI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: (process.env.AI_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, ""),
-  model: process.env.AI_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini",
-});
+const reserveAiRoadmapDraftUsage = async (userId, subscription) => {
+  const periodStart = getMonthlyUsageStart();
+  const draftLimit = getAiDraftLimit(subscription);
 
-const createAiClient = () => {
-  const { apiKey, baseURL } = getAiConfig();
-
-  if (!apiKey) {
-    const error = new Error("AI API key is not configured. Set AI_API_KEY or OPENAI_API_KEY.");
-    error.status = 503;
+  if (draftLimit <= 0) {
+    const error = new Error("Your AI roadmap draft limit has been used this month.");
+    error.status = 402;
     throw error;
   }
 
-  return new OpenAI({
+  const activityDraftsUsed = await UserActivity.countDocuments({
+    user: userId,
+    type: "ai_roadmap_draft",
+    occurredAt: { $gte: periodStart },
+  });
+
+  try {
+    await UserAiUsage.updateOne(
+      { user: userId, type: "ai_roadmap_draft", periodStart },
+      {
+        $setOnInsert: {
+          user: userId,
+          type: "ai_roadmap_draft",
+          periodStart,
+          count: activityDraftsUsed,
+        },
+      },
+      { upsert: true },
+    );
+  } catch (error) {
+    if (error.code !== 11000) {
+      throw error;
+    }
+  }
+
+  const reserve = async (upsert) =>
+    UserAiUsage.findOneAndUpdate(
+      {
+        user: userId,
+        type: "ai_roadmap_draft",
+        periodStart,
+        count: { $lt: draftLimit },
+      },
+      { $inc: { count: 1 } },
+      { returnDocument: "after", upsert },
+    );
+
+  try {
+    const usage = await reserve(true);
+    if (usage) return { periodStart, draftLimit };
+  } catch (error) {
+    if (error.code !== 11000) {
+      throw error;
+    }
+
+    const usage = await reserve(false);
+    if (usage) return { periodStart, draftLimit };
+  }
+
+  const error = new Error("Your AI roadmap draft limit has been used this month.");
+  error.status = 402;
+  throw error;
+};
+
+const releaseAiRoadmapDraftUsage = async (userId, periodStart) => {
+  if (!periodStart) return;
+
+  try {
+    await UserAiUsage.findOneAndUpdate(
+      {
+        user: userId,
+        type: "ai_roadmap_draft",
+        periodStart,
+        count: { $gt: 0 },
+      },
+      { $inc: { count: -1 } },
+    );
+  } catch (error) {
+    console.warn("Unable to release AI roadmap draft usage:", error.message);
+  }
+};
+
+const getGeminiConfig = () => ({
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
+  baseURL: (process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta").replace(/\/$/, ""),
+  models: unique([
+    process.env.GEMINI_MODEL || process.env.AI_GEMINI_MODEL || GEMINI_DEFAULT_MODEL,
+    ...(
+      process.env.GEMINI_FALLBACK_MODELS
+        ? parseCsvEnv(process.env.GEMINI_FALLBACK_MODELS)
+        : GEMINI_DEFAULT_FALLBACK_MODELS
+    ),
+  ]),
+});
+
+const getOpenAiConfig = () => ({
+  apiKey: process.env.OPENAI_API_KEY || process.env.AI_OPENAI_API_KEY || process.env.AI_API_KEY,
+  baseURL: (process.env.OPENAI_BASE_URL || process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, ""),
+  model: process.env.OPENAI_MODEL || process.env.AI_MODEL || "gpt-4o-mini",
+});
+
+const createOpenAiClient = ({ apiKey, baseURL }) =>
+  new OpenAI({
     apiKey,
     baseURL,
   });
+
+const getGeminiModelPath = (model) =>
+  String(model || "")
+    .replace(/^models\//, "")
+    .trim();
+
+const getGeminiThinkingLevel = () => {
+  const thinkingLevel = String(process.env.GEMINI_THINKING_LEVEL || "")
+    .trim()
+    .toUpperCase();
+
+  return GEMINI_THINKING_LEVELS.has(thinkingLevel) ? thinkingLevel : null;
 };
+
+const buildGeminiGenerationConfig = (maxTokens) => {
+  const thinkingLevel = getGeminiThinkingLevel();
+  const generationConfig = {
+    maxOutputTokens: maxTokens,
+    responseMimeType: "application/json",
+  };
+
+  if (thinkingLevel) {
+    generationConfig.thinkingConfig = {
+      thinkingLevel,
+    };
+  }
+
+  return generationConfig;
+};
+
+const isProviderAuthError = (error) => [401, 403].includes(error?.status);
 
 const extractJsonObject = (value = "") => {
   const raw = String(value || "").trim();
@@ -187,16 +328,33 @@ const extractJsonObject = (value = "") => {
 const sanitizeAiProviderMessage = (message = "") =>
   String(message || "AI provider request failed.")
     .replace(/sk-[A-Za-z0-9_-]+/g, "sk-***")
+    .replace(/AIza[A-Za-z0-9_-]+/g, "AIza***")
+    .replace(/([?&]key=)[^&\s]+/gi, "$1[redacted]")
     .replace(/(Incorrect API key provided:)\s*[^.\s]+/i, "$1 [redacted]")
     .trim();
 
-const callAiJson = async ({ system, user, maxTokens = 2200 }) => {
-  const { model } = getAiConfig();
-  const client = createAiClient();
+const toAiProviderError = (providerError, fallbackMessage = "AI provider request failed.") => {
+  const providerStatus =
+    providerError?.status ||
+    providerError?.response?.status ||
+    providerError?.statusCode;
+  const error = new Error(
+    sanitizeAiProviderMessage(
+      providerError?.message || fallbackMessage,
+    ),
+  );
+  error.status =
+    Number.isInteger(providerStatus) && providerStatus >= 400 && providerStatus < 600
+      ? providerStatus
+      : 502;
+  return error;
+};
 
+const callOpenAiJson = async ({ system, user, maxTokens, config }) => {
+  const client = createOpenAiClient(config);
   try {
     const completion = await client.chat.completions.create({
-      model,
+      model: config.model,
       temperature: 0.4,
       max_tokens: maxTokens,
       response_format: { type: "json_object" },
@@ -214,24 +372,146 @@ const callAiJson = async ({ system, user, maxTokens = 2200 }) => {
 
     return {
       json: extractJsonObject(content),
-      model,
+      model: config.model,
+      provider: "openai",
     };
   } catch (providerError) {
-    const providerStatus =
-      providerError?.status ||
-      providerError?.response?.status ||
-      providerError?.statusCode;
-    const error = new Error(
-      sanitizeAiProviderMessage(
-        providerError?.message || "AI provider request failed.",
-      ),
-    );
-    error.status =
-      Number.isInteger(providerStatus) && providerStatus >= 400 && providerStatus < 600
-        ? providerStatus
-        : 502;
+    throw toAiProviderError(providerError);
+  }
+};
+
+const callGeminiJson = async ({ system, user, maxTokens, config }) => {
+  const modelPath = getGeminiModelPath(config.model);
+  const url = new URL(`${config.baseURL}/models/${encodeURIComponent(modelPath)}:generateContent`);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": config.apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: system }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: user }],
+          },
+        ],
+        generationConfig: buildGeminiGenerationConfig(maxTokens),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const error = new Error(data?.error?.message || "Gemini provider request failed.");
+      error.status = response.status;
+      throw error;
+    }
+
+    const content = data?.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text)
+      .filter(Boolean)
+      .join("\n");
+
+    if (!content) {
+      const blockReason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
+      throw new Error(blockReason ? `Gemini returned no JSON content: ${blockReason}` : "Gemini returned an empty response.");
+    }
+
+    return {
+      json: extractJsonObject(content),
+      model: config.model,
+      provider: "gemini",
+    };
+  } catch (providerError) {
+    throw toAiProviderError(providerError, "Gemini provider request failed.");
+  }
+};
+
+const callAiJson = async ({ system, user, maxTokens = 2200 }) => {
+  const geminiConfig = getGeminiConfig();
+  const openAiConfig = getOpenAiConfig();
+  const providers = [];
+
+  if (geminiConfig.apiKey) {
+    geminiConfig.models.forEach((model) => {
+      providers.push({
+        name: `gemini:${model}`,
+        provider: "gemini",
+        call: () =>
+          callGeminiJson({
+            system,
+            user,
+            maxTokens,
+            config: { ...geminiConfig, model },
+          }),
+      });
+    });
+  }
+
+  if (openAiConfig.apiKey) {
+    providers.push({
+      name: `openai:${openAiConfig.model}`,
+      provider: "openai",
+      call: () => callOpenAiJson({ system, user, maxTokens, config: openAiConfig }),
+    });
+  }
+
+  if (!providers.length) {
+    const error = new Error("AI API key is not configured. Set GEMINI_API_KEY or OPENAI_API_KEY.");
+    error.status = 503;
     throw error;
   }
+
+  let lastError = null;
+  const failedProviders = [];
+
+  for (const provider of providers) {
+    try {
+      return await provider.call();
+    } catch (error) {
+      lastError = error;
+      failedProviders.push({
+        provider: provider.provider,
+        name: provider.name,
+        status: error.status || 502,
+        message: sanitizeAiProviderMessage(error.message),
+      });
+      if (provider.name === providers[providers.length - 1]?.name) {
+        break;
+      }
+      console.warn(
+        `AI provider ${provider.name} failed; trying fallback provider.`,
+        {
+          status: error.status || 502,
+          message: sanitizeAiProviderMessage(error.message),
+        },
+      );
+    }
+  }
+
+  const openAiAuthFailure = failedProviders.find(
+    (failure) => failure.provider === "openai" && isProviderAuthError(failure),
+  );
+  const geminiTemporaryFailure = failedProviders.find(
+    (failure) =>
+      failure.provider === "gemini" &&
+      [429, 500, 502, 503, 504].includes(failure.status),
+  );
+
+  if (openAiAuthFailure && geminiTemporaryFailure) {
+    const error = new Error(
+      "Gemini is temporarily unavailable and the OpenAI fallback key is invalid. Fix OPENAI_API_KEY or wait and retry Gemini.",
+    );
+    error.status = geminiTemporaryFailure.status;
+    throw error;
+  }
+
+  throw lastError || Object.assign(new Error("AI provider request failed."), { status: 502 });
 };
 
 const addReason = (reasons, reason) => {
@@ -755,22 +1035,26 @@ const sanitizeAiSteps = (steps = []) => {
   }
 
   const usedStepKeys = new Set();
+  const keyAliases = new Map();
 
-  return steps.slice(0, 12).map((step, index) => {
+  const normalizedSteps = steps.slice(0, 12).map((step, index) => {
     const title = String(step.title || "").trim().slice(0, 120);
 
     if (title.length < 3) {
       throw new Error("Each AI roadmap step must include a title.");
     }
 
-    const baseStepKey = slugify(step.stepKey || title || `step-${index + 1}`);
+    const rawStepKey = step.stepKey || title || `step-${index + 1}`;
+    const baseStepKey = slugify(rawStepKey);
     const stepKey = usedStepKeys.has(baseStepKey)
       ? `${baseStepKey}-${index + 1}`
       : baseStepKey;
     usedStepKeys.add(stepKey);
+    keyAliases.set(baseStepKey, stepKey);
 
     return {
       stepKey,
+      originalDependsOn: step.dependsOn,
       title,
       description: String(step.description || "").trim().slice(0, 1000),
       resources: Array.isArray(step.resources)
@@ -779,11 +1063,33 @@ const sanitizeAiSteps = (steps = []) => {
       order: index,
       estimatedMinutes: clamp(parseInt(step.estimatedMinutes, 10) || 90, 30, 2400),
       required: step.required !== false,
-      dependsOn: Array.isArray(step.dependsOn)
-        ? step.dependsOn.map((dependency) => slugify(dependency)).filter(Boolean)
-        : index > 0
-          ? [Array.from(usedStepKeys)[index - 1]]
-          : [],
+    };
+  });
+
+  return normalizedSteps.map((step, index) => {
+    const previousStepKeys = new Set(
+      normalizedSteps.slice(0, index).map((previousStep) => previousStep.stepKey),
+    );
+    const rawDependencies = Array.isArray(step.originalDependsOn)
+      ? step.originalDependsOn
+      : index > 0
+        ? [normalizedSteps[index - 1].stepKey]
+        : [];
+    const dependsOn = unique(
+      rawDependencies
+        .map((dependency) => slugify(dependency))
+        .map((dependency) => keyAliases.get(dependency) || dependency)
+        .filter((dependency) =>
+          dependency &&
+          dependency !== step.stepKey &&
+          previousStepKeys.has(dependency),
+        ),
+    );
+    const { originalDependsOn, ...sanitizedStep } = step;
+
+    return {
+      ...sanitizedStep,
+      dependsOn,
     };
   });
 };
@@ -855,6 +1161,13 @@ const createAiRoadmapDraft = async ({
   weeklyStudyHours = 6,
 }) => {
   const normalizedGoal = String(goal || "").trim();
+
+  if (normalizedGoal.length < 10) {
+    const error = new Error("Goal must be at least 10 characters.");
+    error.status = 400;
+    throw error;
+  }
+
   const normalizedLevel = ["beginner", "intermediate", "advanced"].includes(targetLevel)
     ? targetLevel
     : "beginner";
@@ -869,7 +1182,7 @@ const createAiRoadmapDraft = async ({
     durationWeeks: parsedDurationWeeks,
     weeklyStudyHours: parsedWeeklyStudyHours,
   });
-  const { json: aiDraft, model } = await callAiJson({
+  const { json: aiDraft, model, provider } = await callAiJson({
     system: prompt.system,
     user: prompt.user,
   });
@@ -890,6 +1203,7 @@ const createAiRoadmapDraft = async ({
   return {
     engine: "ai-roadmap-draft-v1",
     model,
+    provider,
     generatedAt: new Date().toISOString(),
     draft: {
       title,
@@ -1002,25 +1316,41 @@ export const generateUserAiRoadmapDraft = async (req, res) => {
     weeklyStudyHours = 6,
   } = req.body;
 
-  try {
-    const access = await buildAiAccessPayload(req.user);
+  let reservation = null;
 
-    if (!access.capabilities.canGenerateDraft) {
+  try {
+    const subscription = getAiSubscription(req.user);
+
+    try {
+      reservation = await reserveAiRoadmapDraftUsage(userId, subscription);
+    } catch (error) {
+      if (error.status !== 402) {
+        throw error;
+      }
+      const access = await buildAiAccessPayload(req.user);
       return res.status(402).json({
         success: false,
-        message: "Your free AI roadmap draft limit has been used this month.",
+        message: error.message,
         data: access,
       });
     }
 
-    const draftPayload = await createAiRoadmapDraft({
-      goal: prompt,
-      targetRole: "student",
-      targetLevel,
-      templateType: "skillBased",
-      durationWeeks,
-      weeklyStudyHours,
-    });
+    let draftPayload;
+
+    try {
+      draftPayload = await createAiRoadmapDraft({
+        goal: prompt,
+        targetRole: "student",
+        targetLevel,
+        templateType: "skillBased",
+        durationWeeks,
+        weeklyStudyHours,
+      });
+    } catch (error) {
+      await releaseAiRoadmapDraftUsage(userId, reservation.periodStart);
+      reservation = null;
+      throw error;
+    }
 
     await recordAiActivity(userId, "ai_roadmap_draft", {
       prompt: String(prompt || "").slice(0, 300),
@@ -1052,14 +1382,24 @@ export const generateUserAiRoadmapDraft = async (req, res) => {
 
 export const saveUserAiRoadmap = async (req, res) => {
   const userId = req.user._id;
-  const { draft } = req.body;
+  const draft = req.body?.draft || {};
 
   try {
     ensureAiSubscriber(req.user);
 
     const title = String(draft.title || "").trim().slice(0, 120);
     const goal = String(draft.goal || title).trim().slice(0, 300);
-    const steps = sanitizeAiSteps(draft.steps);
+    let steps;
+
+    try {
+      steps = sanitizeAiSteps(draft.steps);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "A saved AI roadmap includes invalid steps.",
+        error: error.message,
+      });
+    }
 
     if (!title || !goal || steps.length < 4) {
       return res.status(400).json({
@@ -1142,7 +1482,7 @@ export const explainAiRoadmapTopic = async (req, res) => {
   try {
     ensureAiSubscriber(req.user);
 
-    const { json, model } = await callAiJson({
+    const { json, model, provider } = await callAiJson({
       maxTokens: 1400,
       system:
         "You explain software learning topics clearly for a student. Return only valid JSON with concise, practical guidance.",
@@ -1173,6 +1513,7 @@ export const explainAiRoadmapTopic = async (req, res) => {
       message: "AI topic explanation generated successfully.",
       data: {
         model,
+        provider,
         generatedAt: new Date().toISOString(),
         explanation: {
           summary: String(json.summary || "").trim().slice(0, 1200),

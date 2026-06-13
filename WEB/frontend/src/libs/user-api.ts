@@ -83,6 +83,19 @@ export type DashboardSummary = {
   activities: DashboardActivity[]
 }
 
+export type UserPreferences = {
+  _id?: string
+  interests?: string[]
+  preferredLanguages?: string[]
+  learningGoals?: string[]
+  skillLevel?: 'beginner' | 'intermediate' | 'advanced'
+  learningPace?: 'slow' | 'medium' | 'fast'
+  preferredCategories?: string[]
+  preferredDifficulty?: 'beginner' | 'intermediate' | 'advanced'
+  weeklyStudyHours?: number
+  reminderPreference?: 'email' | 'push' | 'none'
+}
+
 export type AiRecommendationCourse = {
   type: 'course'
   matchScore: number
@@ -166,6 +179,14 @@ type AiRecommendationsResponse = {
   data?: AiRecommendationsData
 }
 
+type PreferencesResponse = {
+  success?: boolean
+  message?: string
+  data?: UserPreferences | null
+  user?: AuthUser
+  errors?: Array<{ field?: string; message?: string }>
+}
+
 type ProfileUpdateInput = {
   username: string
   Fname: string
@@ -237,6 +258,39 @@ export async function deleteDashboardActivity(activityId: string) {
   }
 
   return true
+}
+
+export async function fetchCurrentUserPreferences() {
+  const { response, data } = await apiGet<PreferencesResponse>('/auth/preferences', {
+    data: null,
+  })
+
+  if (!response.ok) {
+    throw new Error(data.message ?? 'Could not load preferences.')
+  }
+
+  return data.data ?? null
+}
+
+export async function updateCurrentUserPreferences(input: UserPreferences) {
+  const { response, data } = await apiRequest<PreferencesResponse>(
+    '/auth/preferences',
+    {},
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not save preferences.'))
+  }
+
+  return {
+    preferences: data.data ?? null,
+    user: data.user ?? null,
+  }
 }
 
 export async function updateCurrentUserProfile(input: ProfileUpdateInput) {

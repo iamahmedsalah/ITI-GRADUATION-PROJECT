@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import i18n from '../libs/i18n'
 
 export type LanguagePref = 'en' | 'ar'
@@ -15,47 +23,84 @@ type LanguageProviderProps = {
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined)
 
-function normalizeLanguage(language?: string): LanguagePref {
+const SEO_IMAGE =
+  'https://res.cloudinary.com/dkocrxpu4/image/upload/w_1200,h_630,c_pad,f_auto,q_auto,b_rgb:0C2331/v1770685642/logo_k8bbtk.webp'
+
+function normalizeLanguage(language?: string | null): LanguagePref {
   return language?.startsWith('ar') ? 'ar' : 'en'
 }
 
-function applyDocumentLanguage(language: LanguagePref) {
+function getStoredLanguage() {
+  if (typeof localStorage === 'undefined') return null
+
+  return localStorage.getItem('i18nextLng')
+}
+
+function setStoredLanguage(language: LanguagePref) {
+  if (typeof localStorage === 'undefined') return
+
+  localStorage.setItem('i18nextLng', language)
+}
+
+function setMeta(selector: string, content: string) {
   if (typeof document === 'undefined') return
+
+  const element = document.head.querySelector<HTMLMetaElement>(selector)
+
+  if (element) {
+    element.content = content
+  }
+}
+
+function applyDocumentSeo(language: LanguagePref) {
+  if (typeof document === 'undefined') return
+
+  const title = i18n.t('siteTitle')
+  const description = i18n.t('siteDescription')
+  const siteName = i18n.t('siteName')
+  const imageAlt = i18n.t('ogImageAlt')
 
   document.documentElement.lang = language
   document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
-}
+  document.title = title
 
-function applyDocumentTitle() {
-  if (typeof document === 'undefined') return
+  setMeta('meta[name="description"]', description)
 
-  document.title = i18n.t('siteTitle')
+  setMeta('meta[property="og:title"]', title)
+  setMeta('meta[property="og:description"]', description)
+  setMeta('meta[property="og:site_name"]', siteName)
+  setMeta('meta[property="og:image"]', SEO_IMAGE)
+  setMeta('meta[property="og:image:alt"]', imageAlt)
+
+  setMeta('meta[name="twitter:title"]', title)
+  setMeta('meta[name="twitter:description"]', description)
+  setMeta('meta[name="twitter:image"]', SEO_IMAGE)
+  setMeta('meta[name="twitter:image:alt"]', imageAlt)
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<LanguagePref>(() =>
-    normalizeLanguage(localStorage.getItem('i18nextLng') ?? i18n.resolvedLanguage ?? i18n.language),
+    normalizeLanguage(getStoredLanguage() ?? i18n.resolvedLanguage ?? i18n.language),
   )
 
   const setLanguage = useCallback((nextLanguage: LanguagePref) => {
     setLanguageState(nextLanguage)
-    localStorage.setItem('i18nextLng', nextLanguage)
+    setStoredLanguage(nextLanguage)
+
     void i18n.changeLanguage(nextLanguage)
-    applyDocumentLanguage(nextLanguage)
-    applyDocumentTitle()
   }, [])
 
   useEffect(() => {
     const normalized = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language)
-    applyDocumentLanguage(normalized)
-    applyDocumentTitle()
+
+    applyDocumentSeo(normalized)
 
     const handleLanguageChanged = (nextLanguage: string) => {
       const resolved = normalizeLanguage(nextLanguage)
+
       setLanguageState(resolved)
-      localStorage.setItem('i18nextLng', resolved)
-      applyDocumentLanguage(resolved)
-      applyDocumentTitle()
+      setStoredLanguage(resolved)
+      applyDocumentSeo(resolved)
     }
 
     i18n.on('languageChanged', handleLanguageChanged)
@@ -65,13 +110,16 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   }, [])
 
-  const direction = useMemo(() => (language === 'ar' ? 'rtl' : 'ltr'), [language])
+  const direction = language === 'ar' ? 'rtl' : 'ltr'
 
-  const value: LanguageContextValue = {
-    language,
-    setLanguage,
-    direction,
-  }
+  const value = useMemo<LanguageContextValue>(
+    () => ({
+      language,
+      setLanguage,
+      direction,
+    }),
+    [language, setLanguage, direction],
+  )
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

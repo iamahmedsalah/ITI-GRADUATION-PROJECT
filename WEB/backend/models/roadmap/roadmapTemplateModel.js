@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+const ROADMAP_MARKDOWN_MAX_LENGTH = 5000;
+
 const roadmapStepSchema = new mongoose.Schema(
   {
     stepKey: {
@@ -126,7 +128,10 @@ const roadmapTemplateSchema = new mongoose.Schema(
     contentMarkdown: {
       type: String,
       trim: true,
-      maxlength: [50000, "Markdown content must be at most 50000 characters"],
+      maxlength: [
+        ROADMAP_MARKDOWN_MAX_LENGTH,
+        `Markdown content must be at most ${ROADMAP_MARKDOWN_MAX_LENGTH} characters`,
+      ],
     },
     estimatedTotalMinutes: {
       type: Number,

@@ -77,7 +77,7 @@ export default function GuidePage() {
               {t("guidePage.ctaText")}
             </h2>
             <Link
-              to={`/${language}/roadmaps/frontend`}
+              to={`/${language}/roadmaps`}
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) px-6 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
             >
               {t("guidePage.ctaButton")}

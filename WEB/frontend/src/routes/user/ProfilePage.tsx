@@ -30,7 +30,7 @@ function ProfilePage() {
           variants={heroLineVariants}
         />
 
-        <motion.div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)]" variants={staggerContainerVariants}>
+        <motion.div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.75fr)]" variants={staggerContainerVariants}>
           <motion.div variants={heroLineVariants}>
             <ProfileAvatarUploader user={user} />
           </motion.div>

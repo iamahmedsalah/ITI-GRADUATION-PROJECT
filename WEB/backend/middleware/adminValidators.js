@@ -5,6 +5,8 @@ const objectIdSchema = z
   .trim()
   .regex(/^[0-9a-fA-F]{24}$/, "ID must be a valid 24-character hexadecimal value.");
 
+const ROADMAP_MARKDOWN_MAX_LENGTH = 5000;
+
 const imageDataUriSchema = z
   .string()
   .trim()
@@ -215,7 +217,11 @@ const updateRoadmapSchema = z
         .optional(),
       isActive: z.boolean().optional(),
       contentFormat: z.enum(["json", "markdown"]).optional(),
-      contentMarkdown: z.string().trim().max(50000).optional(),
+      contentMarkdown: z
+        .string()
+        .trim()
+        .max(ROADMAP_MARKDOWN_MAX_LENGTH)
+        .optional(),
     }),
     params: z.object({
       templateId: objectIdSchema,

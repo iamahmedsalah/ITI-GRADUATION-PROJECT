@@ -8,6 +8,7 @@ import {
 export type DropdownOption<TValue extends string = string> = {
   value: TValue
   label: string
+  icon?: typeof ArrowUp01Icon
   disabled?: boolean
 }
 
@@ -208,7 +209,10 @@ export default function CustomDropdown<TValue extends string = string>({
           buttonClassName,
         ].join(' ')}
       >
-        <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {selectedOption?.icon ? <HugeiconsIcon icon={selectedOption.icon} size={16} className="shrink-0 text-(--accent)" /> : null}
+          <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+        </span>
         <HugeiconsIcon
           icon={ArrowUp01Icon}
           size={18}
@@ -248,7 +252,10 @@ export default function CustomDropdown<TValue extends string = string>({
                   !isSelected && !isActive ? 'hover:bg-(--surface-soft)' : '',
                 ].join(' ')}
               >
-                {option.label}
+                <span className="flex items-center gap-2">
+                  {option.icon ? <HugeiconsIcon icon={option.icon} size={16} className="shrink-0" /> : null}
+                  <span className="truncate">{option.label}</span>
+                </span>
               </li>
             )
           })}

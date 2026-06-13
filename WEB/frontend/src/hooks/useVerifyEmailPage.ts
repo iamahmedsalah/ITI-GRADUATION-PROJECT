@@ -52,7 +52,7 @@ export function useVerifyEmailPage() {
     }
 
     const redirectTimer = setTimeout(() => {
-      navigate(`/${language}/dashboard`, { replace: true })
+      navigate(`/${language}/preferences`, { replace: true })
     }, 2200)
 
     return () => clearTimeout(redirectTimer)
@@ -120,7 +120,7 @@ export function useVerifyEmailPage() {
         }
 
         toast.success(t('auth.verifySuccess'))
-        navigate(`/${language}/dashboard`, { replace: true })
+        navigate(`/${language}/preferences`, { replace: true })
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t('auth.verifyFailed'))
       } finally {
@@ -131,7 +131,7 @@ export function useVerifyEmailPage() {
   )
 
   const continueToDashboard = useCallback(() => {
-    navigate(`/${language}/dashboard`, { replace: true })
+    navigate(`/${language}/preferences`, { replace: true })
   }, [language, navigate])
 
   return {

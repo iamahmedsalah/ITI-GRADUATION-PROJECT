@@ -47,8 +47,8 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
   })
 
   return (
-    <div className="flex flex-wrap items-center gap-5 rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="relative size-30 overflow-hidden rounded-squircle border border-(--accent-border) bg-(--surface-2)">
+    <div className="grid items-center gap-5 rounded-3xl border border-(--border) bg-(--surface) p-5 sm:p-6 md:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_auto]">
+      <div className="relative size-28 overflow-hidden rounded-squircle border border-(--accent-border) bg-(--surface-2) sm:size-32">
         {pendingAvatarImage || avatarUrl ? (
           <img src={pendingAvatarImage ?? avatarUrl ?? ''} alt={user.name} className="size-full object-cover" />
         ) : (
@@ -58,9 +58,9 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <h2 className="text-xl font-semibold text-(--text-h)">{user.name}</h2>
-        <p className="mt-1 text-sm text-(--text)">{user.email}</p>
+        <p className="mt-1 wrap-break-word text-sm text-(--text)">{user.email}</p>
         <p className="mt-2 text-xs uppercase tracking-[0.18em] text-(--accent)">@{user.username}</p>
       </div>
 
@@ -91,7 +91,7 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
           }
         }}
       />
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 md:col-span-2 xl:col-span-1 xl:justify-end">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -99,7 +99,7 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
           className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-4 py-3 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border) disabled:cursor-not-allowed disabled:opacity-60"
         >
           <HugeiconsIcon icon={ImageUploadIcon} size={17} />
-          {t('profile.avatar.choose')}
+          {t('profile.avatar.update', 'Update image')}
         </button>
         {pendingAvatarImage ? (
           <button

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -17,7 +17,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
 import { deleteUserRoadmap } from '../../libs/roadmaps-api'
-import { deleteDashboardActivity } from '../../libs/user-api'
+import { deleteDashboardActivity, fetchCurrentUserPreferences } from '../../libs/user-api'
 import CustomDropdown from '../ui/CustomDropdown'
 import type {
   AiRecommendationCourse,
@@ -470,8 +470,11 @@ export function LearningActivitySection({
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const initialActivityLimit = 6
+  const activityPageSize = 6
   type ActivityDateFilter = 'all' | 'today' | 'week' | 'month' | 'older'
   const [dateFilter, setDateFilter] = useState<ActivityDateFilter>('all')
+  const [visibleActivityCount, setVisibleActivityCount] = useState(initialActivityLimit)
   const [activityFilterClock] = useState(() => {
     const now = Date.now()
     const startOfToday = new Date(now)
@@ -504,6 +507,8 @@ export function LearningActivitySection({
       return true
     })
   }, [activities, activityFilterClock, dateFilter])
+  const visibleActivities = filteredActivities.slice(0, visibleActivityCount)
+  const hiddenActivityCount = Math.max(0, filteredActivities.length - visibleActivities.length)
   const roadmapEvents = activities.filter((activity) => activity.type.startsWith('roadmap_')).length
   const courseEvents = activities.filter((activity) => activity.type.startsWith('course_') || activity.type === 'lesson_complete').length
   const aiEvents = activities.filter((activity) => activity.type.startsWith('ai_')).length
@@ -527,7 +532,10 @@ export function LearningActivitySection({
         <CustomDropdown
           value={dateFilter}
           options={dateOptions}
-          onChange={setDateFilter}
+          onChange={(value) => {
+            setDateFilter(value)
+            setVisibleActivityCount(initialActivityLimit)
+          }}
           className="w-full sm:w-44"
           buttonClassName="bg-(--surface-2)"
         />
@@ -549,14 +557,30 @@ export function LearningActivitySection({
         {isLoading ? (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.loading')}</p>
         ) : filteredActivities.length ? (
-          filteredActivities.map((activity) => (
-            <ActivityItem
-              key={activity._id}
-              activity={activity}
-              isDeleting={deleteActivityMutation.isPending}
-              onDelete={() => deleteActivityMutation.mutate(activity._id)}
-            />
-          ))
+          <>
+            {visibleActivities.map((activity) => (
+              <ActivityItem
+                key={activity._id}
+                activity={activity}
+                isDeleting={deleteActivityMutation.isPending}
+                onDelete={() => deleteActivityMutation.mutate(activity._id)}
+              />
+            ))}
+            {hiddenActivityCount ? (
+              <div className="flex justify-center pt-4">
+                <button
+                  type="button"
+                  className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border) hover:bg-(--surface-2)"
+                  onClick={() => setVisibleActivityCount((count) => count + activityPageSize)}
+                >
+                  {t('dashboard.activity.loadMore', {
+                    count: Math.min(activityPageSize, hiddenActivityCount),
+                    defaultValue: `Load more (${Math.min(activityPageSize, hiddenActivityCount)})`,
+                  })}
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.activity.empty')}</p>
         )}
@@ -630,11 +654,51 @@ export function SubscriptionSection({
 
 export function PreferencesPreviewSection() {
   const { t } = useTranslation()
-  const preferenceItems = [
-    t('dashboard.preferences.items.interests', 'Interests and target roles'),
-    t('dashboard.preferences.items.level', 'Current skill level'),
-    t('dashboard.preferences.items.schedule', 'Weekly study time'),
-  ]
+  const { language } = useLanguage()
+  const preferencesQuery = useQuery({
+    queryKey: ['auth', 'preferences'],
+    queryFn: fetchCurrentUserPreferences,
+  })
+  const preferences = preferencesQuery.data
+  const hasPreferences = Boolean(preferences)
+  const listLabel = (items?: string[], fallback = t('dashboard.preferences.notSet', 'Not set')) =>
+    items?.length ? items.slice(0, 3).join(', ') : fallback
+  const preferenceItems = hasPreferences
+    ? [
+        {
+          label: t('dashboard.preferences.items.interests', 'Interests'),
+          value: listLabel(preferences?.interests),
+        },
+        {
+          label: t('dashboard.preferences.items.goals', 'Learning goals'),
+          value: listLabel(preferences?.learningGoals),
+        },
+        {
+          label: t('dashboard.preferences.items.level', 'Current skill level'),
+          value: preferences?.skillLevel ?? t('dashboard.preferences.notSet', 'Not set'),
+        },
+        {
+          label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
+          value: t('dashboard.preferences.hours', {
+            count: preferences?.weeklyStudyHours ?? 0,
+            defaultValue: `${preferences?.weeklyStudyHours ?? 0} hours / week`,
+          }),
+        },
+      ]
+    : [
+        {
+          label: t('dashboard.preferences.items.interests', 'Interests'),
+          value: t('dashboard.preferences.emptyItem', 'Choose topics you want to learn'),
+        },
+        {
+          label: t('dashboard.preferences.items.level', 'Current skill level'),
+          value: t('dashboard.preferences.emptyLevel', 'Set your level and difficulty'),
+        },
+        {
+          label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
+          value: t('dashboard.preferences.emptySchedule', 'Pick your learning pace'),
+        },
+      ]
 
   return (
     <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
@@ -644,22 +708,37 @@ export function PreferencesPreviewSection() {
             {t('dashboard.preferences.title', 'Preferences')}
           </h2>
           <p className="mt-2 text-sm leading-6 text-(--text)">
-            {t(
-              'dashboard.preferences.subtitle',
-              'Soon this will tune recommendations by interests, level, goal, study schedule, and preferred resources.',
-            )}
+            {hasPreferences
+              ? t('dashboard.preferences.subtitleReady', 'Your recommendations use your saved interests, goals, level, and weekly schedule.')
+              : t('dashboard.preferences.subtitleSetup', 'Answer a few setup questions so roadmaps, courses, and AI suggestions match your learning plan.')}
           </p>
         </div>
         <HugeiconsIcon icon={UserSettings01Icon} size={20} className="text-(--accent)" />
       </div>
       <div className="mt-4 grid gap-2">
-        {preferenceItems.map((item) => (
-          <div key={item} className="flex items-center gap-2 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm text-(--text-h)">
+        {preferencesQuery.isLoading ? (
+          <div className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm text-(--text)">
+            {t('dashboard.loading')}
+          </div>
+        ) : preferenceItems.map((item) => (
+          <div key={item.label} className="flex items-start gap-3 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm">
             <span className="size-1.5 rounded-full bg-(--accent)" />
-            {item}
+            <span className="grid min-w-0 gap-1">
+              <span className="font-semibold text-(--text-h)">{item.label}</span>
+              <span className="wrap-break-word text-xs text-(--text)">{item.value}</span>
+            </span>
           </div>
         ))}
       </div>
+      <Link
+        to={`/${language}/preferences`}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-squircle border border-(--accent-border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--accent-bg)"
+      >
+        <HugeiconsIcon icon={AiMagicIcon} size={16} className="text-(--accent)" />
+        {hasPreferences
+          ? t('dashboard.preferences.update', 'Update preferences')
+          : t('dashboard.preferences.start', 'Set preferences')}
+      </Link>
     </section>
   )
 }

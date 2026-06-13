@@ -11,7 +11,9 @@ export type AiFeatureAccess = {
     periodStart: string
     draftsUsed: number
     draftLimit: number
+    planDraftLimit?: number
     freeDraftLimit: number
+    proDraftLimit?: number
     draftsRemaining: number
   }
   capabilities: {
@@ -30,6 +32,7 @@ export type AiRoadmapDraft = Omit<RoadmapTemplate, '_id'> & {
 export type AiRoadmapDraftPayload = {
   engine: string
   model: string
+  provider?: 'gemini' | 'openai'
   generatedAt: string
   draft: AiRoadmapDraft
   access?: AiFeatureAccess
@@ -37,6 +40,7 @@ export type AiRoadmapDraftPayload = {
 
 export type AiTopicExplanation = {
   model: string
+  provider?: 'gemini' | 'openai'
   generatedAt: string
   explanation: {
     summary: string

@@ -58,7 +58,7 @@ export default function RoadmapFilterMenu({
         value={currentType}
         options={options}
         onChange={(value) => {
-          navigate(`/${language}/roadmaps/frontend?type=${value}`);
+          navigate(`/${language}/roadmaps?type=${value}`);
         }}
         placeholder={t("navbar.roadmap")}
         buttonClassName="bg-(--surface) px-4 py-3 text-sm"

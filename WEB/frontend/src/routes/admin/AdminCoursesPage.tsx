@@ -19,6 +19,7 @@ import { AdminFilterToggleButton, AdminStatusToggleButton } from '../../componen
 import AdminPagination from '../../components/ui/AdminPagination'
 import CustomDropdown from '../../components/ui/CustomDropdown'
 import AdminCourseFormModal from '../../components/models/AdminCourseFormModal'
+import ConfirmActionModal from '../../components/models/ConfirmActionModal'
 
 type CourseLevel = 'beginner' | 'intermediate' | 'advanced'
 
@@ -36,6 +37,11 @@ export default function AdminCoursesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingCourse, setEditingCourse] = useState<AdminCourseRow | null>(null)
+  const [deleteRequest, setDeleteRequest] = useState<{
+    ids: string[]
+    title: string
+    message: string
+  } | null>(null)
 
   const queryKey = useMemo(
     () => ['admin', 'courses', search, level, isPublished, isFeatured, page],
@@ -146,6 +152,7 @@ export default function AdminCoursesPage() {
   return (
     <motion.main className="px-3 py-4 sm:px-4 sm:py-5 lg:px-8 lg:py-8" variants={pageVariants} initial="hidden" animate="show">
       <AdminCourseFormModal
+        key={isCreateModalOpen ? 'open-course-create' : 'closed-course-create'}
         open={isCreateModalOpen}
         mode="create"
         isPending={createMutation.isPending}
@@ -153,6 +160,7 @@ export default function AdminCoursesPage() {
         onSubmit={(payload) => createMutation.mutate(payload)}
       />
       <AdminCourseFormModal
+        key={editingCourse?._id ?? 'closed-course-update'}
         open={Boolean(editingCourse)}
         mode="update"
         course={editingCourse}
@@ -161,6 +169,20 @@ export default function AdminCoursesPage() {
         onSubmit={(payload) => {
           if (!editingCourse) return
           updateMutation.mutate({ courseId: editingCourse._id, payload })
+        }}
+      />
+      <ConfirmActionModal
+        open={Boolean(deleteRequest)}
+        title={deleteRequest?.title ?? ''}
+        message={deleteRequest?.message ?? ''}
+        confirmLabel={t('adminUi.common.delete', 'Delete')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setDeleteRequest(null)}
+        onConfirm={() => {
+          const ids = deleteRequest?.ids ?? []
+          ids.forEach((id) => deleteMutation.mutate(id))
+          setDeleteRequest(null)
         }}
       />
       <section className="grid gap-4 rounded-3xl border border-(--border) bg-(--surface) p-3 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:gap-5 sm:p-6">
@@ -190,9 +212,14 @@ export default function AdminCoursesPage() {
               type="button"
               disabled={deleteMutation.isPending}
               onClick={() => {
-                const confirmed = window.confirm(t('adminUi.common.bulkDeleteConfirm', { count: selectedIds.length }))
-                if (!confirmed) return
-                selectedIds.forEach((id) => deleteMutation.mutate(id))
+                setDeleteRequest({
+                  ids: selectedIds,
+                  title: t('adminUi.courses.actions.deleteSelectedTitle', 'Delete selected courses?'),
+                  message: t('adminUi.common.bulkDeleteConfirm', {
+                    count: selectedIds.length,
+                    defaultValue: `You are about to delete ${selectedIds.length} selected item(s). This cannot be undone.`,
+                  }),
+                })
               }}
               className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.4)] bg-[rgba(226,33,52,0.08)] px-4 py-2 text-sm font-semibold text-(--error)"
             >
@@ -317,12 +344,14 @@ export default function AdminCoursesPage() {
                     className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
-                      const confirmed = window.confirm(t('adminUi.courses.actions.deleteConfirm', { title: course.title }))
-                      if (!confirmed) {
-                        return
-                      }
-
-                      deleteMutation.mutate(course._id)
+                      setDeleteRequest({
+                        ids: [course._id],
+                        title: t('adminUi.courses.actions.deleteTitle', 'Delete course?'),
+                        message: t('adminUi.courses.actions.deleteConfirm', {
+                          title: course.title,
+                          defaultValue: `Delete course "${course.title}"? This cannot be undone.`,
+                        }),
+                      })
                     }}
                   >
                     <HugeiconsIcon icon={Cancel02Icon} size={14} />
@@ -436,12 +465,14 @@ export default function AdminCoursesPage() {
                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[rgba(226,33,52,0.4)] px-3 py-2 text-xs font-semibold text-(--error) transition-transform duration-200 hover:scale-[1.04] hover:bg-[rgba(226,33,52,0.08)]"
                         disabled={deleteMutation.isPending}
                         onClick={() => {
-                          const confirmed = window.confirm(t('adminUi.courses.actions.deleteConfirm', { title: course.title }))
-                          if (!confirmed) {
-                            return
-                          }
-
-                          deleteMutation.mutate(course._id)
+                          setDeleteRequest({
+                            ids: [course._id],
+                            title: t('adminUi.courses.actions.deleteTitle', 'Delete course?'),
+                            message: t('adminUi.courses.actions.deleteConfirm', {
+                              title: course.title,
+                              defaultValue: `Delete course "${course.title}"? This cannot be undone.`,
+                            }),
+                          })
                         }}
                       >
                         <HugeiconsIcon icon={Cancel02Icon} size={14} />
