@@ -1,12 +1,25 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, type Variants } from 'framer-motion'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Alert02Icon, Delete02Icon, Login03Icon } from '@hugeicons/core-free-icons'
 import FormInput from '../ui/Input'
 import { authQueryKey } from '../../libs/react-query'
-import { updateCurrentUserPassword, updateCurrentUserProfile } from '../../libs/user-api'
+import {
+  confirmAccountDeletionUndo,
+  confirmCurrentUserAccountDeletion,
+  deactivateCurrentUserAccount,
+  requestAccountDeletionUndo,
+  requestCurrentUserAccountDeletion,
+  updateCurrentUserPassword,
+  updateCurrentUserProfile,
+} from '../../libs/user-api'
 import type { AuthUser } from '../../utils/route-utils'
+import { clearAccessToken } from '../../utils/api'
+import { useLanguage } from '../../context/LanguageContext'
 import PasswordActions from '../ui/passwordActions'
 import PasswordStrength from '../ui/passwordStrength'
 import PasswordVisibilityToggle from '../ui/passwordVisibilityToggle'
@@ -30,6 +43,8 @@ const passwordSettingsSchema = resetPasswordSchema.extend({
 
 export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = authQueryKey }: ProfileSettingsPanelProps) {
   const { t } = useTranslation()
+  const { language } = useLanguage()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [profileForm, setProfileForm] = useState({
     username: user.username,
@@ -44,8 +59,17 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({})
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showAccountPassword, setShowAccountPassword] = useState(false)
   const [isPasswordCopied, setIsPasswordCopied] = useState(false)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [isDeleteCodeSent, setIsDeleteCodeSent] = useState(false)
+  const [isUndoCodeSent, setIsUndoCodeSent] = useState(false)
+  const [accountForm, setAccountForm] = useState({
+    password: '',
+    reason: '',
+    deleteCode: '',
+    undoCode: '',
+  })
   const savedProfileForm = {
     username: user.username,
     Fname: user.Fname ?? user.name.split(' ')[0] ?? '',
@@ -79,6 +103,71 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t('profile.settings.passwordFailed'))
+    },
+  })
+
+  const deactivateAccountMutation = useMutation({
+    mutationFn: deactivateCurrentUserAccount,
+    onSuccess: () => {
+      clearAccessToken()
+      queryClient.setQueryData(authQueryKey, null)
+      toast.success(t('profile.account.deactivated', 'Account deactivated. Log in with your password to reactivate it.'))
+      navigate(`/${language}/login`, { replace: true })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('profile.account.deactivateFailed', 'Could not deactivate account.'))
+    },
+  })
+
+  const requestDeleteMutation = useMutation({
+    mutationFn: requestCurrentUserAccountDeletion,
+    onSuccess: () => {
+      setIsDeleteCodeSent(true)
+      toast.success(t('profile.account.deleteCodeSent', 'Deletion code sent to your email.'))
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('profile.account.deleteRequestFailed', 'Could not send deletion code.'))
+    },
+  })
+
+  const confirmDeleteMutation = useMutation({
+    mutationFn: confirmCurrentUserAccountDeletion,
+    onSuccess: (result) => {
+      if (result.user) {
+        queryClient.setQueryData(authQueryKey, result.user)
+        queryClient.setQueryData(cacheQueryKey, result.user)
+      }
+      setIsDeleteCodeSent(false)
+      setAccountForm((current) => ({ ...current, password: '', deleteCode: '' }))
+      toast.success(t('profile.account.deleteScheduled', 'Account deletion scheduled. You have 7 days to undo it.'))
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('profile.account.deleteConfirmFailed', 'Could not confirm deletion.'))
+    },
+  })
+
+  const requestUndoMutation = useMutation({
+    mutationFn: requestAccountDeletionUndo,
+    onSuccess: () => {
+      setIsUndoCodeSent(true)
+      toast.success(t('profile.account.undoCodeSent', 'Undo code sent to your email.'))
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('profile.account.undoRequestFailed', 'Could not send undo code.'))
+    },
+  })
+
+  const confirmUndoMutation = useMutation({
+    mutationFn: confirmAccountDeletionUndo,
+    onSuccess: async () => {
+      setIsUndoCodeSent(false)
+      setAccountForm((current) => ({ ...current, password: '', undoCode: '' }))
+      await queryClient.invalidateQueries({ queryKey: authQueryKey })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+      toast.success(t('profile.account.deleteCanceled', 'Account deletion canceled.'))
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('profile.account.undoConfirmFailed', 'Could not cancel deletion.'))
     },
   })
 
@@ -126,8 +215,28 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     }
   }
 
+  const scheduledDeletionDate = user.accountDeletion?.scheduledFor
+    ? new Date(user.accountDeletion.scheduledFor).toLocaleString()
+    : null
+  const isDeletionScheduled = user.accountDeletion?.status === 'scheduled'
+  const isAccountActionPending =
+    deactivateAccountMutation.isPending ||
+    requestDeleteMutation.isPending ||
+    confirmDeleteMutation.isPending ||
+    requestUndoMutation.isPending ||
+    confirmUndoMutation.isPending
+
+  const requireAccountPassword = () => {
+    if (accountForm.password.trim().length < 8) {
+      toast.error(t('profile.account.passwordRequired', 'Enter your current password first.'))
+      return false
+    }
+
+    return true
+  }
+
   return (
-    <motion.section variants={variants} className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+    <motion.section variants={variants} className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <form
         className="grid gap-4 rounded-3xl border border-(--border) bg-(--surface) p-5 sm:p-6"
         onSubmit={(event) => {
@@ -319,6 +428,178 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
           isSubmitting={passwordMutation.isPending}
         />
       </form>
+
+      <section className="grid gap-5 rounded-3xl border border-[rgba(226,33,52,0.35)] bg-(--surface) p-5 sm:p-6 xl:col-span-2">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--error)">
+              {t('profile.account.overline', 'Account control')}
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-(--text-h)">
+              {t('profile.account.title', 'Deactivate or delete account')}
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-(--text)">
+              {isDeletionScheduled
+                ? t('profile.account.scheduledText', {
+                    date: scheduledDeletionDate,
+                    defaultValue: `Deletion is scheduled for ${scheduledDeletionDate}. You can undo it before that date with an email code.`,
+                  })
+                : t('profile.account.subtitle', 'Deactivate pauses your account until your next password login. Delete requires an email code and stays undoable for 7 days.')}
+            </p>
+          </div>
+          <span className="grid size-11 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
+            <HugeiconsIcon icon={Alert02Icon} size={22} />
+          </span>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
+            <FormInput
+              label={t('profile.account.currentPassword', 'Current password')}
+              value={accountForm.password}
+              onChange={(event) => setAccountForm((current) => ({ ...current, password: event.target.value }))}
+              type={showAccountPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              rightAdornment={
+                <PasswordVisibilityToggle
+                  visible={showAccountPassword}
+                  onToggle={() => setShowAccountPassword((current) => !current)}
+                  showLabel={t('passwordToggle.show')}
+                  hideLabel={t('passwordToggle.hide')}
+                />
+              }
+              className="pr-11"
+            />
+            <label className="grid gap-2 text-sm font-semibold text-(--text-h)">
+              {t('profile.account.reason', 'Reason')}
+              <textarea
+                value={accountForm.reason}
+                maxLength={500}
+                rows={4}
+                onChange={(event) => setAccountForm((current) => ({ ...current, reason: event.target.value }))}
+                placeholder={t('profile.account.reasonPlaceholder', 'Optional, max 500 characters')}
+                className="min-h-28 resize-y rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none transition focus:border-(--accent-border)"
+              />
+              <span className="text-xs font-medium text-(--text)">{accountForm.reason.length}/500</span>
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={isAccountActionPending || isDeletionScheduled}
+                onClick={() => {
+                  if (!requireAccountPassword()) return
+                  deactivateAccountMutation.mutate({
+                    password: accountForm.password,
+                    reason: accountForm.reason.trim() || undefined,
+                  })
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-squircle border border-(--border) px-4 py-3 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2) disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <HugeiconsIcon icon={Login03Icon} size={16} />
+                {t('profile.account.deactivate', 'Deactivate account')}
+              </button>
+              <button
+                type="button"
+                disabled={isAccountActionPending || isDeletionScheduled}
+                onClick={() => {
+                  if (!requireAccountPassword()) return
+                  requestDeleteMutation.mutate({
+                    password: accountForm.password,
+                    reason: accountForm.reason.trim() || undefined,
+                  })
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.45)] bg-[rgba(226,33,52,0.08)] px-4 py-3 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <HugeiconsIcon icon={Delete02Icon} size={16} />
+                {t('profile.account.sendDeleteCode', 'Send delete code')}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
+            {isDeletionScheduled ? (
+              <>
+                <div className="rounded-2xl border border-(--accent-border) bg-(--accent-bg) p-4">
+                  <h3 className="font-semibold text-(--text-h)">
+                    {t('profile.account.undoTitle', 'Undo scheduled deletion')}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-(--text)">
+                    {t('profile.account.undoSubtitle', 'Use your current password to send an undo code, then confirm the code from your email.')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={isAccountActionPending}
+                  onClick={() => {
+                    if (!requireAccountPassword()) return
+                    requestUndoMutation.mutate({
+                      identifier: user.email,
+                      password: accountForm.password,
+                    })
+                  }}
+                  className="rounded-squircle border border-(--accent-border) px-4 py-3 text-sm font-semibold text-(--text-h) transition hover:bg-(--accent-bg) disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {t('profile.account.sendUndoCode', 'Send undo code')}
+                </button>
+                {isUndoCodeSent ? (
+                  <div className="grid gap-3">
+                    <FormInput
+                      label={t('profile.account.undoCode', 'Undo code')}
+                      value={accountForm.undoCode}
+                      onChange={(event) => setAccountForm((current) => ({ ...current, undoCode: event.target.value.toUpperCase() }))}
+                      maxLength={8}
+                      autoComplete="one-time-code"
+                    />
+                    <button
+                      type="button"
+                      disabled={confirmUndoMutation.isPending || !/^[A-Z0-9]{8}$/.test(accountForm.undoCode)}
+                      onClick={() => confirmUndoMutation.mutate({ code: accountForm.undoCode })}
+                      className="rounded-squircle bg-(--gd-primary) px-4 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {t('profile.account.confirmUndo', 'Cancel scheduled deletion')}
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <div className="rounded-2xl border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] p-4">
+                  <h3 className="font-semibold text-(--text-h)">
+                    {t('profile.account.confirmDeleteTitle', 'Confirm delete with email code')}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-(--text)">
+                    {t('profile.account.confirmDeleteSubtitle', 'After confirmation, deletion is scheduled 7 days later. You can undo it before the deadline.')}
+                  </p>
+                </div>
+                {isDeleteCodeSent ? (
+                  <div className="grid gap-3">
+                    <FormInput
+                      label={t('profile.account.deleteCode', 'Delete code')}
+                      value={accountForm.deleteCode}
+                      onChange={(event) => setAccountForm((current) => ({ ...current, deleteCode: event.target.value.toUpperCase() }))}
+                      maxLength={8}
+                      autoComplete="one-time-code"
+                    />
+                    <button
+                      type="button"
+                      disabled={confirmDeleteMutation.isPending || !/^[A-Z0-9]{8}$/.test(accountForm.deleteCode)}
+                      onClick={() => confirmDeleteMutation.mutate({ code: accountForm.deleteCode })}
+                      className="inline-flex items-center justify-center gap-2 rounded-squircle bg-(--error) px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} size={16} />
+                      {t('profile.account.confirmDelete', 'Confirm delete account')}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="rounded-2xl border border-(--border) bg-(--surface-2) p-4 text-sm leading-6 text-(--text)">
+                    {t('profile.account.waitingForCode', 'Send a delete code first. The code expires after 15 minutes.')}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </section>
     </motion.section>
   )
 }

@@ -202,11 +202,26 @@ type AvatarUpdateInput = {
   avatarImage: string
 }
 
+type AccountPasswordActionInput = {
+  password: string
+  reason?: string
+}
+
+type AccountCodeInput = {
+  code: string
+}
+
+type AccountDeleteUndoRequestInput = {
+  identifier: string
+  password: string
+}
+
 type UserMutationResponse = {
   success?: boolean
   message?: string
   user?: AuthUser
   data?: unknown
+  scheduledFor?: string | number | null
   errors?: Array<{ field?: string; message?: string }>
 }
 
@@ -345,4 +360,98 @@ export async function updateCurrentUserAvatar(input: AvatarUpdateInput) {
   }
 
   return data.user
+}
+
+export async function deactivateCurrentUserAccount(input: AccountPasswordActionInput) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    '/auth/account/deactivate',
+    emptyMutationResponse,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      authRetry: false,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not deactivate account.'))
+  }
+
+  return data
+}
+
+export async function requestCurrentUserAccountDeletion(input: AccountPasswordActionInput) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    '/auth/account/delete/request',
+    emptyMutationResponse,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not start account deletion.'))
+  }
+
+  return data
+}
+
+export async function confirmCurrentUserAccountDeletion(input: AccountCodeInput) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    '/auth/account/delete/confirm',
+    emptyMutationResponse,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      authRetry: false,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not confirm account deletion.'))
+  }
+
+  return data
+}
+
+export async function requestAccountDeletionUndo(input: AccountDeleteUndoRequestInput) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    '/auth/account/delete/undo/request',
+    emptyMutationResponse,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      authRetry: false,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not request deletion undo.'))
+  }
+
+  return data
+}
+
+export async function confirmAccountDeletionUndo(input: AccountCodeInput) {
+  const { response, data } = await apiRequest<UserMutationResponse>(
+    '/auth/account/delete/undo/confirm',
+    emptyMutationResponse,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      authRetry: false,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(firstApiError(data, 'Could not undo account deletion.'))
+  }
+
+  return data
 }

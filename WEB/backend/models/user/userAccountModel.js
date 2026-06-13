@@ -89,6 +89,35 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [500, "Deactivation reason must be at most 500 characters"],
     },
+    accountDeletion: {
+      status: {
+        type: String,
+        enum: ["none", "pendingConfirmation", "scheduled"],
+        default: "none",
+        index: true,
+      },
+      requestedAt: Date,
+      confirmedAt: Date,
+      scheduledFor: {
+        type: Date,
+        index: true,
+      },
+      reason: {
+        type: String,
+        trim: true,
+        maxlength: [500, "Deletion reason must be at most 500 characters"],
+      },
+      verificationTokenHash: {
+        type: String,
+        select: false,
+      },
+      verificationTokenExpireAt: Date,
+      undoTokenHash: {
+        type: String,
+        select: false,
+      },
+      undoTokenExpireAt: Date,
+    },
     failedLoginAttempts: {
       type: Number,
       default: 0,

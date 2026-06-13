@@ -8,6 +8,7 @@ import {
   CheckmarkCircle01Icon,
   CrownIcon,
   Delete02Icon,
+  StarHalfIcon,
   UserAccountIcon,
   UserEdit01Icon,
 } from '@hugeicons/core-free-icons';
@@ -170,7 +171,7 @@ export default function AdminUsersPage() {
   ]
   const subscriptionOptions = [
     { value: '', label: t('adminUi.users.filters.allPlans') },
-    { value: 'free', label: t('adminUi.users.subscription.free'), icon: CheckmarkCircle01Icon },
+    { value: 'free', label: t('adminUi.users.subscription.free'), icon: StarHalfIcon },
     { value: 'pro', label: t('adminUi.users.subscription.pro'), icon: CrownIcon },
   ]
 

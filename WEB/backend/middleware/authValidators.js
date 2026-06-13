@@ -244,6 +244,81 @@ const updatePasswordSchema = z.object({
   params: z.object({}).passthrough(),
 });
 
+const accountReasonSchema = z
+  .string()
+  .trim()
+  .max(500, "Reason must be at most 500 characters.")
+  .optional()
+  .transform((value) => value || undefined);
+
+const accountPasswordActionSchema = z.object({
+  body: z
+    .object({
+      password: z
+        .string({ error: "Password is required." })
+        .min(8, "Password must be at least 8 characters."),
+      reason: accountReasonSchema,
+    })
+    .strict(),
+  params: z.object({}).passthrough(),
+});
+
+const accountDeleteCodeSchema = z.object({
+  body: z
+    .object({
+      code: z
+        .string({ error: "Verification code is required." })
+        .trim()
+        .regex(/^[A-Za-z0-9]{8}$/, "Verification code must be 8 letters/numbers.")
+        .transform((value) => value.toUpperCase()),
+    })
+    .strict(),
+  params: z.object({}).passthrough(),
+});
+
+const accountDeleteUndoRequestSchema = z.object({
+  body: z.object({
+    identifier: z.string().trim().optional(),
+    email: z.string().trim().optional(),
+    username: z.string().trim().optional(),
+    password: z
+      .string({ error: "Please enter your password." })
+      .min(8, "Password must be at least 8 characters."),
+  }),
+  params: z.object({}).passthrough(),
+}).superRefine((data, ctx) => {
+  const identifier = data.body.identifier || data.body.email || data.body.username;
+
+  if (!identifier) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["body", "identifier"],
+      message: "Please enter your email address or username.",
+    });
+    return;
+  }
+
+  if (!String(identifier).includes("@")) {
+    const usernameMessage = getUsernameValidationMessage(identifier);
+
+    if (usernameMessage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["body", "identifier"],
+        message: usernameMessage,
+      });
+    }
+  }
+}).transform(({ body, params }) => ({
+  body: {
+    identifier: String(body.identifier || body.email || body.username || "")
+      .trim()
+      .toLowerCase(),
+    password: body.password,
+  },
+  params,
+}));
+
 const avatarUpdateSchema = z.object({
   body: z.object({
     avatarImage: imageDataUriSchema,
@@ -375,3 +450,9 @@ export const updatePasswordValidation = validateRequest(updatePasswordSchema);
 export const avatarUpdateValidation = validateRequest(avatarUpdateSchema);
 
 export const preferencesUpdateValidation = validateRequest(preferencesUpdateSchema);
+
+export const accountPasswordActionValidation = validateRequest(accountPasswordActionSchema);
+
+export const accountDeleteCodeValidation = validateRequest(accountDeleteCodeSchema);
+
+export const accountDeleteUndoRequestValidation = validateRequest(accountDeleteUndoRequestSchema);

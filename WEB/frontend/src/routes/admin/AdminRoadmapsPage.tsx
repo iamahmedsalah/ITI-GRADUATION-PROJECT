@@ -4,7 +4,13 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { AiMagicIcon, Cancel02Icon, UserAccountIcon, UserEdit01Icon, UserSettings01Icon } from '@hugeicons/core-free-icons'
+import {
+  AiMagicIcon,
+  Delete02Icon,
+  UserAccountIcon,
+  UserEdit01Icon,
+  UserSettings01Icon,
+} from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
 import { createPageVariants } from '../../libs/motionVariants'
 import {
@@ -288,7 +294,7 @@ export default function AdminRoadmapsPage() {
               }}
               className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.4)] bg-[rgba(226,33,52,0.08)] px-4 py-2 text-sm font-semibold text-(--error)"
             >
-              <HugeiconsIcon icon={Cancel02Icon} size={16} />
+              <HugeiconsIcon icon={Delete02Icon} size={16} />
               {t('adminUi.common.deleteSelected', { count: selectedIds.length })}
             </button>
           ) : null}
@@ -407,7 +413,7 @@ export default function AdminRoadmapsPage() {
                       })
                     }}
                   >
-                    <HugeiconsIcon icon={Cancel02Icon} size={14} />
+                    <HugeiconsIcon icon={Delete02Icon} size={14} />
                     {t('adminUi.roadmaps.actions.delete')}
                   </button>
                 </div>
@@ -520,7 +526,7 @@ export default function AdminRoadmapsPage() {
                           })
                         }}
                       >
-                        <HugeiconsIcon icon={Cancel02Icon} size={14} />
+                        <HugeiconsIcon icon={Delete02Icon} size={14} />
                         {t('adminUi.roadmaps.actions.delete')}
                       </button>
                     </div>

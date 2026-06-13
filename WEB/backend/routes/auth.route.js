@@ -18,6 +18,9 @@ import {
   updatePasswordValidation,
   avatarUpdateValidation,
   preferencesUpdateValidation,
+  accountPasswordActionValidation,
+  accountDeleteCodeValidation,
+  accountDeleteUndoRequestValidation,
 } from "../middleware/authValidators.js";
 import {
   signup,
@@ -37,6 +40,11 @@ import {
   updatePassword,
   updateAvatar,
   updatePreferences,
+  deactivateCurrentAccount,
+  requestAccountDeletion,
+  confirmAccountDeletion,
+  requestAccountDeletionUndo,
+  confirmAccountDeletionUndo,
   startSocialAuth,
   handleSocialAuthCallback,
 } from "../services/users.service.js";
@@ -230,6 +238,17 @@ router.get("/oauth/google/callback", handleSocialAuthCallback("google"));
  *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
+router.post(
+  "/account/delete/undo/request",
+  loginLimiter,
+  accountDeleteUndoRequestValidation,
+  requestAccountDeletionUndo,
+);
+router.post(
+  "/account/delete/undo/confirm",
+  accountDeleteCodeValidation,
+  confirmAccountDeletionUndo,
+);
 
 // PROTECTED ROUTES (Requires authentication)
 /**
@@ -259,5 +278,8 @@ router.delete("/activities/:activityId", protect, deleteUserActivity);
 router.patch("/profile", protect, profileUpdateValidation, updateProfile);
 router.patch("/profile/avatar", protect, avatarUpdateValidation, updateAvatar);
 router.patch("/password", protect, updatePasswordValidation, updatePassword);
+router.post("/account/deactivate", protect, accountPasswordActionValidation, deactivateCurrentAccount);
+router.post("/account/delete/request", protect, accountPasswordActionValidation, requestAccountDeletion);
+router.post("/account/delete/confirm", protect, accountDeleteCodeValidation, confirmAccountDeletion);
 
 export default router;

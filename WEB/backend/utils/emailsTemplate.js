@@ -501,6 +501,115 @@ export const PASSWORD_RESET_SUCCESS_TEMPLATE = `
 </html>
 `;
 
+export const ACCOUNT_DELETION_CODE_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Confirm your ILMA account deletion</title>
+  ${EMAIL_STYLE}
+</head>
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
+          <tr>
+            <td class="email-header">
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
+              <h1 class="email-title">Confirm account deletion</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="email-content">
+              <p class="lead">Hello {name},</p>
+              <p>We received a request to delete your ILMA account: <strong>{email}</strong>.</p>
+              <p>Use the verification code below to confirm this action.</p>
+              <div class="email-panel">
+                <div class="token-box">{verificationCode}</div>
+              </div>
+              <div class="info-card">
+                <p>After confirmation, deletion is scheduled for <strong>{scheduledFor}</strong>.</p>
+                <p>You can still undo the deletion before that date.</p>
+              </div>
+              <p>If this was not you, do not enter this code. Change your password and contact support.</p>
+              <p>Best regards,<br />ILMA Security Team</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+              <p>This is an automated security message from ILMA.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+export const ACCOUNT_DELETION_UNDO_CODE_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Undo your ILMA account deletion</title>
+  ${EMAIL_STYLE}
+</head>
+<body class="email-body ${EMAIL_THEME_CLASS}">
+  <table width="100%" cellpadding="0" cellspacing="0" class="email-body ${EMAIL_THEME_CLASS}">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" class="email-card">
+          <tr>
+            <td class="email-header">
+              <a href="${LOGO_LINK}" class="logo-link" target="_blank" rel="noopener">
+                <img src="${LOGO_URL}" alt="ILMA logo" class="logo" />
+              </a>
+              <h1 class="email-title">Undo account deletion</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="email-content">
+              <p class="lead">Hello {name},</p>
+              <p>We received a request to cancel the scheduled deletion for your ILMA account: <strong>{email}</strong>.</p>
+              <p>Use the verification code below to undo the deletion.</p>
+              <div class="email-panel">
+                <div class="token-box">{verificationCode}</div>
+              </div>
+              <div class="info-card">
+                <p>Entering this code will cancel the scheduled deletion and keep your account active.</p>
+              </div>
+              <p>If this was not you, you can safely ignore this email.</p>
+              <p>Best regards,<br />ILMA Security Team</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+              <p>This is an automated security message from ILMA.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 export const CONTACT_EMAIL_TEMPLATE = `
 <!DOCTYPE html>
 <html lang="en">
@@ -619,6 +728,8 @@ export default {
   WELCOME_EMAIL_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   PASSWORD_RESET_REQUEST_TEMPLATE,
+  ACCOUNT_DELETION_CODE_TEMPLATE,
+  ACCOUNT_DELETION_UNDO_CODE_TEMPLATE,
   CONTACT_EMAIL_TEMPLATE,
   CONTACT_REPLY_EMAIL_TEMPLATE,
 };

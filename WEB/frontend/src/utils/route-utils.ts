@@ -33,6 +33,11 @@ export type AuthUser = {
     status: 'inactive' | 'active' | 'trialing' | 'pastDue' | 'canceled'
     currentPeriodEnd?: string | number | null
   }
+  accountDeletion?: {
+    status: 'none' | 'pendingConfirmation' | 'scheduled'
+    requestedAt?: string | number | null
+    scheduledFor?: string | number | null
+  }
   hasPreferences?: boolean
 }
 

@@ -5,6 +5,8 @@ import {
   PASSWORD_RESET_REQUEST_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   CONTACT_REPLY_EMAIL_TEMPLATE,
+  ACCOUNT_DELETION_CODE_TEMPLATE,
+  ACCOUNT_DELETION_UNDO_CODE_TEMPLATE,
 } from "../utils/emailsTemplate.js";
 import logger from "../utils/logger.js";
 
@@ -314,5 +316,107 @@ ILMA Support Team`;
     });
 
     throw new Error(`Error sending contact reply email: ${error.message}`);
+  }
+};
+
+export const sendAccountDeletionCodeEmail = async ({ email, name, code, scheduledFor }) => {
+  try {
+    verifyTransporterState();
+
+    const deleteDate = scheduledFor ? new Date(scheduledFor).toLocaleString() : "7 days after confirmation";
+    const formattedHtml = ACCOUNT_DELETION_CODE_TEMPLATE
+      .replace("{verificationCode}", code)
+      .replace("{name}", name)
+      .replace("{email}", email)
+      .replace("{scheduledFor}", deleteDate);
+    const text = `Hello ${name},
+
+We received a request to delete your ILMA account.
+
+Verification code: ${code}
+
+Enter this code in ILMA to confirm account deletion. After confirmation, deletion is scheduled for ${deleteDate}.
+
+If this was not you, change your password and contact support.
+
+ILMA Security Team`;
+
+    const res = await transporter.sendMail({
+      from: `"ILMA Security" <${sender}>`,
+      to: email,
+      replyTo: sender,
+      subject: "Confirm your ILMA account deletion",
+      text,
+      html: formattedHtml,
+      headers: {
+        ...baseHeaders,
+        "X-Category": "Account Deletion Verification",
+      },
+    });
+
+    logger.info("Account deletion verification email sent successfully", {
+      messageId: res.messageId,
+      recipient: email,
+    });
+
+    return res;
+  } catch (error) {
+    logger.error("Error executing sendAccountDeletionCodeEmail", {
+      recipient: email,
+      errorMessage: error.message,
+      stack: error.stack,
+    });
+
+    throw new Error(`Error sending account deletion email: ${error.message}`);
+  }
+};
+
+export const sendAccountDeletionUndoCodeEmail = async ({ email, name, code }) => {
+  try {
+    verifyTransporterState();
+
+    const formattedHtml = ACCOUNT_DELETION_UNDO_CODE_TEMPLATE
+      .replace("{verificationCode}", code)
+      .replace("{name}", name)
+      .replace("{email}", email);
+    const text = `Hello ${name},
+
+We received a request to undo your ILMA account deletion.
+
+Verification code: ${code}
+
+Enter this code in ILMA to cancel the scheduled deletion and reactivate your account.
+
+If this was not you, you can ignore this email.
+
+ILMA Security Team`;
+
+    const res = await transporter.sendMail({
+      from: `"ILMA Security" <${sender}>`,
+      to: email,
+      replyTo: sender,
+      subject: "Undo your ILMA account deletion",
+      text,
+      html: formattedHtml,
+      headers: {
+        ...baseHeaders,
+        "X-Category": "Account Deletion Undo",
+      },
+    });
+
+    logger.info("Account deletion undo email sent successfully", {
+      messageId: res.messageId,
+      recipient: email,
+    });
+
+    return res;
+  } catch (error) {
+    logger.error("Error executing sendAccountDeletionUndoCodeEmail", {
+      recipient: email,
+      errorMessage: error.message,
+      stack: error.stack,
+    });
+
+    throw new Error(`Error sending account deletion undo email: ${error.message}`);
   }
 };
