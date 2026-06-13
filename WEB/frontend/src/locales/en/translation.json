@@ -505,6 +505,27 @@
       "coursesHint": "{{count}} completed course(s).",
       "time": "Learning time",
       "timeHint": "Average roadmap progress: {{count}}%."
+    },
+    "constellation": {
+      "overline": "Learning constellation",
+      "emptyTitle": "Your learning map",
+      "emptyDetail": "No learning nodes yet",
+      "selectedProgress": "Selected progress",
+      "legend": {
+        "starred": "Starred",
+        "roadmaps": "Roadmaps",
+        "courses": "Courses",
+        "ai": "AI"
+      },
+      "fallbacks": {
+        "starredRoadmap": "Starred roadmap",
+        "readyToStart": "Ready to start",
+        "roadmap": "Roadmap",
+        "inProgress": "In progress",
+        "course": "Course",
+        "aiRecommendation": "AI recommendation",
+        "match": "match"
+      }
     }
   },
   "auth": {

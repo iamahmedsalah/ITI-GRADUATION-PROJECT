@@ -22,10 +22,10 @@
     "logout": "تسجيل الخروج",
     "openMenu": "فتح قائمة التنقل",
     "closeMenu": "إغلاق قائمة التنقل",
-    "courses": "Courses",
-    "aiRoadmapBuilder": "AI roadmap builder",
-    "aiChatbot": "AI Chatbot",
-    "upgrade": "Upgrade"
+    "courses": "الدورات",
+    "aiRoadmapBuilder": "منشئ خرائط الطريق بالذكاء الاصطناعي",
+    "aiChatbot": "محادثة الذكاء الاصطناعي",
+    "upgrade": "ترقية"
   },
   "layout": {
     "footerDescription": "منصة تعلم محلية تدعم العربية والإنجليزية مع تبديل اللغة والوضع وتخطيط موحد.",
@@ -296,39 +296,39 @@
     }
   },
   "aiRoadmap": {
-    "overline": "AI roadmap builder",
-    "title": "Create your roadmap with AI",
-    "promptLabel": "Learning goal",
-    "promptPlaceholder": "Example: Become a React frontend developer in 8 weeks",
-    "level": "Level",
-    "durationWeeks": "Weeks",
-    "weeklyHours": "Hours / week",
-    "generate": "Generate roadmap",
-    "generating": "Generating...",
-    "generated": "AI roadmap generated.",
-    "generateFailed": "Could not generate AI roadmap.",
-    "generatedRoadmap": "Generated roadmap",
-    "save": "Save roadmap",
-    "saving": "Saving...",
-    "saved": "AI roadmap saved to your account.",
-    "saveFailed": "Could not save AI roadmap.",
-    "planTitle": "AI plan",
-    "freePlan": "Free users can generate 3 AI roadmaps each month.",
-    "proPlan": "Pro plan active. Saving roadmaps and topic explanations are enabled.",
-    "draftsLeft": "{{count}} of {{limit}} AI roadmap(s) left this month.",
-    "limitReached": "Your monthly AI roadmap limit is used. Upgrade to keep generating.",
-    "topicLabel": "Selected topic",
-    "explainTopic": "Explain topic",
-    "explaining": "Explaining...",
-    "explainFailed": "Could not explain this topic.",
-    "proOnly": "Pro only",
-    "keyPoints": "Key points",
-    "practice": "Practice",
-    "commonMistakes": "Common mistakes",
-    "guestPlan": "Preview the AI builder, then sign in to generate a roadmap.",
-    "loginRequiredTitle": "Log in to start",
-    "loginRequiredText": "Create or sign in to your account before generating an AI roadmap.",
-    "cancel": "Cancel"
+    "overline": "منشئ خرائط الطريق بالذكاء الاصطناعي",
+    "title": "أنشئ خريطة طريقك بالذكاء الاصطناعي",
+    "promptLabel": "هدف التعلم",
+    "promptPlaceholder": "مثال: أصبح مطور React Frontend خلال 8 أسابيع",
+    "level": "المستوى",
+    "durationWeeks": "الأسابيع",
+    "weeklyHours": "ساعات / أسبوع",
+    "generate": "إنشاء خريطة طريق",
+    "generating": "جار الإنشاء...",
+    "generated": "تم إنشاء خريطة الطريق بالذكاء الاصطناعي.",
+    "generateFailed": "تعذر إنشاء خريطة الطريق بالذكاء الاصطناعي.",
+    "generatedRoadmap": "خريطة الطريق المنشأة",
+    "save": "حفظ خريطة الطريق",
+    "saving": "جار الحفظ...",
+    "saved": "تم حفظ خريطة الطريق في حسابك.",
+    "saveFailed": "تعذر حفظ خريطة الطريق.",
+    "planTitle": "خطة الذكاء الاصطناعي",
+    "freePlan": "يمكن لمستخدمي الخطة المجانية إنشاء 3 خرائط طريق بالذكاء الاصطناعي كل شهر.",
+    "proPlan": "خطة برو مفعلة. الحفظ وشرح الموضوعات متاحان.",
+    "draftsLeft": "تبقى {{count}} من أصل {{limit}} خريطة طريق بالذكاء الاصطناعي هذا الشهر.",
+    "limitReached": "استخدمت حد خرائط الطريق الشهري. قم بالترقية لمتابعة الإنشاء.",
+    "topicLabel": "الموضوع المحدد",
+    "explainTopic": "شرح الموضوع",
+    "explaining": "جار الشرح...",
+    "explainFailed": "تعذر شرح هذا الموضوع.",
+    "proOnly": "لبرو فقط",
+    "keyPoints": "النقاط الرئيسية",
+    "practice": "تدريب",
+    "commonMistakes": "الأخطاء الشائعة",
+    "guestPlan": "عاين منشئ الذكاء الاصطناعي، ثم سجل الدخول لإنشاء خريطة طريق.",
+    "loginRequiredTitle": "سجل الدخول للبدء",
+    "loginRequiredText": "أنشئ حسابًا أو سجل الدخول قبل إنشاء خريطة طريق بالذكاء الاصطناعي.",
+    "cancel": "إلغاء"
   },
   "roadmapDetail": {
     "backToRoadmaps": "العودة إلى كل خرائط الطريق",
@@ -470,13 +470,34 @@
     },
     "activity": {
       "title": "نشاط التعلم",
+      "subtitle": "تابع نشاط خرائط الطريق والدورات والذكاء الاصطناعي وتسجيل الدخول.",
       "empty": "سيظهر نشاط التعلم هنا بعد بدء تتبع خرائط الطريق أو الدورات.",
       "started": "بدأت {{count}} موضوع في {{roadmap}}",
       "completed": "أكملت {{count}} موضوع في {{roadmap}}",
       "enrolled": "بدأت تعلم {{course}}",
       "courseCompleted": "أكملت {{course}}",
+      "aiDraft": "تم إنشاء مسودة خريطة طريق بالذكاء الاصطناعي",
+      "aiSave": "تم حفظ خريطة طريق من الذكاء الاصطناعي",
+      "aiExplain": "تم طلب شرح موضوع من الذكاء الاصطناعي",
       "login": "تم تسجيل الدخول إلى إلما",
-      "updated": "تم تحديث تقدم التعلم"
+      "updated": "تم تحديث تقدم التعلم",
+      "delete": "حذف النشاط",
+      "deleted": "تم حذف النشاط.",
+      "deleteFailed": "تعذر حذف النشاط.",
+      "loadMore": "عرض {{count}} نشاط آخر",
+      "filters": {
+        "all": "كل النشاط",
+        "today": "اليوم",
+        "week": "آخر 7 أيام",
+        "month": "آخر 30 يومًا",
+        "older": "الأقدم"
+      },
+      "metrics": {
+        "total": "الإجمالي",
+        "roadmaps": "خرائط الطريق",
+        "courses": "الدورات",
+        "ai": "الذكاء الاصطناعي"
+      }
     },
     "metrics": {
       "streak": "سلسلة الدخول",
@@ -488,23 +509,84 @@
       "time": "وقت التعلم",
       "timeHint": "متوسط تقدم خرائط الطريق: {{count}}٪."
     },
+    "constellation": {
+      "overline": "كوكبة التعلم",
+      "emptyTitle": "خريطة تعلمك",
+      "emptyDetail": "لا توجد عناصر تعلم بعد",
+      "selectedProgress": "تقدم العنصر المحدد",
+      "legend": {
+        "starred": "المحفوظة",
+        "roadmaps": "خرائط الطريق",
+        "courses": "الدورات",
+        "ai": "الذكاء الاصطناعي"
+      },
+      "fallbacks": {
+        "starredRoadmap": "خريطة محفوظة",
+        "readyToStart": "جاهزة للبدء",
+        "roadmap": "خريطة طريق",
+        "inProgress": "قيد التقدم",
+        "course": "دورة",
+        "aiRecommendation": "توصية ذكاء اصطناعي",
+        "match": "تطابق"
+      }
+    },
     "roadmaps": {
-      "overline": "Your learning paths",
-      "title": "My roadmaps",
-      "viewAll": "View all",
-      "openActions": "Open roadmap actions",
-      "open": "Open",
-      "delete": "Delete",
-      "deleting": "Deleting...",
-      "deleted": "Roadmap deleted.",
-      "deleteFailed": "Could not delete roadmap.",
-      "deleteSelected": "Delete selected ({{count}})",
-      "search": "Search your roadmaps",
-      "allStatuses": "All statuses",
-      "tableRoadmap": "Roadmap",
-      "tableStatus": "Status",
-      "tableProgress": "Progress",
-      "tableActions": "Actions"
+      "overline": "مسارات التعلم الخاصة بك",
+      "title": "خرائط الطريق الخاصة بي",
+      "viewAll": "عرض الكل",
+      "openActions": "فتح إجراءات خريطة الطريق",
+      "open": "فتح",
+      "delete": "حذف",
+      "deleting": "جار الحذف...",
+      "deleted": "تم حذف خريطة الطريق.",
+      "deleteFailed": "تعذر حذف خريطة الطريق.",
+      "deleteSelected": "حذف المحدد ({{count}})",
+      "search": "ابحث في خرائطك",
+      "allStatuses": "كل الحالات",
+      "allTypes": "كل الأنواع",
+      "starred": "محفوظة",
+      "unstar": "إزالة الحفظ",
+      "confirmDeleteTitle": "حذف خرائط الطريق المحددة؟",
+      "confirmDeleteText": "أنت على وشك حذف {{count}} خريطة طريق. لا يمكن التراجع عن هذا الإجراء.",
+      "confirmDeleteSingleText": "ستتم إزالة خريطة الطريق هذه من قائمة التعلم الخاصة بك.",
+      "confirmUnstarTitle": "إزالة خريطة الطريق المحفوظة؟",
+      "confirmUnstarText": "ستتم إزالة خريطة الطريق هذه من خرائطك المحفوظة.",
+      "tableRoadmap": "خريطة الطريق",
+      "tableType": "النوع",
+      "tableStatus": "الحالة",
+      "tableProgress": "التقدم",
+      "tableActions": "الإجراءات"
+    },
+    "savedRoadmaps": {
+      "title": "خرائط الطريق المحفوظة",
+      "subtitle": "خرائط حفظتها في ملفك وجاهزة للبدء.",
+      "viewAll": "عرض الكل"
+    },
+    "preferences": {
+      "title": "التفضيلات",
+      "subtitleReady": "تستخدم التوصيات اهتماماتك وأهدافك ومستواك وجدولك الأسبوعي المحفوظ.",
+      "subtitleSetup": "أجب عن بعض أسئلة الإعداد لتناسب خرائط الطريق والدورات واقتراحات الذكاء الاصطناعي خطة تعلمك.",
+      "notSet": "غير محدد",
+      "hours": "{{count}} ساعة / أسبوع",
+      "emptyItem": "اختر الموضوعات التي تريد تعلمها",
+      "emptyLevel": "حدد مستواك ودرجة الصعوبة",
+      "emptySchedule": "اختر وتيرة التعلم",
+      "start": "ضبط التفضيلات",
+      "update": "تحديث التفضيلات",
+      "items": {
+        "interests": "الاهتمامات",
+        "goals": "أهداف التعلم",
+        "level": "المستوى الحالي",
+        "schedule": "وقت الدراسة الأسبوعي"
+      }
+    },
+    "subscription": {
+      "title": "الاشتراك",
+      "pro": "خطة برو",
+      "free": "الخطة المجانية",
+      "status": "الحالة",
+      "renewsAt": "تنتهي الفترة الحالية",
+      "upgrade": "الترقية إلى برو"
     }
   },
   "auth": {
@@ -591,7 +673,7 @@
       "selectAll": "تحديد الكل",
       "deleteSelected": "حذف المحدد ({{count}})",
       "bulkDeleteConfirm": "حذف {{count}} عنصر محدد؟",
-      "loading": "Loading..."
+      "loading": "جار التحميل..."
     },
     "roles": {
       "student": "طالب",
@@ -697,7 +779,7 @@
         "allRoles": "كل الأدوار",
         "allVerification": "كل حالات التحقق",
         "allStatus": "كل الحالات",
-        "allPlans": "All plans"
+        "allPlans": "كل الخطط"
       },
       "table": {
         "user": "المستخدم",
@@ -705,7 +787,7 @@
         "status": "الحالة",
         "lastLogin": "آخر تسجيل دخول",
         "actions": "الإجراءات",
-        "subscription": "Subscription"
+        "subscription": "الاشتراك"
       },
       "actions": {
         "saveRole": "حفظ الدور",
@@ -717,14 +799,14 @@
         "deactivateSelected": "تعطيل المحدد ({{count}})"
       },
       "subscription": {
-        "free": "Free",
-        "pro": "Pro"
+        "free": "مجاني",
+        "pro": "برو"
       },
       "detail": {
-        "title": "User details",
-        "profile": "Profile and preferences",
-        "roadmaps": "Roadmaps",
-        "courses": "Courses"
+        "title": "تفاصيل المستخدم",
+        "profile": "الملف الشخصي والتفضيلات",
+        "roadmaps": "خرائط الطريق",
+        "courses": "الدورات"
       }
     },
     "roadmaps": {
@@ -904,6 +986,7 @@
     "adminLogin": "دخول المدير",
     "forgotPassword": "نسيت كلمة المرور؟",
     "socialDivider": "أو سجل الدخول عبر",
+    "socialHint": "أو استخدم جوجل لتسجيل الدخول إذا أنشأت حسابك بهذه الطريقة.",
     "social": {
       "google": "تسجيل الدخول عبر جوجل"
     },

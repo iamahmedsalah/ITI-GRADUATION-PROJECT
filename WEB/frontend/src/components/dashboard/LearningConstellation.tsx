@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AiMagicIcon, CourseIcon, Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
 import * as THREE from 'three'
@@ -23,6 +24,16 @@ type ConstellationNode = {
   detail: string
 }
 
+type ConstellationLabels = {
+  starredRoadmap: string
+  readyToStart: string
+  roadmap: string
+  inProgress: string
+  course: string
+  aiRecommendation: string
+  match: string
+}
+
 const palette: Record<ConstellationNode['kind'], string> = {
   starred: '#f4c542',
   roadmap: '#4da3ff',
@@ -34,17 +45,17 @@ function buildNodes({
   roadmaps,
   courses,
   recommendations,
-}: LearningConstellationProps): ConstellationNode[] {
+}: LearningConstellationProps, labels: ConstellationLabels): ConstellationNode[] {
   const starred = roadmaps
     .filter((roadmap) => roadmap.status === 'assigned')
     .slice(0, 4)
     .map((roadmap) => ({
       id: `starred-${roadmap._id}`,
-      title: roadmap.template?.title ?? 'Starred roadmap',
+      title: roadmap.template?.title ?? labels.starredRoadmap,
       kind: 'starred' as const,
       progress: Math.round(roadmap.progressPercent ?? 0),
       radius: 1.8,
-      detail: roadmap.template?.targetLevel ?? 'Ready to start',
+      detail: roadmap.template?.targetLevel ?? labels.readyToStart,
     }))
 
   const activeRoadmaps = roadmaps
@@ -52,29 +63,29 @@ function buildNodes({
     .slice(0, 5)
     .map((roadmap) => ({
       id: `roadmap-${roadmap._id}`,
-      title: roadmap.template?.title ?? 'Roadmap',
+      title: roadmap.template?.title ?? labels.roadmap,
       kind: 'roadmap' as const,
       progress: Math.round(roadmap.progressPercent ?? 0),
       radius: 2.75,
-      detail: roadmap.status ?? 'In progress',
+      detail: roadmap.status ?? labels.inProgress,
     }))
 
   const activeCourses = courses.slice(0, 4).map((course) => ({
     id: `course-${course._id}`,
-    title: course.course?.title ?? 'Course',
+    title: course.course?.title ?? labels.course,
     kind: 'course' as const,
     progress: Math.round(course.progressPercent ?? 0),
     radius: 3.55,
-    detail: course.course?.category ?? course.status ?? 'Course',
+    detail: course.course?.category ?? course.status ?? labels.course,
   }))
 
   const aiNodes = recommendations?.recommendations.roadmaps.slice(0, 3).map((item) => ({
     id: `ai-${item.roadmap._id}`,
-    title: item.roadmap.title ?? 'AI recommendation',
+    title: item.roadmap.title ?? labels.aiRecommendation,
     kind: 'ai' as const,
     progress: item.matchScore,
     radius: 4.35,
-    detail: `${item.matchScore}% match`,
+    detail: `${item.matchScore}% ${labels.match}`,
   })) ?? []
 
   return [...starred, ...activeRoadmaps, ...activeCourses, ...aiNodes].slice(0, 16)
@@ -96,14 +107,30 @@ export default function LearningConstellation({
   courses,
   recommendations,
 }: LearningConstellationProps) {
+  const { t } = useTranslation()
   const mountRef = useRef<HTMLDivElement | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const selectedIdRef = useRef<string | null>(null)
   const hoveredIdRef = useRef<string | null>(null)
+  const labels = useMemo<ConstellationLabels>(() => ({
+    starredRoadmap: t('dashboard.constellation.fallbacks.starredRoadmap'),
+    readyToStart: t('dashboard.constellation.fallbacks.readyToStart'),
+    roadmap: t('dashboard.constellation.fallbacks.roadmap'),
+    inProgress: t('dashboard.constellation.fallbacks.inProgress'),
+    course: t('dashboard.constellation.fallbacks.course'),
+    aiRecommendation: t('dashboard.constellation.fallbacks.aiRecommendation'),
+    match: t('dashboard.constellation.fallbacks.match'),
+  }), [t])
+  const kindLabels = useMemo<Record<ConstellationNode['kind'], string>>(() => ({
+    starred: t('dashboard.constellation.legend.starred'),
+    roadmap: t('dashboard.constellation.legend.roadmaps'),
+    course: t('dashboard.constellation.legend.courses'),
+    ai: t('dashboard.constellation.legend.ai'),
+  }), [t])
   const nodes = useMemo(
-    () => buildNodes({ roadmaps, courses, recommendations }),
-    [courses, recommendations, roadmaps],
+    () => buildNodes({ roadmaps, courses, recommendations }, labels),
+    [courses, labels, recommendations, roadmaps],
   )
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? nodes[0]
   const hoveredNode = nodes.find((node) => node.id === hoveredId) ?? null
@@ -470,41 +497,41 @@ export default function LearningConstellation({
     label: string
     icon: typeof Route03Icon
   }> = [
-    { kind: 'starred', label: 'Starred', icon: StarIcon },
-    { kind: 'roadmap', label: 'Roadmaps', icon: Route03Icon },
-    { kind: 'course', label: 'Courses', icon: CourseIcon },
-    { kind: 'ai', label: 'AI', icon: AiMagicIcon },
+    { kind: 'starred', label: t('dashboard.constellation.legend.starred'), icon: StarIcon },
+    { kind: 'roadmap', label: t('dashboard.constellation.legend.roadmaps'), icon: Route03Icon },
+    { kind: 'course', label: t('dashboard.constellation.legend.courses'), icon: CourseIcon },
+    { kind: 'ai', label: t('dashboard.constellation.legend.ai'), icon: AiMagicIcon },
   ]
 
   return (
-    <section className="relative min-h-136 overflow-hidden rounded-none border-y border-(--border) bg-[#101311]">
+    <section className="relative min-h-[34rem] overflow-hidden rounded-none border-y border-[#1f3328] bg-[#07110c] text-white shadow-[inset_0_0_120px_rgba(29,185,84,0.12)]">
       <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
-      <div className="pointer-events-none absolute left-5 top-5 z-10 grid max-w-sm gap-3 rounded-2xl border border-(--border) bg-black/24 p-4 backdrop-blur-md sm:left-7 sm:top-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">Learning constellation</p>
+      <div className="pointer-events-none absolute left-5 top-5 z-10 grid max-w-sm gap-3 rounded-2xl border border-white/15 bg-black/45 p-4 text-white shadow-2xl shadow-black/30 backdrop-blur-md sm:left-7 sm:top-7">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1ed760]">{t('dashboard.constellation.overline')}</p>
         <div className="min-w-0">
-          <h2 className="truncate text-2xl font-semibold text-(--text-h)">
-            {previewNode?.title ?? 'Your learning map'}
+          <h2 className="truncate text-2xl font-semibold text-white">
+            {previewNode?.title ?? t('dashboard.constellation.emptyTitle')}
           </h2>
-          <p className="mt-1 text-sm capitalize text-(--text)">
-            {previewNode ? `${previewNode.kind} / ${previewNode.detail}` : 'No learning nodes yet'}
+          <p className="mt-1 text-sm capitalize text-white/70">
+            {previewNode ? `${kindLabels[previewNode.kind]} / ${previewNode.detail}` : t('dashboard.constellation.emptyDetail')}
           </p>
         </div>
         {selectedNode ? (
           <div className="grid gap-2">
-            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--text)">
-              <span>Selected progress</span>
-              <span className="text-(--text-h)">{progress}%</span>
+            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
+              <span>{t('dashboard.constellation.selectedProgress')}</span>
+              <span className="text-white">{progress}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-2 overflow-hidden rounded-full bg-white/15">
               <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-[linear-gradient(180deg,transparent,rgba(16,19,17,0.9))] px-5 py-5 sm:px-7">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-[linear-gradient(180deg,transparent,rgba(7,17,12,0.94))] px-5 py-5 sm:px-7">
         <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
           {legendItems.map((item) => (
-            <span key={item.kind} className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-black/24 px-3 py-1.5 text-(--text-h) backdrop-blur-md">
+            <span key={item.kind} className="inline-flex items-center gap-2 rounded-full border border-white/18 bg-black/40 px-3 py-1.5 text-white backdrop-blur-md">
               <HugeiconsIcon
                 icon={item.icon}
                 size={15}
