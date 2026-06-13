@@ -234,8 +234,8 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
         </span>
       </Link>
 
-      <span className="grid size-9 shrink-0 place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent)">
-        <HugeiconsIcon icon={StarIcon} size={17} />
+      <span data-starred="true" className="star-toggle-button grid size-9 shrink-0 place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent)">
+        <HugeiconsIcon icon={StarIcon} size={17} className="star-toggle-icon star-toggle-icon-active" />
       </span>
 
       <button
@@ -328,7 +328,7 @@ export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[
           to={`/${language}/my-roadmaps?status=assigned`}
           className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)"
         >
-          <HugeiconsIcon icon={StarIcon} size={18} className="text-(--accent)" />
+          <HugeiconsIcon icon={StarIcon} size={18} className="star-toggle-icon star-toggle-icon-active text-(--accent)" />
           {t('dashboard.savedRoadmaps.viewAll', 'View all')}
         </Link>
       </div>

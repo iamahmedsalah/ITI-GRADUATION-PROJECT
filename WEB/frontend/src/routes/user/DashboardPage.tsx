@@ -7,18 +7,37 @@ import { useLanguage } from '../../context/LanguageContext'
 import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
 import type { DashboardLoaderData } from '../../utils/route-utils'
 import { fetchAiRecommendations, fetchDashboardSummary } from '../../libs/user-api'
-import {
-  AiRecommendationsSection,
-  ContinueFollowingSection,
-  DashboardStat,
-  LearningActivitySection,
-  PreferencesPreviewSection,
-  SavedRoadmapsSection,
-  StreakCard,
-  SubscriptionSection
-} from '../../components/dashboard/DashboardSections'
 
 const LearningConstellation = lazy(() => import('../../components/dashboard/LearningConstellation'))
+const loadDashboardSections = () => import('../../components/dashboard/DashboardSections')
+const SavedRoadmapsSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.SavedRoadmapsSection })))
+const ContinueFollowingSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.ContinueFollowingSection })))
+const AiRecommendationsSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.AiRecommendationsSection })))
+const StreakCard = lazy(() => loadDashboardSections().then((module) => ({ default: module.StreakCard })))
+const SubscriptionSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.SubscriptionSection })))
+const PreferencesPreviewSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.PreferencesPreviewSection })))
+const LearningActivitySection = lazy(() => loadDashboardSections().then((module) => ({ default: module.LearningActivitySection })))
+
+function DashboardStat({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div className="grid min-h-32 place-items-center border-(--border) px-4 py-6 text-center md:border-r md:last:border-r-0">
+      <strong className="text-5xl font-semibold leading-none text-(--text-h)">{value}</strong>
+      <span className="mt-3 text-sm text-(--text)">{label}</span>
+    </div>
+  )
+}
+
+function SectionFallback({ className = 'min-h-40' }: { className?: string }) {
+  return (
+    <div className={`rounded-lg border border-(--border) bg-(--surface) p-5 ${className}`}>
+      <div className="h-4 w-36 rounded-full bg-(--surface-2)" />
+      <div className="mt-4 grid gap-3">
+        <div className="h-12 rounded-lg bg-(--surface-2)" />
+        <div className="h-12 rounded-lg bg-(--surface-2)" />
+      </div>
+    </div>
+  )
+}
 
 function DashboardPage() {
   const { language, direction } = useLanguage()
@@ -76,32 +95,46 @@ function DashboardPage() {
           <div className="grid gap-6">
             {savedRoadmaps.length ? (
               <motion.div variants={cardVariants}>
-                <SavedRoadmapsSection roadmaps={savedRoadmaps} />
+                <Suspense fallback={<SectionFallback />}>
+                  <SavedRoadmapsSection roadmaps={savedRoadmaps} />
+                </Suspense>
               </motion.div>
             ) : null}
             <motion.div variants={cardVariants}>
-              <ContinueFollowingSection roadmaps={continueRoadmaps} />
+              <Suspense fallback={<SectionFallback />}>
+                <ContinueFollowingSection roadmaps={continueRoadmaps} />
+              </Suspense>
             </motion.div>
             <motion.div variants={cardVariants}>
-              <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
+              <Suspense fallback={<SectionFallback className="min-h-56" />}>
+                <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
+              </Suspense>
             </motion.div>
           </div>
 
           <div className="grid gap-6">
             <motion.div variants={cardVariants}>
-              <StreakCard current={streak.current} longest={streak.longest} />
+              <Suspense fallback={<SectionFallback />}>
+                <StreakCard current={streak.current} longest={streak.longest} />
+              </Suspense>
             </motion.div>
             <motion.div variants={cardVariants}>
-              <SubscriptionSection subscription={user.subscription} />
+              <Suspense fallback={<SectionFallback />}>
+                <SubscriptionSection subscription={user.subscription} />
+              </Suspense>
             </motion.div>
             <motion.div variants={cardVariants}>
-              <PreferencesPreviewSection />
+              <Suspense fallback={<SectionFallback />}>
+                <PreferencesPreviewSection />
+              </Suspense>
             </motion.div>
           </div>
         </motion.div>
 
         <motion.div variants={cardVariants}>
-          <LearningActivitySection activities={summary?.activities ?? []} isLoading={summaryQuery.isLoading} />
+          <Suspense fallback={<SectionFallback className="min-h-72" />}>
+            <LearningActivitySection activities={summary?.activities ?? []} isLoading={summaryQuery.isLoading} />
+          </Suspense>
         </motion.div>
       </motion.section>
     </motion.main>

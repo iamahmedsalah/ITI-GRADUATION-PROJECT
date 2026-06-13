@@ -190,7 +190,11 @@ export default function MyRoadmapsPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <span className="grid size-9 place-items-center rounded-squircle bg-(--surface-2) text-(--accent)">
-                            <HugeiconsIcon icon={roadmap.status === 'assigned' ? StarIcon : Route03Icon} size={18} />
+                            <HugeiconsIcon
+                              icon={roadmap.status === 'assigned' ? StarIcon : Route03Icon}
+                              size={18}
+                              className={roadmap.status === 'assigned' ? 'star-toggle-icon star-toggle-icon-active' : undefined}
+                            />
                           </span>
                           <div className="min-w-0">
                             <Link

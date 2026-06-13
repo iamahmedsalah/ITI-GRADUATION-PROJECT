@@ -137,6 +137,28 @@ export default function LearningConstellation({
     root.scale.setScalar(1.12)
     scene.add(root)
 
+    const particles = new THREE.Points(
+      new THREE.BufferGeometry().setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(
+          Array.from({ length: 240 }, () => [
+            (Math.random() - 0.5) * 11,
+            (Math.random() - 0.5) * 4.5,
+            (Math.random() - 0.5) * 8,
+          ]).flat(),
+          3,
+        ),
+      ),
+      new THREE.PointsMaterial({
+        color: '#1db954',
+        size: 0.018,
+        transparent: true,
+        opacity: 0.42,
+        depthWrite: false,
+      }),
+    )
+    scene.add(particles)
+
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.4)
     scene.add(ambientLight)
     const pointLight = new THREE.PointLight(0x1db954, 18, 9)
@@ -156,6 +178,17 @@ export default function LearningConstellation({
     )
     root.add(coreGlow)
 
+    const pulseRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.06, 0.012, 10, 96),
+      new THREE.MeshBasicMaterial({
+        color: '#1db954',
+        transparent: true,
+        opacity: 0.52,
+      }),
+    )
+    pulseRing.rotation.x = Math.PI / 2
+    root.add(pulseRing)
+
     const logoCore = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: logoTexture,
@@ -166,6 +199,8 @@ export default function LearningConstellation({
     root.add(logoCore)
 
     const nodeMeshes: THREE.Mesh[] = []
+    const linkLines: THREE.Line[] = []
+    const sparkMeshes: THREE.Mesh[] = []
     const nodeCountsByRadius = new Map<number, number>()
     nodes.forEach((node) => {
       nodeCountsByRadius.set(node.radius, (nodeCountsByRadius.get(node.radius) ?? 0) + 1)
@@ -189,6 +224,7 @@ export default function LearningConstellation({
       const indexOnRing = nodeIndexByRadius.get(node.radius) ?? 0
       nodeIndexByRadius.set(node.radius, indexOnRing + 1)
       const countOnRing = nodeCountsByRadius.get(node.radius) ?? 1
+      const baseAngle = (indexOnRing / countOnRing) * Math.PI * 2
       const size = 0.12 + Math.min(0.16, node.progress / 500)
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(size, 24, 18),
@@ -202,9 +238,42 @@ export default function LearningConstellation({
       )
       mesh.position.copy(nodePosition(indexOnRing, countOnRing, node.radius))
       mesh.userData.nodeId = node.id
-      mesh.userData.baseScale = 1
+      mesh.userData.radius = node.radius
+      mesh.userData.baseAngle = baseAngle
+      mesh.userData.orbitSpeed = 0.07 + indexOnRing * 0.012 + node.radius * 0.006
+      mesh.userData.wavePhase = indexOnRing * 1.9 + node.radius
       nodeMeshes.push(mesh)
       root.add(mesh)
+
+      const linkGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), mesh.position.clone()])
+      const link = new THREE.Line(
+        linkGeometry,
+        new THREE.LineBasicMaterial({
+          color: palette[node.kind],
+          transparent: true,
+          opacity: 0.12,
+        }),
+      )
+      link.userData.nodeId = node.id
+      linkLines.push(link)
+      root.add(link)
+    })
+
+    Array.from({ length: 18 }).forEach((_, index) => {
+      const radius = [1.8, 2.75, 3.55, 4.35][index % 4]
+      const spark = new THREE.Mesh(
+        new THREE.SphereGeometry(0.035, 12, 8),
+        new THREE.MeshBasicMaterial({
+          color: index % 2 === 0 ? '#1db954' : '#ffffff',
+          transparent: true,
+          opacity: 0.6,
+        }),
+      )
+      spark.userData.radius = radius
+      spark.userData.angle = index * 1.7
+      spark.userData.speed = 0.32 + (index % 5) * 0.08
+      sparkMeshes.push(spark)
+      root.add(spark)
     })
 
     const raycaster = new THREE.Raycaster()
@@ -300,15 +369,50 @@ export default function LearningConstellation({
       root.rotation.y = pointerState.yaw + elapsed * 0.08
       root.rotation.x = pointerState.pitch
       coreGlow.scale.setScalar(1 + Math.sin(elapsed * 1.8) * 0.04)
+      pulseRing.scale.setScalar(1 + Math.sin(elapsed * 2.2) * 0.1)
+      pulseRing.rotation.z = elapsed * 0.35
+      particles.rotation.y = elapsed * 0.025
+      particles.rotation.x = Math.sin(elapsed * 0.18) * 0.08
       camera.position.z += (pointerState.zoom - camera.position.z) * 0.08
       nodeMeshes.forEach((mesh, index) => {
         const nodeId = String(mesh.userData.nodeId ?? '')
+        const radius = Number(mesh.userData.radius ?? 1)
+        const angle = Number(mesh.userData.baseAngle ?? 0) + elapsed * Number(mesh.userData.orbitSpeed ?? 0.08)
+        const wavePhase = Number(mesh.userData.wavePhase ?? 0)
+        mesh.position.set(
+          Math.cos(angle) * radius,
+          Math.sin(elapsed * 1.1 + wavePhase) * 0.42,
+          Math.sin(angle) * radius,
+        )
         const activeScale = nodeId === selectedIdRef.current ? 1.55 : nodeId === hoveredIdRef.current ? 1.35 : 1
         const pulse = activeScale + Math.sin(elapsed * 2 + index) * 0.07
         mesh.scale.setScalar(pulse)
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
           mesh.material.emissiveIntensity = nodeId === selectedIdRef.current || nodeId === hoveredIdRef.current ? 0.95 : 0.55
         }
+      })
+      linkLines.forEach((line) => {
+        const nodeId = String(line.userData.nodeId ?? '')
+        const mesh = nodeMeshes.find((candidate) => candidate.userData.nodeId === nodeId)
+        const position = line.geometry.getAttribute('position') as THREE.BufferAttribute
+        if (mesh) {
+          position.setXYZ(0, 0, 0, 0)
+          position.setXYZ(1, mesh.position.x, mesh.position.y, mesh.position.z)
+          position.needsUpdate = true
+        }
+        const material = line.material
+        if (material instanceof THREE.LineBasicMaterial) {
+          material.opacity = nodeId === selectedIdRef.current || nodeId === hoveredIdRef.current ? 0.45 : 0.12
+        }
+      })
+      sparkMeshes.forEach((spark) => {
+        const radius = Number(spark.userData.radius ?? 2)
+        const angle = Number(spark.userData.angle ?? 0) + elapsed * Number(spark.userData.speed ?? 0.3)
+        spark.position.set(
+          Math.cos(angle) * radius,
+          Math.sin(angle * 1.7) * 0.22,
+          Math.sin(angle) * radius,
+        )
       })
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(animate)
@@ -339,6 +443,22 @@ export default function LearningConstellation({
             object.material.dispose()
           }
         }
+        if (object instanceof THREE.Points) {
+          object.geometry.dispose()
+          if (Array.isArray(object.material)) {
+            object.material.forEach((material) => material.dispose())
+          } else {
+            object.material.dispose()
+          }
+        }
+        if (object instanceof THREE.Line) {
+          object.geometry.dispose()
+          if (Array.isArray(object.material)) {
+            object.material.forEach((material) => material.dispose())
+          } else {
+            object.material.dispose()
+          }
+        }
       })
       logoTexture.dispose()
       mount.removeChild(renderer.domElement)
@@ -348,7 +468,7 @@ export default function LearningConstellation({
   const legendItems: Array<{
     kind: ConstellationNode['kind']
     label: string
-    icon: typeof StarIcon
+    icon: typeof Route03Icon
   }> = [
     { kind: 'starred', label: 'Starred', icon: StarIcon },
     { kind: 'roadmap', label: 'Roadmaps', icon: Route03Icon },
@@ -385,7 +505,12 @@ export default function LearningConstellation({
         <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
           {legendItems.map((item) => (
             <span key={item.kind} className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-black/24 px-3 py-1.5 text-(--text-h) backdrop-blur-md">
-              <HugeiconsIcon icon={item.icon} size={15} style={{ color: palette[item.kind] }} />
+              <HugeiconsIcon
+                icon={item.icon}
+                size={15}
+                className={item.kind === 'starred' ? 'star-toggle-icon star-toggle-icon-active' : undefined}
+                style={{ color: item.kind === 'starred' ? '#1db954' : palette[item.kind] }}
+              />
               {item.label}
             </span>
           ))}

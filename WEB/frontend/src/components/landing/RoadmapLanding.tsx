@@ -96,8 +96,9 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
       <button
         type="button"
         disabled={starMutation.isPending}
+        data-starred={isStarred}
         className={[
-          'grid size-9 shrink-0 cursor-pointer place-items-center rounded-squircle border transition disabled:cursor-not-allowed disabled:opacity-60',
+          'star-toggle-button grid size-9 shrink-0 cursor-pointer place-items-center rounded-squircle border transition disabled:cursor-not-allowed disabled:opacity-60',
           isStarred
             ? 'border-(--accent-border) bg-(--accent-bg) text-(--accent)'
             : 'border-(--border) text-(--text) hover:border-(--accent-border) hover:bg-(--accent-bg) hover:text-(--accent)',
@@ -110,7 +111,7 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
           : t('landing.save', { defaultValue: 'Star roadmap' })}
         onClick={() => starMutation.mutate()}
       >
-        <HugeiconsIcon icon={StarIcon} size={17} />
+        <HugeiconsIcon icon={StarIcon} size={17} className={isStarred ? 'star-toggle-icon star-toggle-icon-active' : 'star-toggle-icon'} />
       </button>
       <Link
         to={`/${language}/roadmaps/${roadmap.slug}`}
