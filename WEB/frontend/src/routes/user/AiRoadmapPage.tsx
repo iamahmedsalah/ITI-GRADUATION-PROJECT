@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -174,7 +174,9 @@ export default function AiRoadmapPage() {
   const { t } = useTranslation()
   const { language } = useLanguage()
   const queryClient = useQueryClient()
-  const [prompt, setPrompt] = useState('Become a React frontend developer in 8 weeks')
+  const defaultPrompt = t('aiRoadmap.promptDefault')
+  const previousDefaultPromptRef = useRef(defaultPrompt)
+  const [prompt, setPrompt] = useState(defaultPrompt)
   const [targetLevel, setTargetLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner')
   const [durationWeeks, setDurationWeeks] = useState(8)
   const [weeklyStudyHours, setWeeklyStudyHours] = useState(6)
@@ -183,6 +185,11 @@ export default function AiRoadmapPage() {
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false)
   const [explanations, setExplanations] = useState<Record<string, TopicExplanationContent>>({})
+
+  useEffect(() => {
+    setPrompt((current) => (current === previousDefaultPromptRef.current ? defaultPrompt : current))
+    previousDefaultPromptRef.current = defaultPrompt
+  }, [defaultPrompt])
 
   const authQuery = useQuery({
     queryKey: authQueryKey,

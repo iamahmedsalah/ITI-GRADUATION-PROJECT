@@ -61,7 +61,12 @@
     "coursesTitle": "Courses from ILMA",
     "coursesSubtitle": "Explore published courses connected to your roadmap practice.",
     "loadingCourses": "Loading available courses...",
-    "coursesFallback": "A practical course from the backend catalog."
+    "coursesFallback": "A practical course from the backend catalog.",
+    "savedRoadmap": "Roadmap starred in your profile.",
+    "unstarredRoadmap": "Roadmap removed from starred.",
+    "saveFailed": "Could not save roadmap.",
+    "save": "Star roadmap",
+    "unstar": "Unstar roadmap"
   },
   "footer": {
     "roadmaps": "Roadmaps",
@@ -328,7 +333,47 @@
     "cancel": "Cancel",
     "keyPoints": "Key points",
     "practice": "Practice",
-    "commonMistakes": "Common mistakes"
+    "commonMistakes": "Common mistakes",
+    "promptDefault": "Become a React frontend developer in 8 weeks"
+  },
+  "upgrade": {
+    "overline": "Upgrade",
+    "title": "Choose the AI plan that fits your learning pace",
+    "subtitle": "Free users can try AI roadmap generation. Pro users get higher quota, saving, and AI topic explanations.",
+    "openAi": "Open AI builder",
+    "currentPlan": "Current plan",
+    "adminManaged": "Admin managed for now",
+    "loginToUpgrade": "Login to upgrade",
+    "freeSummaryTitle": "Free",
+    "freeSummaryText": "Good for trying AI roadmaps and getting dashboard recommendations.",
+    "proSummaryTitle": "Pro",
+    "proSummaryText": "Best for saving AI roadmaps and asking AI to explain topics.",
+    "futureSummaryTitle": "Future",
+    "futureSummaryText": "The same plan structure is ready for chatbot access later.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "quota": "3 AI roadmaps / month",
+        "description": "Preview AI features, generate a few drafts, and keep learning with public roadmaps.",
+        "features": [
+          "3 AI roadmap drafts every month",
+          "AI recommendations on your dashboard",
+          "Track public roadmap progress",
+          "Preview the AI roadmap builder"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "quota": "10 AI roadmaps / month",
+        "description": "For users who want to generate, save, and learn from AI-built roadmaps more deeply.",
+        "features": [
+          "10 AI roadmap drafts every month",
+          "Save AI roadmaps to your account",
+          "Ask AI to explain roadmap topics",
+          "Ready for future AI chatbot access"
+        ]
+      }
+    }
   },
   "roadmapDetail": {
     "backToRoadmaps": "Back to all roadmaps",
@@ -363,6 +408,10 @@
     "watchResource": "Watch",
     "emptyResources": "No resources were added for this step yet.",
     "emptySteps": "This roadmap does not have steps yet.",
+    "saving": "Saving...",
+    "requires": "Requires: {{items}}",
+    "stepDetailsAria": "Step details",
+    "closePanel": "Close panel",
     "emptyGraph": {
       "title": "No roadmaps found",
       "subtitle": "This roadmap has no visible steps yet. Once content is added, the path will appear here.",
@@ -452,10 +501,25 @@
       "deleteSelected": "Delete selected ({{count}})",
       "search": "Search your roadmaps",
       "allStatuses": "All statuses",
+      "allTypes": "All types",
+      "starred": "Starred",
+      "unstar": "Remove",
+      "confirmDeleteTitle": "Delete selected roadmaps?",
+      "confirmDeleteText": "You are about to delete {{count}} roadmap(s). This cannot be undone.",
+      "confirmDeleteSingleText": "This roadmap will be removed from your learning list.",
+      "confirmUnstarTitle": "Remove starred roadmap?",
+      "confirmUnstarText": "This roadmap will be removed from your starred roadmaps.",
       "tableRoadmap": "Roadmap",
+      "tableType": "Type",
       "tableStatus": "Status",
       "tableProgress": "Progress",
-      "tableActions": "Actions"
+      "tableActions": "Actions",
+      "status": {
+        "assigned": "Starred",
+        "inProgress": "In progress",
+        "paused": "Paused",
+        "completed": "Completed"
+      }
     },
     "ai": {
       "title": "AI recommendations",
@@ -493,8 +557,36 @@
       "completed": "Completed {{count}} topic(s) in {{roadmap}}",
       "enrolled": "Started learning {{course}}",
       "courseCompleted": "Completed {{course}}",
+      "aiDraft": "Generated an AI roadmap draft",
+      "aiSave": "Saved an AI roadmap",
+      "aiExplain": "Asked AI to explain a topic",
       "login": "Logged in to ILMA",
-      "updated": "Updated learning progress"
+      "updated": "Updated learning progress",
+      "subtitle": "Track recent roadmap, course, AI, and login activity.",
+      "delete": "Delete activity",
+      "deleted": "Activity deleted.",
+      "deleteFailed": "Could not delete activity.",
+      "loadMore": "Load {{count}} more",
+      "relative": {
+        "today": "today",
+        "oneDayAgo": "1 day ago",
+        "daysAgo": "{{count}} days ago",
+        "oneMonthAgo": "1 month ago",
+        "monthsAgo": "{{count}} months ago"
+      },
+      "filters": {
+        "all": "All activity",
+        "today": "Today",
+        "week": "Last 7 days",
+        "month": "Last 30 days",
+        "older": "Older"
+      },
+      "metrics": {
+        "total": "Total",
+        "roadmaps": "Roadmaps",
+        "courses": "Courses",
+        "ai": "AI"
+      }
     },
     "metrics": {
       "streak": "Login streak",
@@ -526,6 +618,37 @@
         "aiRecommendation": "AI recommendation",
         "match": "match"
       }
+    },
+    "savedRoadmaps": {
+      "title": "Starred roadmaps",
+      "subtitle": "Roadmaps starred in your profile and ready to start.",
+      "viewAll": "View all"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "subtitleReady": "Your recommendations use your saved interests, goals, level, and weekly schedule.",
+      "subtitleSetup": "Answer a few setup questions so roadmaps, courses, and AI suggestions match your learning plan.",
+      "notSet": "Not set",
+      "hours": "{{count}} hours / week",
+      "emptyItem": "Choose topics you want to learn",
+      "emptyLevel": "Set your level and difficulty",
+      "emptySchedule": "Pick your learning pace",
+      "start": "Set preferences",
+      "update": "Update preferences",
+      "items": {
+        "interests": "Interests",
+        "goals": "Learning goals",
+        "level": "Current skill level",
+        "schedule": "Weekly study time"
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "pro": "Pro Plan",
+      "free": "Free Plan",
+      "status": "Status",
+      "renewsAt": "Current period ends",
+      "upgrade": "Upgrade to Pro"
     }
   },
   "auth": {
@@ -1067,7 +1190,11 @@
     "valid": "Looks good."
   },
   "fallback": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "switchingLanguage": "Switching language…"
+  },
+  "languageToggle": {
+    "ariaLabel": "Language: {{language}}"
   },
   "errors": {
     "label": "Unexpected error",

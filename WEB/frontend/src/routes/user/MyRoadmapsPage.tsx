@@ -13,18 +13,18 @@ import ConfirmActionModal from '../../components/models/ConfirmActionModal'
 type RoadmapStatusFilter = '' | 'assigned' | 'inProgress' | 'paused' | 'completed'
 type RoadmapTypeFilter = '' | 'roleBased' | 'skillBased'
 
-const statusOptions: DropdownOption<RoadmapStatusFilter>[] = [
-  { value: '', label: 'All statuses' },
-  { value: 'assigned', label: 'Starred' },
-  { value: 'inProgress', label: 'inProgress' },
-  { value: 'paused', label: 'paused' },
-  { value: 'completed', label: 'completed' },
+const statusOptionKeys: Array<{ value: RoadmapStatusFilter; labelKey: string }> = [
+  { value: '', labelKey: 'dashboard.roadmaps.allStatuses' },
+  { value: 'assigned', labelKey: 'dashboard.roadmaps.status.assigned' },
+  { value: 'inProgress', labelKey: 'dashboard.roadmaps.status.inProgress' },
+  { value: 'paused', labelKey: 'dashboard.roadmaps.status.paused' },
+  { value: 'completed', labelKey: 'dashboard.roadmaps.status.completed' },
 ]
 
-const typeOptions: DropdownOption<RoadmapTypeFilter>[] = [
-  { value: '', label: 'All types' },
-  { value: 'roleBased', label: 'Role-based' },
-  { value: 'skillBased', label: 'Skill-based' },
+const typeOptionKeys: Array<{ value: RoadmapTypeFilter; labelKey: string }> = [
+  { value: '', labelKey: 'dashboard.roadmaps.allTypes' },
+  { value: 'roleBased', labelKey: 'landing.roleRoadmaps' },
+  { value: 'skillBased', labelKey: 'landing.skillRoadmaps' },
 ]
 
 export default function MyRoadmapsPage() {
@@ -73,7 +73,17 @@ export default function MyRoadmapsPage() {
 
   const allSelected = roadmaps.length > 0 && roadmaps.every((roadmap) => selectedIds.includes(roadmap._id))
   const statusLabel = (value?: string) =>
-    value === 'assigned' ? t('dashboard.roadmaps.starred', 'Starred') : value ?? 'assigned'
+    t(`dashboard.roadmaps.status.${value ?? 'assigned'}`, {
+      defaultValue: value === 'assigned' ? t('dashboard.roadmaps.starred') : value ?? t('dashboard.roadmaps.starred'),
+    })
+  const statusOptions: DropdownOption<RoadmapStatusFilter>[] = statusOptionKeys.map((option) => ({
+    value: option.value,
+    label: t(option.labelKey),
+  }))
+  const typeOptions: DropdownOption<RoadmapTypeFilter>[] = typeOptionKeys.map((option) => ({
+    value: option.value,
+    label: t(option.labelKey),
+  }))
 
   return (
     <main className="min-h-screen bg-(--bg) px-4 py-6 text-(--text-h) sm:px-6 lg:px-8">
@@ -119,21 +129,13 @@ export default function MyRoadmapsPage() {
               }
               setSearchParams(nextParams, { replace: true })
             }}
-            options={statusOptions.map((option) =>
-              option.value === ''
-                ? { ...option, label: t('dashboard.roadmaps.allStatuses') }
-                : option,
-            )}
+            options={statusOptions}
             buttonClassName="min-h-12 bg-(--surface) px-4 py-3 text-base"
           />
           <CustomDropdown
             value={type}
             onChange={setType}
-            options={typeOptions.map((option) =>
-              option.value === ''
-                ? { ...option, label: t('dashboard.roadmaps.allTypes', 'All types') }
-                : option,
-            )}
+            options={typeOptions}
             buttonClassName="min-h-12 bg-(--surface) px-4 py-3 text-base"
           />
         </div>
@@ -203,7 +205,11 @@ export default function MyRoadmapsPage() {
                             >
                               {roadmap.template?.title ?? t('profile.unknownRoadmap')}
                             </Link>
-                            <p className="text-xs text-(--text)">{roadmap.template?.targetLevel ?? 'roadmap'}</p>
+                            <p className="text-xs text-(--text)">
+                              {roadmap.template?.targetLevel
+                                ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
+                                : t('landing.levels.roadmap')}
+                            </p>
                           </div>
                         </div>
                       </td>

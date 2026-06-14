@@ -29,19 +29,21 @@ import type {
   DashboardRoadmap,
 } from '../../libs/user-api'
 
-function relativeTime(value?: string | number) {
+function relativeTime(value: string | number | undefined, t: (key: string, options?: Record<string, unknown>) => string) {
   if (!value) return ''
 
   const date = new Date(value)
   const diffMs = Date.now() - date.getTime()
   const diffDays = Math.max(0, Math.floor(diffMs / 86400000))
 
-  if (diffDays === 0) return 'today'
-  if (diffDays === 1) return '1 day ago'
-  if (diffDays < 30) return `${diffDays} days ago`
+  if (diffDays === 0) return t('dashboard.activity.relative.today')
+  if (diffDays === 1) return t('dashboard.activity.relative.oneDayAgo')
+  if (diffDays < 30) return t('dashboard.activity.relative.daysAgo', { count: diffDays })
 
   const months = Math.floor(diffDays / 30)
-  return months === 1 ? '1 month ago' : `${months} months ago`
+  return months === 1
+    ? t('dashboard.activity.relative.oneMonthAgo')
+    : t('dashboard.activity.relative.monthsAgo', { count: months })
 }
 
 function progressWidth(progress?: number) {
@@ -390,7 +392,7 @@ export function ActivityItem({
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-6 text-(--text-h)">
             {activityTitle(activity, t)}{' '}
-            <span className="text-(--text)">{relativeTime(activity.occurredAt ?? activity.createdAt)}</span>
+            <span className="text-(--text)">{relativeTime(activity.occurredAt ?? activity.createdAt, t)}</span>
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-(--text)">
             <span className="rounded-md bg-(--surface-2) px-2 py-1">{activity.type.replaceAll('_', ' ')}</span>

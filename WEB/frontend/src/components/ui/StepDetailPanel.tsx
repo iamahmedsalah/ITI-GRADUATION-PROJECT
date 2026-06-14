@@ -144,7 +144,7 @@ export function StepDetailPanel({
   return (
     <aside
       className="flex flex-col gap-5 rounded-xl border border-(--border) bg-(--surface) p-5 shadow-(--shadow)"
-      aria-label="Step details"
+      aria-label={t('roadmapDetail.stepDetailsAria')}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -159,7 +159,7 @@ export function StepDetailPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close panel"
+          aria-label={t('roadmapDetail.closePanel')}
           className="mt-1 shrink-0 cursor-pointer rounded-squircle border border-(--border) p-1.5 text-(--text) transition hover:border-(--accent-border) hover:text-(--text-h)"
         >
           <HugeiconsIcon icon={Cancel02Icon} size={18} />
@@ -183,7 +183,7 @@ export function StepDetailPanel({
         />
 
         {isUpdating && (
-          <p className="mt-2 text-xs text-(--accent)">Saving…</p>
+          <p className="mt-2 text-xs text-(--accent)">{t('roadmapDetail.saving')}</p>
         )}
         {disabled && !isUpdating && (
           <p className="mt-3 text-xs leading-5 text-(--text)">
@@ -213,7 +213,7 @@ export function StepDetailPanel({
       {/* Dependencies notice */}
       {step.dependsOn?.length ? (
         <p className="text-xs text-(--text) opacity-60">
-          Requires: {step.dependsOn.join(', ')}
+          {t('roadmapDetail.requires', { items: step.dependsOn.join(', ') })}
         </p>
       ) : null}
     </aside>

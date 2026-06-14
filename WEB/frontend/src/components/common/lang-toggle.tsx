@@ -1,12 +1,14 @@
 import { TranslateIcon } from '@hugeicons/core-free-icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useLanguage } from '../../context/LanguageContext'
 import { toggleWrapperVariants } from '../../libs/motionVariants'
 
 export function LangToggleButton() {
   const { language, setLanguage } = useLanguage()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -15,7 +17,7 @@ export function LangToggleButton() {
     const nextPath = location.pathname.replace(/^\/(en|ar)(?=\/|$)/, `/${nextLanguage}`)
     const targetPath = nextPath === location.pathname ? `/${nextLanguage}` : nextPath
 
-    setLanguage(nextLanguage)
+    void setLanguage(nextLanguage)
     navigate(`${targetPath}${location.search}${location.hash}`, { replace: true })
   }
 
@@ -24,7 +26,7 @@ export function LangToggleButton() {
       <button
         type="button"
         onClick={toggleLanguage}
-        aria-label={`Language: ${language}`}
+        aria-label={t('languageToggle.ariaLabel', { language: t(language === 'ar' ? 'arabic' : 'english') })}
         aria-pressed={language === 'ar'}
         className="grid size-11 place-items-center rounded-squircle border border-(--border) bg-transparent text-(--text-h) cursor-pointer"
       >

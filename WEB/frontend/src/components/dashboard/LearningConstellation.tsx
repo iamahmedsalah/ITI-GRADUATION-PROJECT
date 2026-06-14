@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AiMagicIcon, CourseIcon, Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
 import * as THREE from 'three'
+import { useTheme } from '../../context/ThemeContext'
 import type {
   AiRecommendationsData,
   DashboardCourse,
@@ -40,6 +41,56 @@ const palette: Record<ConstellationNode['kind'], string> = {
   course: '#f08f45',
   ai: '#8b5cf6',
 }
+
+const SCENE_OFFSET_X = -0.88
+const SCENE_OFFSET_Y = 0.3
+const SCENE_SCALE = 0.6
+const CAMERA_START_X = 0
+const CAMERA_START_Y = 1.25
+const CAMERA_START_Z = 7.6
+const INITIAL_YAW = -0.28
+const INITIAL_PITCH = 0.46
+
+const sceneThemes = {
+  dark: {
+    shellBg: '#07110c',
+    shellText: '#ffffff',
+    shellMuted: 'rgba(255,255,255,0.72)',
+    border: '#1f3328',
+    panelBg: 'rgba(0,0,0,0.46)',
+    panelBorder: 'rgba(255,255,255,0.15)',
+    legendGradient: 'linear-gradient(180deg, rgba(7,17,12,0.94), transparent)',
+    shadow: 'inset 0 0 120px rgba(29,185,84,0.12)',
+    fog: '#111511',
+    particle: '#1db954',
+    particleOpacity: 0.42,
+    ring: '#2c2c2c',
+    ringOpacity: 0.9,
+    core: '#1db954',
+    spark: '#ffffff',
+    ambient: 1.4,
+    pointIntensity: 18,
+  },
+  light: {
+    shellBg: '#f7fbf6',
+    shellText: '#0d1510',
+    shellMuted: 'rgba(13,21,16,0.68)',
+    border: '#d5eadc',
+    panelBg: 'rgba(255,255,255,0.76)',
+    panelBorder: 'rgba(29,185,84,0.22)',
+    legendGradient: 'linear-gradient(180deg, rgba(247,251,246,0.96), transparent)',
+    shadow: 'inset 0 0 120px rgba(29,185,84,0.09)',
+    fog: '#dcefe3',
+    particle: '#168f43',
+    particleOpacity: 0.32,
+    ring: '#a8d6b7',
+    ringOpacity: 0.54,
+    core: '#169b48',
+    spark: '#103818',
+    ambient: 1.85,
+    pointIntensity: 11,
+  },
+} as const
 
 function buildNodes({
   roadmaps,
@@ -108,6 +159,7 @@ export default function LearningConstellation({
   recommendations,
 }: LearningConstellationProps) {
   const { t } = useTranslation()
+  const { resolvedTheme } = useTheme()
   const mountRef = useRef<HTMLDivElement | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -132,6 +184,7 @@ export default function LearningConstellation({
     () => buildNodes({ roadmaps, courses, recommendations }, labels),
     [courses, labels, recommendations, roadmaps],
   )
+  const sceneTheme = sceneThemes[resolvedTheme]
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? nodes[0]
   const hoveredNode = nodes.find((node) => node.id === hoveredId) ?? null
   const previewNode = hoveredNode ?? selectedNode
@@ -150,10 +203,10 @@ export default function LearningConstellation({
     if (!mount) return
 
     const scene = new THREE.Scene()
-    scene.fog = new THREE.Fog('#111511', 6, 13)
+    scene.fog = new THREE.Fog(sceneTheme.fog, 6, 13)
 
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100)
-    camera.position.set(0, 1.6, 6.2)
+    camera.position.set(CAMERA_START_X, CAMERA_START_Y, CAMERA_START_Z)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -161,7 +214,8 @@ export default function LearningConstellation({
     mount.appendChild(renderer.domElement)
 
     const root = new THREE.Group()
-    root.scale.setScalar(1.12)
+    root.position.set(SCENE_OFFSET_X, SCENE_OFFSET_Y, 0.9)
+    root.scale.setScalar(SCENE_SCALE)
     scene.add(root)
 
     const particles = new THREE.Points(
@@ -177,18 +231,18 @@ export default function LearningConstellation({
         ),
       ),
       new THREE.PointsMaterial({
-        color: '#1db954',
+        color: sceneTheme.particle,
         size: 0.018,
         transparent: true,
-        opacity: 0.42,
+        opacity: sceneTheme.particleOpacity,
         depthWrite: false,
       }),
     )
     scene.add(particles)
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4)
+    const ambientLight = new THREE.AmbientLight(0xffffff, sceneTheme.ambient)
     scene.add(ambientLight)
-    const pointLight = new THREE.PointLight(0x1db954, 18, 9)
+    const pointLight = new THREE.PointLight(sceneTheme.core, sceneTheme.pointIntensity, 9)
     pointLight.position.set(1.6, 2.5, 2.5)
     scene.add(pointLight)
 
@@ -198,19 +252,34 @@ export default function LearningConstellation({
     const coreGlow = new THREE.Mesh(
       new THREE.SphereGeometry(0.82, 32, 24),
       new THREE.MeshBasicMaterial({
-        color: '#1db954',
+        color: sceneTheme.core,
         transparent: true,
-        opacity: 0.16,
+        opacity: resolvedTheme === 'dark' ? 0.16 : 0.12,
+        depthWrite: false,
       }),
     )
     root.add(coreGlow)
 
+    const logoBadge = new THREE.Mesh(
+      new THREE.CircleGeometry(0.68, 48),
+      new THREE.MeshBasicMaterial({
+        color: resolvedTheme === 'dark' ? '#06140c' : '#e8f8ed',
+        transparent: true,
+        opacity: resolvedTheme === 'dark' ? 0.58 : 0.78,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    )
+    logoBadge.position.set(0, 0, 0.08)
+    logoBadge.renderOrder = 2
+    root.add(logoBadge)
+
     const pulseRing = new THREE.Mesh(
       new THREE.TorusGeometry(1.06, 0.012, 10, 96),
       new THREE.MeshBasicMaterial({
-        color: '#1db954',
+        color: sceneTheme.core,
         transparent: true,
-        opacity: 0.52,
+        opacity: resolvedTheme === 'dark' ? 0.52 : 0.38,
       }),
     )
     pulseRing.rotation.x = Math.PI / 2
@@ -220,9 +289,13 @@ export default function LearningConstellation({
       new THREE.SpriteMaterial({
         map: logoTexture,
         transparent: true,
+        depthTest: false,
+        depthWrite: false,
       }),
     )
-    logoCore.scale.set(1.2, 1.2, 1)
+    logoCore.position.set(0, 0.02, 0.18)
+    logoCore.scale.set(0.92, 0.92, 1)
+    logoCore.renderOrder = 3
     root.add(logoCore)
 
     const nodeMeshes: THREE.Mesh[] = []
@@ -238,9 +311,9 @@ export default function LearningConstellation({
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(radius, 0.008, 8, 96),
         new THREE.MeshBasicMaterial({
-          color: '#2c2c2c',
+          color: sceneTheme.ring,
           transparent: true,
-          opacity: 0.9,
+          opacity: sceneTheme.ringOpacity,
         }),
       )
       ring.rotation.x = Math.PI / 2
@@ -291,9 +364,9 @@ export default function LearningConstellation({
       const spark = new THREE.Mesh(
         new THREE.SphereGeometry(0.035, 12, 8),
         new THREE.MeshBasicMaterial({
-          color: index % 2 === 0 ? '#1db954' : '#ffffff',
+          color: index % 2 === 0 ? sceneTheme.core : sceneTheme.spark,
           transparent: true,
-          opacity: 0.6,
+          opacity: resolvedTheme === 'dark' ? 0.6 : 0.5,
         }),
       )
       spark.userData.radius = radius
@@ -311,9 +384,9 @@ export default function LearningConstellation({
       moved: false,
       x: 0,
       y: 0,
-      yaw: -0.25,
-      pitch: 0.18,
-      zoom: 6.2,
+      yaw: INITIAL_YAW,
+      pitch: INITIAL_PITCH,
+      zoom: CAMERA_START_Z,
     }
 
     const setSize = () => {
@@ -379,7 +452,7 @@ export default function LearningConstellation({
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault()
-      pointerState.zoom = Math.max(4.5, Math.min(8.2, pointerState.zoom + event.deltaY * 0.005))
+      pointerState.zoom = Math.max(5.6, Math.min(9.2, pointerState.zoom + event.deltaY * 0.005))
     }
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
@@ -401,6 +474,8 @@ export default function LearningConstellation({
       particles.rotation.y = elapsed * 0.025
       particles.rotation.x = Math.sin(elapsed * 0.18) * 0.08
       camera.position.z += (pointerState.zoom - camera.position.z) * 0.08
+      camera.position.y += (CAMERA_START_Y - camera.position.y) * 0.08
+      camera.lookAt(SCENE_OFFSET_X, SCENE_OFFSET_Y, 0)
       nodeMeshes.forEach((mesh, index) => {
         const nodeId = String(mesh.userData.nodeId ?? '')
         const radius = Number(mesh.userData.radius ?? 1)
@@ -490,7 +565,7 @@ export default function LearningConstellation({
       logoTexture.dispose()
       mount.removeChild(renderer.domElement)
     }
-  }, [nodes])
+  }, [nodes, resolvedTheme, sceneTheme])
 
   const legendItems: Array<{
     kind: ConstellationNode['kind']
@@ -504,34 +579,58 @@ export default function LearningConstellation({
   ]
 
   return (
-    <section className="relative min-h-[34rem] overflow-hidden rounded-none border-y border-[#1f3328] bg-[#07110c] text-white shadow-[inset_0_0_120px_rgba(29,185,84,0.12)]">
+    <section
+      className="relative min-h-136 overflow-hidden rounded-none border-y"
+      style={{
+        borderColor: sceneTheme.border,
+        background: sceneTheme.shellBg,
+        color: sceneTheme.shellText,
+        boxShadow: sceneTheme.shadow,
+      }}
+    >
       <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
-      <div className="pointer-events-none absolute left-5 top-5 z-10 grid max-w-sm gap-3 rounded-2xl border border-white/15 bg-black/45 p-4 text-white shadow-2xl shadow-black/30 backdrop-blur-md sm:left-7 sm:top-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1ed760]">{t('dashboard.constellation.overline')}</p>
+      <div
+        className="pointer-events-none absolute left-5 top-5 z-10 grid max-w-sm gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md sm:left-7 sm:top-7"
+        style={{
+          borderColor: sceneTheme.panelBorder,
+          background: sceneTheme.panelBg,
+          color: sceneTheme.shellText,
+          boxShadow: resolvedTheme === 'dark' ? '0 24px 70px rgba(0,0,0,0.32)' : '0 24px 70px rgba(41,92,57,0.14)',
+        }}
+      >
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">{t('dashboard.constellation.overline')}</p>
         <div className="min-w-0">
-          <h2 className="truncate text-2xl font-semibold text-white">
+          <h2 className="truncate text-2xl font-semibold" style={{ color: sceneTheme.shellText }}>
             {previewNode?.title ?? t('dashboard.constellation.emptyTitle')}
           </h2>
-          <p className="mt-1 text-sm capitalize text-white/70">
+          <p className="mt-1 text-sm capitalize" style={{ color: sceneTheme.shellMuted }}>
             {previewNode ? `${kindLabels[previewNode.kind]} / ${previewNode.detail}` : t('dashboard.constellation.emptyDetail')}
           </p>
         </div>
         {selectedNode ? (
           <div className="grid gap-2">
-            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
+            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: sceneTheme.shellMuted }}>
               <span>{t('dashboard.constellation.selectedProgress')}</span>
-              <span className="text-white">{progress}%</span>
+              <span style={{ color: sceneTheme.shellText }}>{progress}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/15">
+            <div className="h-2 overflow-hidden rounded-full" style={{ background: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(13,21,16,0.12)' }}>
               <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: `${progress}%` }} />
             </div>
           </div>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-[linear-gradient(180deg,transparent,rgba(7,17,12,0.94))] px-5 py-5 sm:px-7">
-        <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-5 py-5 sm:px-7" style={{ background: sceneTheme.legendGradient }}>
+        <div className="flex flex-wrap justify-end gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
           {legendItems.map((item) => (
-            <span key={item.kind} className="inline-flex items-center gap-2 rounded-full border border-white/18 bg-black/40 px-3 py-1.5 text-white backdrop-blur-md">
+            <span
+              key={item.kind}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-md"
+              style={{
+                borderColor: sceneTheme.panelBorder,
+                background: sceneTheme.panelBg,
+                color: sceneTheme.shellText,
+              }}
+            >
               <HugeiconsIcon
                 icon={item.icon}
                 size={15}

@@ -4,17 +4,20 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
 import i18n from '../libs/i18n'
+import LanguageSwitchOverlay from '../components/ui/LanguageSwitchOverlay'
 
 export type LanguagePref = 'en' | 'ar'
 
 type LanguageContextValue = {
   language: LanguagePref
-  setLanguage: (language: LanguagePref) => void
+  setLanguage: (language: LanguagePref) => Promise<void>
   direction: 'ltr' | 'rtl'
+  isLanguageChanging: boolean
 }
 
 type LanguageProviderProps = {
@@ -78,16 +81,41 @@ function applyDocumentSeo(language: LanguagePref) {
   setMeta('meta[name="twitter:image:alt"]', imageAlt)
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<LanguagePref>(() =>
     normalizeLanguage(getStoredLanguage() ?? i18n.resolvedLanguage ?? i18n.language),
   )
+  const [isLanguageChanging, setIsLanguageChanging] = useState(false)
+  const languageChangeIdRef = useRef(0)
 
-  const setLanguage = useCallback((nextLanguage: LanguagePref) => {
+  const setLanguage = useCallback(async (nextLanguage: LanguagePref) => {
+    if (nextLanguage === normalizeLanguage(i18n.resolvedLanguage ?? i18n.language)) {
+      setLanguageState(nextLanguage)
+      setStoredLanguage(nextLanguage)
+      applyDocumentSeo(nextLanguage)
+      return
+    }
+
+    const changeId = languageChangeIdRef.current + 1
+    languageChangeIdRef.current = changeId
+    setIsLanguageChanging(true)
     setLanguageState(nextLanguage)
     setStoredLanguage(nextLanguage)
 
-    void i18n.changeLanguage(nextLanguage)
+    try {
+      await i18n.changeLanguage(nextLanguage)
+      await wait(2000)
+    } finally {
+      if (languageChangeIdRef.current === changeId) {
+        setIsLanguageChanging(false)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -117,11 +145,17 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       language,
       setLanguage,
       direction,
+      isLanguageChanging,
     }),
-    [language, setLanguage, direction],
+    [language, setLanguage, direction, isLanguageChanging],
   )
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+      {isLanguageChanging ? <LanguageSwitchOverlay /> : null}
+    </LanguageContext.Provider>
+  )
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
