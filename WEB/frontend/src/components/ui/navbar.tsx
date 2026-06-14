@@ -148,20 +148,20 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
 
   return (
     <header className="relative z-50 border-b border-(--border) bg-(--surface-header) text-(--text-h) shadow-[0_1px_0_var(--surface-header-line)] backdrop-blur-xl">
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-2 px-3 sm:h-20 sm:gap-4 sm:px-6 lg:px-8">
         <Link
           to={logoPath(language)}
-          className="flex shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-(--text-h) transition-transform hover:scale-[1.02]"
+          className="flex min-w-0 shrink-0 items-center gap-2 rounded-2xl px-1 py-1 text-(--text-h) transition-transform hover:scale-[1.02] sm:gap-3"
           aria-label={t("navbar.logo")}
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <img
             src="/logo.png"
             alt={t("navbar.logo")}
-            className="size-10 object-contain"
+            className="size-8 object-contain sm:size-10"
           />
           <span
-            className="text-xl font-semibold tracking-[0.06em] text-(--text-h) sm:text-2xl"
+            className="max-w-18 truncate text-sm font-semibold tracking-[0.06em] text-(--text-h) sm:max-w-none sm:text-2xl"
             style={{ fontFamily: "var(--heading)" }}
           >
             {t("navbar.logo")}
@@ -239,7 +239,7 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <LangToggleButton />
           <ThemeToggleButton />
         </div>

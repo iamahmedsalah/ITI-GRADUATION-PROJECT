@@ -638,7 +638,7 @@ export default function LearningConstellation({
 
   return (
     <section
-      className="relative min-h-136 overflow-hidden rounded-none border-y"
+      className="relative min-h-116 overflow-hidden rounded-none border-y sm:min-h-136"
       style={{
         borderColor: sceneTheme.border,
         background: sceneTheme.shellBg,
@@ -648,7 +648,7 @@ export default function LearningConstellation({
     >
       <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
       <div
-        className={`pointer-events-none absolute top-24 z-10 grid max-w-sm gap-2 rounded-squircle border p-7 shadow-lg backdrop-blur-md sm:top-16 ${isRtl ? 'right-5 text-right sm:right-7' : 'left-5 text-left sm:left-7'}`}
+        className={`pointer-events-none absolute inset-x-4 top-20 z-10 grid max-w-none gap-2 rounded-squircle border p-4 shadow-lg backdrop-blur-md sm:inset-x-auto sm:top-16 sm:max-w-sm sm:p-6 ${isRtl ? 'text-right sm:right-7' : 'text-left sm:left-7'}`}
         dir={isRtl ? 'rtl' : 'ltr'}
         style={{
           borderColor: sceneTheme.panelBorder,
@@ -657,18 +657,18 @@ export default function LearningConstellation({
           boxShadow: resolvedTheme === 'dark' ? '0 24px 70px rgba(0,0,0,0.32)' : '0 24px 70px rgba(41,92,57,0.14)',
         }}
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">{t('dashboard.constellation.overline')}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-(--accent) sm:text-xs sm:tracking-[0.22em]">{t('dashboard.constellation.overline')}</p>
         <div className="min-w-0">
-          <h2 className="truncate text-2xl font-semibold" style={{ color: sceneTheme.shellText }}>
+          <h2 className="truncate text-lg font-semibold sm:text-2xl" style={{ color: sceneTheme.shellText }}>
             {previewNode?.title ?? t('dashboard.constellation.emptyTitle')}
           </h2>
-          <p className="mt-1 text-sm capitalize" style={{ color: sceneTheme.shellMuted }}>
+          <p className="mt-1 truncate text-xs capitalize sm:text-sm" style={{ color: sceneTheme.shellMuted }}>
             {previewNode ? `${kindLabels[previewNode.kind]} / ${previewNode.detail}` : t('dashboard.constellation.emptyDetail')}
           </p>
         </div>
         {selectedNode ? (
           <div className="grid gap-2">
-            <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: sceneTheme.shellMuted }}>
+            <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.14em]" style={{ color: sceneTheme.shellMuted }}>
               <span>{t('dashboard.constellation.selectedProgress')}</span>
               <span style={{ color: sceneTheme.shellText }}>{progress}%</span>
             </div>
@@ -684,12 +684,12 @@ export default function LearningConstellation({
           </div>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-5 py-5 sm:px-7" style={{ background: sceneTheme.legendGradient }}>
-        <div className={`flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-4 py-4 sm:px-7 sm:py-5" style={{ background: sceneTheme.legendGradient }}>
+        <div className={`flex flex-wrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] sm:gap-2 sm:text-xs sm:tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
           {legendItems.map((item) => (
             <span
               key={item.kind}
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 backdrop-blur-md"
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 backdrop-blur-md sm:gap-2 sm:px-3 sm:py-1.5"
               style={{
                 borderColor: sceneTheme.panelBorder,
                 background: sceneTheme.panelBg,
