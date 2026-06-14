@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { addAnimatedLogoModel } from '../../utils/threeLogoModel'
 
 type ThreeSceneLoaderProps = {
   className?: string
@@ -55,16 +56,22 @@ export default function ThreeSceneLoader({ className = '', cycleDurationMs = 150
     scene.add(keyLight)
 
     const core = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(0.64, 2),
-      new THREE.MeshStandardMaterial({
+      new THREE.SphereGeometry(0.74, 32, 24),
+      new THREE.MeshBasicMaterial({
         color: colors.accent,
-        emissive: colors.accent,
-        emissiveIntensity: 0.55,
-        roughness: 0.32,
-        metalness: 0.22,
+        transparent: true,
+        opacity: 0.16,
+        depthWrite: false,
       }),
     )
     root.add(core)
+
+    const logoModel = addAnimatedLogoModel({
+      parent: root,
+      size: 1.05,
+      position: new THREE.Vector3(0, 0.02, 0.18),
+      rotation: new THREE.Euler(0.12, -0.22, 0),
+    })
 
     const halo = new THREE.Mesh(
       new THREE.SphereGeometry(0.9, 32, 20),
@@ -135,9 +142,8 @@ export default function ThreeSceneLoader({ className = '', cycleDurationMs = 150
       const nextColors = buildThemeColors()
       scene.fog = new THREE.Fog(nextColors.border, 7, 15)
       keyLight.color.set(nextColors.accent)
-      if (core.material instanceof THREE.MeshStandardMaterial) {
+      if (core.material instanceof THREE.MeshBasicMaterial) {
         core.material.color.set(nextColors.accent)
-        core.material.emissive.set(nextColors.accent)
       }
       if (halo.material instanceof THREE.MeshBasicMaterial) {
         halo.material.color.set(nextColors.accent)
@@ -175,12 +181,13 @@ export default function ThreeSceneLoader({ className = '', cycleDurationMs = 150
     const clock = new THREE.Clock()
     const speed = 1500 / Math.max(cycleDurationMs, 300)
     const animate = () => {
-      const elapsed = clock.getElapsedTime() * speed
+      const delta = clock.getDelta() * speed
+      const elapsed = clock.elapsedTime * speed
       root.rotation.y = elapsed * 0.55
       root.rotation.x = Math.sin(elapsed * 0.65) * 0.18
-      core.rotation.x = elapsed * 0.9
-      core.rotation.y = elapsed * 1.15
-      core.scale.setScalar(1 + Math.sin(elapsed * 2.7) * 0.04)
+      core.scale.setScalar(1 + Math.sin(elapsed * 2.7) * 0.05)
+      logoModel.update(delta)
+      logoModel.group.scale.setScalar(1 + Math.sin(elapsed * 2.2) * 0.035)
       halo.scale.setScalar(1.05 + Math.sin(elapsed * 2.2) * 0.1)
 
       rings.forEach((ring, index) => {
@@ -209,10 +216,18 @@ export default function ThreeSceneLoader({ className = '', cycleDurationMs = 150
       cancelAnimationFrame(frameId)
       observer.disconnect()
       window.removeEventListener('resize', setSize)
+      logoModel.dispose()
       renderer.dispose()
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Points) {
           object.geometry.dispose()
+          if (Array.isArray(object.material)) {
+            object.material.forEach((material) => material.dispose())
+          } else {
+            object.material.dispose()
+          }
+        }
+        if (object instanceof THREE.Sprite) {
           if (Array.isArray(object.material)) {
             object.material.forEach((material) => material.dispose())
           } else {

@@ -4,6 +4,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { AiMagicIcon, CourseIcon, Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
 import * as THREE from 'three'
 import { useTheme } from '../../context/ThemeContext'
+import { addAnimatedGltfModel, addAnimatedLogoModel } from '../../utils/threeLogoModel'
 import type {
   AiRecommendationsData,
   DashboardCourse,
@@ -36,17 +37,56 @@ type ConstellationLabels = {
 }
 
 const palette: Record<ConstellationNode['kind'], string> = {
-  starred: '#f4c542',
+  starred: '#1db954',
   roadmap: '#4da3ff',
   course: '#f08f45',
   ai: '#8b5cf6',
 }
 
-const SCENE_OFFSET_X = -0.88
-const SCENE_OFFSET_Y = 0.3
+const nodeModelUrls: Record<ConstellationNode['kind'], string> = {
+  starred: '/blender/star_premium_animated.glb',
+  roadmap: '/blender/roadmaps_premium_animated.glb',
+  course: '/blender/courses_premium_sharp_edges_v2.glb',
+  ai: '/blender/ai_premium_double_sparkle.glb',
+}
+
+const nodeModelSettings: Record<ConstellationNode['kind'], {
+  rotation: THREE.Euler
+  size: number
+  spin: number
+  tintStrength: number
+}> = {
+  starred: {
+    rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+    size: 0.72,
+    spin: 0,
+    tintStrength: 0.88,
+  },
+  roadmap: {
+    rotation: new THREE.Euler(0.18, -0.2, 0),
+    size: 0.62,
+    spin: 0.35,
+    tintStrength: 0.76,
+  },
+  course: {
+    rotation: new THREE.Euler(0.16, -0.18, 0),
+    size: 0.58,
+    spin: 0.25,
+    tintStrength: 0.74,
+  },
+  ai: {
+    rotation: new THREE.Euler(0.12, -0.14, 0),
+    size: 0.7,
+    spin: 0.18,
+    tintStrength: 1,
+  },
+}
+
+const SCENE_OFFSET_X = -0.08
+const SCENE_OFFSET_Y = 1
 const SCENE_SCALE = 0.6
-const CAMERA_START_X = 0
-const CAMERA_START_Y = 1.25
+const CAMERA_START_X = 1
+const CAMERA_START_Y = -1.25
 const CAMERA_START_Z = 7.6
 const INITIAL_YAW = -0.28
 const INITIAL_PITCH = 0.46
@@ -158,7 +198,7 @@ export default function LearningConstellation({
   courses,
   recommendations,
 }: LearningConstellationProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { resolvedTheme } = useTheme()
   const mountRef = useRef<HTMLDivElement | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -189,6 +229,7 @@ export default function LearningConstellation({
   const hoveredNode = nodes.find((node) => node.id === hoveredId) ?? null
   const previewNode = hoveredNode ?? selectedNode
   const progress = Math.min(100, Math.max(0, Math.round(selectedNode?.progress ?? 0)))
+  const isRtl = i18n.dir() === 'rtl'
 
   useEffect(() => {
     selectedIdRef.current = selectedId
@@ -246,9 +287,6 @@ export default function LearningConstellation({
     pointLight.position.set(1.6, 2.5, 2.5)
     scene.add(pointLight)
 
-    const logoTexture = new THREE.TextureLoader().load('/logo.png')
-    logoTexture.colorSpace = THREE.SRGBColorSpace
-
     const coreGlow = new THREE.Mesh(
       new THREE.SphereGeometry(0.82, 32, 24),
       new THREE.MeshBasicMaterial({
@@ -259,20 +297,6 @@ export default function LearningConstellation({
       }),
     )
     root.add(coreGlow)
-
-    const logoBadge = new THREE.Mesh(
-      new THREE.CircleGeometry(0.68, 48),
-      new THREE.MeshBasicMaterial({
-        color: resolvedTheme === 'dark' ? '#06140c' : '#e8f8ed',
-        transparent: true,
-        opacity: resolvedTheme === 'dark' ? 0.58 : 0.78,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-      }),
-    )
-    logoBadge.position.set(0, 0, 0.08)
-    logoBadge.renderOrder = 2
-    root.add(logoBadge)
 
     const pulseRing = new THREE.Mesh(
       new THREE.TorusGeometry(1.06, 0.012, 10, 96),
@@ -285,20 +309,16 @@ export default function LearningConstellation({
     pulseRing.rotation.x = Math.PI / 2
     root.add(pulseRing)
 
-    const logoCore = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: logoTexture,
-        transparent: true,
-        depthTest: false,
-        depthWrite: false,
-      }),
-    )
-    logoCore.position.set(0, 0.02, 0.18)
-    logoCore.scale.set(0.92, 0.92, 1)
-    logoCore.renderOrder = 3
-    root.add(logoCore)
+    const logoModel = addAnimatedLogoModel({
+      parent: root,
+      size: 1.18,
+      position: new THREE.Vector3(0, 0.02, 0.24),
+      rotation: new THREE.Euler(0.08, -0.18, 0),
+    })
 
     const nodeMeshes: THREE.Mesh[] = []
+    const nodeModels: ReturnType<typeof addAnimatedGltfModel>[] = []
+    const pickableObjects: THREE.Object3D[] = []
     const linkLines: THREE.Line[] = []
     const sparkMeshes: THREE.Mesh[] = []
     const nodeCountsByRadius = new Map<number, number>()
@@ -326,14 +346,14 @@ export default function LearningConstellation({
       const countOnRing = nodeCountsByRadius.get(node.radius) ?? 1
       const baseAngle = (indexOnRing / countOnRing) * Math.PI * 2
       const size = 0.12 + Math.min(0.16, node.progress / 500)
+      const modelSettings = nodeModelSettings[node.kind]
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(size, 24, 18),
-        new THREE.MeshStandardMaterial({
+        new THREE.MeshBasicMaterial({
           color: palette[node.kind],
-          emissive: palette[node.kind],
-          emissiveIntensity: 0.55,
-          roughness: 0.36,
-          metalness: 0.18,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
         }),
       )
       mesh.position.copy(nodePosition(indexOnRing, countOnRing, node.radius))
@@ -343,7 +363,26 @@ export default function LearningConstellation({
       mesh.userData.orbitSpeed = 0.07 + indexOnRing * 0.012 + node.radius * 0.006
       mesh.userData.wavePhase = indexOnRing * 1.9 + node.radius
       nodeMeshes.push(mesh)
+      pickableObjects.push(mesh)
       root.add(mesh)
+
+      const nodeModel = addAnimatedGltfModel({
+        parent: root,
+        url: nodeModelUrls[node.kind],
+        size: modelSettings.size,
+        position: mesh.position.clone(),
+        rotation: modelSettings.rotation,
+        tintColor: palette[node.kind],
+        tintStrength: modelSettings.tintStrength,
+        userData: { nodeId: node.id },
+      })
+      nodeModel.group.userData.baseScale = 1
+      nodeModel.group.userData.baseRotationX = modelSettings.rotation.x
+      nodeModel.group.userData.baseRotationY = modelSettings.rotation.y
+      nodeModel.group.userData.baseRotationZ = modelSettings.rotation.z
+      nodeModel.group.userData.spin = modelSettings.spin
+      nodeModels.push(nodeModel)
+      pickableObjects.push(nodeModel.group)
 
       const linkGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), mesh.position.clone()])
       const link = new THREE.Line(
@@ -406,7 +445,7 @@ export default function LearningConstellation({
     const pickNodeId = (event: PointerEvent) => {
       updatePointer(event)
       raycaster.setFromCamera(pointer, camera)
-      const hit = raycaster.intersectObjects(nodeMeshes, false)[0]
+      const hit = raycaster.intersectObjects(pickableObjects, true)[0]
       return typeof hit?.object.userData.nodeId === 'string' ? hit.object.userData.nodeId : null
     }
 
@@ -421,7 +460,7 @@ export default function LearningConstellation({
     const onPointerMove = (event: PointerEvent) => {
       updatePointer(event)
       raycaster.setFromCamera(pointer, camera)
-      const hit = raycaster.intersectObjects(nodeMeshes, false)[0]
+      const hit = raycaster.intersectObjects(pickableObjects, true)[0]
       const nodeId = typeof hit?.object.userData.nodeId === 'string' ? hit.object.userData.nodeId : null
       renderer.domElement.style.cursor = hit ? 'pointer' : pointerState.dragging ? 'grabbing' : 'grab'
 
@@ -465,9 +504,12 @@ export default function LearningConstellation({
     let frameId = 0
     const clock = new THREE.Clock()
     const animate = () => {
-      const elapsed = clock.getElapsedTime()
+      const delta = clock.getDelta()
+      const elapsed = clock.elapsedTime
       root.rotation.y = pointerState.yaw + elapsed * 0.08
       root.rotation.x = pointerState.pitch
+      logoModel.update(delta)
+      logoModel.group.scale.setScalar(1 + Math.sin(elapsed * 1.7) * 0.025)
       coreGlow.scale.setScalar(1 + Math.sin(elapsed * 1.8) * 0.04)
       pulseRing.scale.setScalar(1 + Math.sin(elapsed * 2.2) * 0.1)
       pulseRing.rotation.z = elapsed * 0.35
@@ -489,9 +531,24 @@ export default function LearningConstellation({
         const activeScale = nodeId === selectedIdRef.current ? 1.55 : nodeId === hoveredIdRef.current ? 1.35 : 1
         const pulse = activeScale + Math.sin(elapsed * 2 + index) * 0.07
         mesh.scale.setScalar(pulse)
-        if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material.emissiveIntensity = nodeId === selectedIdRef.current || nodeId === hoveredIdRef.current ? 0.95 : 0.55
+
+        const nodeModel = nodeModels[index]
+        if (nodeModel) {
+          const modelPulse = 1 + Math.sin(elapsed * 2.8 + index) * 0.07
+          const spin = Number(nodeModel.group.userData.spin ?? 0)
+          nodeModel.update(delta)
+          nodeModel.group.position.copy(mesh.position)
+          nodeModel.group.position.y += 0.02
+          nodeModel.group.position.z += 0.2
+          nodeModel.group.scale.setScalar(activeScale * modelPulse)
+          nodeModel.group.rotation.set(
+            Number(nodeModel.group.userData.baseRotationX ?? 0),
+            Number(nodeModel.group.userData.baseRotationY ?? 0) + Math.sin(elapsed * 0.8 + index) * spin,
+            Number(nodeModel.group.userData.baseRotationZ ?? 0) + Math.sin(elapsed * 1.2 + index) * 0.06,
+          )
         }
+
+        mesh.rotation.y = elapsed * 0.7 + index
       })
       linkLines.forEach((line) => {
         const nodeId = String(line.userData.nodeId ?? '')
@@ -528,6 +585,8 @@ export default function LearningConstellation({
       renderer.domElement.removeEventListener('pointermove', onPointerMove)
       renderer.domElement.removeEventListener('pointerup', onPointerUp)
       renderer.domElement.removeEventListener('wheel', onWheel)
+      logoModel.dispose()
+      nodeModels.forEach((nodeModel) => nodeModel.dispose())
       renderer.dispose()
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -562,7 +621,6 @@ export default function LearningConstellation({
           }
         }
       })
-      logoTexture.dispose()
       mount.removeChild(renderer.domElement)
     }
   }, [nodes, resolvedTheme, sceneTheme])
@@ -590,7 +648,8 @@ export default function LearningConstellation({
     >
       <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute left-5 top-5 z-10 grid max-w-sm gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md sm:left-7 sm:top-7"
+        className={`pointer-events-none absolute top-24 z-10 grid max-w-sm gap-2 rounded-squircle border p-7 shadow-lg backdrop-blur-md sm:top-16 ${isRtl ? 'right-5 text-right sm:right-7' : 'left-5 text-left sm:left-7'}`}
+        dir={isRtl ? 'rtl' : 'ltr'}
         style={{
           borderColor: sceneTheme.panelBorder,
           background: sceneTheme.panelBg,
@@ -614,13 +673,19 @@ export default function LearningConstellation({
               <span style={{ color: sceneTheme.shellText }}>{progress}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full" style={{ background: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(13,21,16,0.12)' }}>
-              <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: `${progress}%` }} />
+              <div
+                className="h-full rounded-full bg-(--gd-primary)"
+                style={{
+                  width: `${progress}%`,
+                  marginInlineStart: isRtl ? 'auto' : undefined,
+                }}
+              />
             </div>
           </div>
         ) : null}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-5 py-5 sm:px-7" style={{ background: sceneTheme.legendGradient }}>
-        <div className="flex flex-wrap justify-end gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
+        <div className={`flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
           {legendItems.map((item) => (
             <span
               key={item.kind}
