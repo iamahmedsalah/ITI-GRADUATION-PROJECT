@@ -472,6 +472,46 @@
       "profileFailed": "تعذر تحديث الملف الشخصي.",
       "passwordSaved": "تم تحديث كلمة المرور بنجاح.",
       "passwordFailed": "تعذر تحديث كلمة المرور."
+    },
+    "accountControl": {
+      "sectionLabel": "إدارة الحساب",
+      "title": "إلغاء تنشيط الحساب أو حذفه",
+      "description": "يمكنك إلغاء تنشيط حسابك مؤقتًا أو حذفه نهائيًا. يمكن استعادة الحسابات المحذوفة خلال 7 أيام من طلب الحذف.",
+      "scheduledText": "تمت جدولة حذف حسابك بتاريخ ${scheduledDeletionDate}. يمكنك إلغاء عملية الحذف قبل هذا التاريخ باستخدام رمز التحقق المرسل إلى بريدك الإلكتروني.",
+
+      "deleteAccount": {
+        "title": "حذف الحساب",
+        "description": "سيتم جدولة حذف الحساب مع إمكانية التراجع عن العملية خلال 7 أيام.",
+        "sendCodeHint": "اطلب رمز تحقق للمتابعة في حذف الحساب. تنتهي صلاحية الرمز بعد 15 دقيقة.",
+        "sendCodeButton": "إرسال رمز التحقق",
+        "deleteScheduled":"حذف الحساب. لديك 7 أيام للتراجع عن ذلك.",
+        "deleteCodeSent": "تم إرسال رمز الحذف إلى بريدك الإلكتروني.",
+        "deleteRequestFailed": "تعذر إرسال رمز الحذف.",
+        "deleteConfirmFailed": "تعذر تأكيد الحذف.",
+        "undoCodeSent": "تم إرسال رمز الإلغاء إلى بريدك الإلكتروني.",
+        "undoRequestFailed": "تعذر إرسال رمز الإلغاء.",
+        "deleteCanceled":"تم إلغاء حذف الحساب.",
+        "undoConfirmFailed":"تعذر تأكيد الإلغاء.",
+        "confirmUndo": "تأكيد الإلغاء",
+        "passwordRequired": "أدخل كلمة المرور الحالية أولاً."
+      },
+      "deactivateAccount": {
+        "passwordLabel": "كلمة المرور الحالية",
+        "passwordPlaceholder": "أدخل كلمة المرور الحالية",
+        "reasonLabel": "سبب إلغاء التنشيط",
+        "reasonPlaceholder": "اختياري (بحد أقصى 500 حرف)",
+        "characterCount": "{{count}}/500",
+        "deactivate": "إلغاء تنشيط الحساب",
+        "confirmDeleteTitle": "تأكيد حذف الحساب",
+        "confirmDeleteSubtitle": "بعد التأكيد، سيتم جدولة حذف حسابك وإزالته نهائيًا بعد 7 أيام. يمكنك إلغاء عملية الحذف خلال هذه الفترة.",
+        "deleteCode": "رمز التحقق",
+        "confirmDelete": "حذف الحساب",
+        "waitingForCode": "اطلب رمز التحقق أولاً. تنتهي صلاحية الرمز بعد 15 دقيقة.",
+        "undoTitle":"إلغاء الحذف",
+        "undoSubtitle": "يمكنك إلغاء حذف الحساب خلال 7 أيام.",
+        "undoCode": "رمز الإلغاء",
+        "sendUndoCode": "إرسال رمز الإلغاء"
+      }
     }
   },
   "dashboard": {

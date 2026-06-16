@@ -111,11 +111,11 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     onSuccess: () => {
       clearAccessToken()
       queryClient.setQueryData(authQueryKey, null)
-      toast.success(t('profile.account.deactivated', 'Account deactivated. Log in with your password to reactivate it.'))
+      toast.success(t('profile.accountControl.deactivateAccount.deactivated', 'Account deactivated. Log in with your password to reactivate it.'))
       navigate(`/${language}/login`, { replace: true })
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('profile.account.deactivateFailed', 'Could not deactivate account.'))
+      toast.error(error instanceof Error ? error.message : t('profile.accountControl.deactivateAccount.deactivateFailed', 'Could not deactivate account.'))
     },
   })
 
@@ -123,10 +123,10 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     mutationFn: requestCurrentUserAccountDeletion,
     onSuccess: () => {
       setIsDeleteCodeSent(true)
-      toast.success(t('profile.account.deleteCodeSent', 'Deletion code sent to your email.'))
+      toast.success(t('profile.accountControl.deactivateAccount.deleteCodeSent', 'Deletion code sent to your email.'))
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('profile.account.deleteRequestFailed', 'Could not send deletion code.'))
+      toast.error(error instanceof Error ? error.message : t('profile.accountControl.deactivateAccount.deleteRequestFailed', 'Could not send deletion code.'))
     },
   })
 
@@ -139,10 +139,10 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
       }
       setIsDeleteCodeSent(false)
       setAccountForm((current) => ({ ...current, password: '', deleteCode: '' }))
-      toast.success(t('profile.account.deleteScheduled', 'Account deletion scheduled. You have 7 days to undo it.'))
+      toast.success(t('profile.accountControl.deleteAccount.deleteScheduled'))
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('profile.account.deleteConfirmFailed', 'Could not confirm deletion.'))
+      toast.error(error instanceof Error ? error.message : t('profile.accountControl.deleteAccount.deleteConfirmFailed', 'Could not confirm deletion.'))
     },
   })
 
@@ -150,10 +150,10 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     mutationFn: requestAccountDeletionUndo,
     onSuccess: () => {
       setIsUndoCodeSent(true)
-      toast.success(t('profile.account.undoCodeSent', 'Undo code sent to your email.'))
+      toast.success(t('profile.accountControl.deactivateAccount.undoCodeSent', 'Undo code sent to your email.'))
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('profile.account.undoRequestFailed', 'Could not send undo code.'))
+      toast.error(error instanceof Error ? error.message : t('profile.accountControl.deactivateAccount.undoRequestFailed', 'Could not send undo code.'))
     },
   })
 
@@ -164,10 +164,10 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
       setAccountForm((current) => ({ ...current, password: '', undoCode: '' }))
       await queryClient.invalidateQueries({ queryKey: authQueryKey })
       await queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
-      toast.success(t('profile.account.deleteCanceled', 'Account deletion canceled.'))
+      toast.success(t('profile.accountControl.deleteAccount.deleteCanceled'))
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('profile.account.undoConfirmFailed', 'Could not cancel deletion.'))
+      toast.error(error instanceof Error ? error.message : t('profile.accountControl.deleteAccount.undoConfirmFailed'))
     },
   })
 
@@ -226,9 +226,11 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
     requestUndoMutation.isPending ||
     confirmUndoMutation.isPending
 
+
+    // Delecte acc toast
   const requireAccountPassword = () => {
     if (accountForm.password.trim().length < 8) {
-      toast.error(t('profile.account.passwordRequired', 'Enter your current password first.'))
+      toast.error(t('profile.accountControl.deleteAccount.passwordRequired'))
       return false
     }
 
@@ -432,19 +434,19 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
       <section className="grid gap-5 rounded-3xl border border-[rgba(226,33,52,0.35)] bg-(--surface) p-5 sm:p-6 xl:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--error)">
-              {t('profile.account.overline', 'Account control')}
-            </p>
-            <h2 className="mt-2 text-lg font-semibold text-(--text-h)">
-              {t('profile.account.title', 'Deactivate or delete account')}
-            </h2>
+            <h3 className="text-lg font-bold uppercase tracking-[0.18em] text-(--error)">
+              {t('profile.accountControl.sectionLabel')}
+            </h3>
+            <h4 className="mt-2 text-md font-semibold text-(--text-h)">
+              {t('profile.accountControl.title')}
+            </h4>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-(--text)">
               {isDeletionScheduled
-                ? t('profile.account.scheduledText', {
+                ? t('profile.accountControl.scheduledText', {
                     date: scheduledDeletionDate,
                     defaultValue: `Deletion is scheduled for ${scheduledDeletionDate}. You can undo it before that date with an email code.`,
                   })
-                : t('profile.account.subtitle', 'Deactivate pauses your account until your next password login. Delete requires an email code and stays undoable for 7 days.')}
+                : t('profile.accountControl.description')}
             </p>
           </div>
           <span className="grid size-11 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
@@ -455,8 +457,9 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div className="grid gap-4 rounded-2xl border border-(--border) bg-(--surface-muted) p-4">
             <FormInput
-              label={t('profile.account.currentPassword', 'Current password')}
+              label={t('profile.accountControl.deactivateAccount.passwordLabel')}
               value={accountForm.password}
+              placeholder={t('profile.accountControl.deactivateAccount.passwordPlaceholder')}
               onChange={(event) => setAccountForm((current) => ({ ...current, password: event.target.value }))}
               type={showAccountPassword ? 'text' : 'password'}
               autoComplete="current-password"
@@ -471,13 +474,13 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
               className="pr-11"
             />
             <label className="grid gap-2 text-sm font-semibold text-(--text-h)">
-              {t('profile.account.reason', 'Reason')}
+              {t('profile.accountControl.deactivateAccount.reasonLabel')}
               <textarea
                 value={accountForm.reason}
                 maxLength={500}
                 rows={4}
                 onChange={(event) => setAccountForm((current) => ({ ...current, reason: event.target.value }))}
-                placeholder={t('profile.account.reasonPlaceholder', 'Optional, max 500 characters')}
+                placeholder={t('profile.accountControl.deactivateAccount.reasonPlaceholder')}
                 className="min-h-28 resize-y rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none transition focus:border-(--accent-border)"
               />
               <span className="text-xs font-medium text-(--text)">{accountForm.reason.length}/500</span>
@@ -496,7 +499,7 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
                 className="inline-flex items-center justify-center gap-2 rounded-squircle border border-(--border) px-4 py-3 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2) disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <HugeiconsIcon icon={Login03Icon} size={16} />
-                {t('profile.account.deactivate', 'Deactivate account')}
+                {t('profile.accountControl.deactivateAccount.deactivate')}
               </button>
               <button
                 type="button"
@@ -511,7 +514,7 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
                 className="inline-flex items-center justify-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.45)] bg-[rgba(226,33,52,0.08)] px-4 py-3 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <HugeiconsIcon icon={Delete02Icon} size={16} />
-                {t('profile.account.sendDeleteCode', 'Send delete code')}
+                {t('profile.accountControl.deactivateAccount.confirmDelete')}
               </button>
             </div>
           </div>
@@ -521,10 +524,10 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
               <>
                 <div className="rounded-2xl border border-(--accent-border) bg-(--accent-bg) p-4">
                   <h3 className="font-semibold text-(--text-h)">
-                    {t('profile.account.undoTitle', 'Undo scheduled deletion')}
+                    {t('profile.accountControl.deactivateAccount.undoTitle')}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-(--text)">
-                    {t('profile.account.undoSubtitle', 'Use your current password to send an undo code, then confirm the code from your email.')}
+                    {t('profile.accountControl.deactivateAccount.undoSubtitle')}
                   </p>
                 </div>
                 <button
@@ -539,12 +542,12 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
                   }}
                   className="rounded-squircle border border-(--accent-border) px-4 py-3 text-sm font-semibold text-(--text-h) transition hover:bg-(--accent-bg) disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {t('profile.account.sendUndoCode', 'Send undo code')}
+                  {t('profile.accountControl.deactivateAccount.sendUndoCode')}
                 </button>
                 {isUndoCodeSent ? (
                   <div className="grid gap-3">
                     <FormInput
-                      label={t('profile.account.undoCode', 'Undo code')}
+                      label={t('profile.accountControl.deactivateAccount.undoCode')}
                       value={accountForm.undoCode}
                       onChange={(event) => setAccountForm((current) => ({ ...current, undoCode: event.target.value.toUpperCase() }))}
                       maxLength={8}
@@ -556,7 +559,7 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
                       onClick={() => confirmUndoMutation.mutate({ code: accountForm.undoCode })}
                       className="rounded-squircle bg-(--gd-primary) px-4 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {t('profile.account.confirmUndo', 'Cancel scheduled deletion')}
+                      {t('profile.accountControl.deleteAccount.confirmUndo')}
                     </button>
                   </div>
                 ) : null}
@@ -565,16 +568,16 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
               <>
                 <div className="rounded-2xl border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] p-4">
                   <h3 className="font-semibold text-(--text-h)">
-                    {t('profile.account.confirmDeleteTitle', 'Confirm delete with email code')}
+                    {t('profile.accountControl.deactivateAccount.confirmDeleteTitle')}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-(--text)">
-                    {t('profile.account.confirmDeleteSubtitle', 'After confirmation, deletion is scheduled 7 days later. You can undo it before the deadline.')}
+                    {t('profile.accountControl.deactivateAccount.confirmDeleteSubtitle')}
                   </p>
                 </div>
                 {isDeleteCodeSent ? (
                   <div className="grid gap-3">
                     <FormInput
-                      label={t('profile.account.deleteCode', 'Delete code')}
+                      label={t('profile.accountControl.deactivateAccount.deleteCode', 'Delete code')}
                       value={accountForm.deleteCode}
                       onChange={(event) => setAccountForm((current) => ({ ...current, deleteCode: event.target.value.toUpperCase() }))}
                       maxLength={8}
@@ -587,12 +590,12 @@ export default function ProfileSettingsPanel({ user, variants, cacheQueryKey = a
                       className="inline-flex items-center justify-center gap-2 rounded-squircle bg-(--error) px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <HugeiconsIcon icon={Delete02Icon} size={16} />
-                      {t('profile.account.confirmDelete', 'Confirm delete account')}
+                      {t('profile.accountControl.deactivateAccount.confirmDeleteTitle')}
                     </button>
                   </div>
                 ) : (
                   <p className="rounded-2xl border border-(--border) bg-(--surface-2) p-4 text-sm leading-6 text-(--text)">
-                    {t('profile.account.waitingForCode', 'Send a delete code first. The code expires after 15 minutes.')}
+                    {t('profile.accountControl.deactivateAccount.waitingForCode', 'Send a delete code first. The code expires after 15 minutes.')}
                   </p>
                 )}
               </>
