@@ -24,7 +24,7 @@ import {
   saveUserAiRoadmap,
   sendAiChatMessage,
   updateAiChatConversation,
-} from "../services/ai.service.js";
+} from "../controllers/ai.controller.js";
 
 const router = express.Router();
 

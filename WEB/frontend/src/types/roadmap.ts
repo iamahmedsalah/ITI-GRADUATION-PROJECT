@@ -15,6 +15,8 @@ export type StepNodeData = {
   isLocked: boolean
   completedDeps: boolean
   onSelect: (stepKey: string) => void
+  isCore?: boolean
+  branchSide?: 'left' | 'right'
 }
 
 export type { RoadmapStepProgress, RoadmapTemplate, UserRoadmap }

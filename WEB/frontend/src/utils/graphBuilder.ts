@@ -20,51 +20,6 @@ function getCompletedDepsStatus(
     .every((d) => progressMap.get(d) === 'completed')
 }
 
-function getNodePosition(index: number, totalSteps: number) {
-  const NODE_HEIGHT = 60
-
-  if (totalSteps >= 25) {
-    const columns =
-      totalSteps >= 500
-        ? 10
-        : totalSteps >= 250
-          ? 8
-          : totalSteps >= 120
-            ? 6
-            : totalSteps >= 90
-              ? 4
-              : totalSteps >= 50
-                ? 3
-                : 2
-    const COLUMN_GAP = totalSteps >= 250 ? 290 : 320
-    const ROW_GAP = totalSteps >= 250 ? 105 : 120
-    const row = Math.floor(index / columns)
-    const rawColumn = index % columns
-    const column = row % 2 === 0 ? rawColumn : columns - 1 - rawColumn
-
-    return {
-      x: (column - (columns - 1) / 2) * COLUMN_GAP,
-      y: row * ROW_GAP,
-    }
-  }
-
-  const ROW_GAP = 100
-  const BRANCH_OFFSET = 280
-  const isCenter = index % 3 === 0
-  const side = index % 2 === 0 ? -1 : 1
-
-  return {
-    x: isCenter ? 0 : side * BRANCH_OFFSET,
-    y: index * (NODE_HEIGHT + ROW_GAP),
-  }
-}
-
-/**
- * Improved graph builder:
- * - Compact multi-column layout for large imported roadmaps
- * - Zigzag path for smaller roadmaps
- * - Dependency-aware step order before positioning
- */
 export function createGraph(
   steps: RoadmapStep[],
   selectedStepKey: string,
@@ -74,17 +29,126 @@ export function createGraph(
 ): { nodes: Node<StepNodeData>[]; edges: Edge[] } {
   const knownKeys = new Set(steps.map((s) => s.stepKey))
 
-  /**
-   * Layout strategy:
-   * - Even indices (0, 2, 4…) → center column (x = 0)
-   * - Odd indices alternating left/right
-   * This creates a zigzag flow that's easy to follow.
-   */
-  const nodes: Node<StepNodeData>[] = steps.map((step, index) => {
+  // 1. Build a dependents map to count how many other nodes depend on each key
+  const dependentsMap = new Map<string, string[]>()
+  steps.forEach((step) => {
+    step.dependsOn?.forEach((parentKey) => {
+      if (knownKeys.has(parentKey)) {
+        if (!dependentsMap.has(parentKey)) {
+          dependentsMap.set(parentKey, [])
+        }
+        dependentsMap.get(parentKey)!.push(step.stepKey)
+      }
+    })
+  })
+
+  // 2. Classify steps into Core vs Branch
+  const coreSteps: RoadmapStep[] = []
+  const branchStepsMap = new Map<string, RoadmapStep[]>() // parentKey -> branch steps
+
+  steps.forEach((step) => {
+    const isLeaf = !dependentsMap.has(step.stepKey) || dependentsMap.get(step.stepKey)!.length === 0
+    const hasSingleParent = step.dependsOn && step.dependsOn.length === 1
+
+    // If it's a leaf node and has exactly one parent, treat it as a side branch of that parent
+    if (isLeaf && hasSingleParent) {
+      const parentKey = step.dependsOn![0]
+      if (knownKeys.has(parentKey)) {
+        if (!branchStepsMap.has(parentKey)) {
+          branchStepsMap.set(parentKey, [])
+        }
+        branchStepsMap.get(parentKey)!.push(step)
+        return
+      }
+    }
+    // Otherwise it's part of the main core spine
+    coreSteps.push(step)
+  })
+
+  // Fallback: if for some reason coreSteps is empty (e.g. no templates or they all have no parents),
+  // make all steps core nodes.
+  if (coreSteps.length === 0) {
+    coreSteps.push(...steps)
+    branchStepsMap.clear()
+  }
+
+  // 3. Compute coordinates for each core step and its branches
+  const positionsMap = new Map<string, { x: number; y: number }>()
+  const nodeLayoutDataMap = new Map<string, { isCore: boolean; branchSide?: 'left' | 'right' }>()
+
+  let currentY = 0
+  const CORE_X = 0
+  const BRANCH_X_OFFSET = 300
+  const BRANCH_Y_GAP = 85
+  const CORE_Y_GAP_BASE = 150
+
+  coreSteps.forEach((coreStep, index) => {
+    const branches = branchStepsMap.get(coreStep.stepKey) ?? []
+    const branchCount = branches.length
+
+    // Determine Y coordinate for this core node
+    // Spacing needs to account for branches of the previous node if they went below it,
+    // and branches of the current node if they go above it.
+    // Centering the stack vertically: branches are distributed from -(branchCount - 1)/2 * BRANCH_Y_GAP to +(branchCount - 1)/2 * BRANCH_Y_GAP.
+    const currentHalfBranchHeight = branchCount > 0 ? ((branchCount - 1) / 2) * BRANCH_Y_GAP : 0
+
+    if (index > 0) {
+      const prevCoreStep = coreSteps[index - 1]
+      const prevBranches = branchStepsMap.get(prevCoreStep.stepKey) ?? []
+      const prevBranchCount = prevBranches.length
+      const prevHalfBranchHeight = prevBranchCount > 0 ? ((prevBranchCount - 1) / 2) * BRANCH_Y_GAP : 0
+
+      // Add a gap that is proportional to both half-heights
+      const requiredGap = CORE_Y_GAP_BASE + prevHalfBranchHeight + currentHalfBranchHeight
+      currentY += requiredGap
+    }
+
+    // Assign core node position
+    positionsMap.set(coreStep.stepKey, { x: CORE_X, y: currentY })
+    nodeLayoutDataMap.set(coreStep.stepKey, { isCore: true })
+
+    // Assign branch node positions
+    if (branchCount > 0) {
+      // Alternate side: odd index on left, even index on right
+      const defaultSide = index % 2 === 0 ? 'right' : 'left'
+
+      branches.forEach((branchStep, branchIndex) => {
+        // If there are many branches (e.g. > 4), we split them to balance both sides.
+        let side: 'left' | 'right' = defaultSide
+        let localIndex = branchIndex
+        let groupSize = branchCount
+
+        if (branchCount > 4) {
+          const half = Math.ceil(branchCount / 2)
+          if (branchIndex < half) {
+            side = 'left'
+            localIndex = branchIndex
+            groupSize = half
+          } else {
+            side = 'right'
+            localIndex = branchIndex - half
+            groupSize = branchCount - half
+          }
+        }
+
+        const x = side === 'right' ? BRANCH_X_OFFSET : -BRANCH_X_OFFSET
+        // Center vertically relative to the core step
+        const offset = (localIndex - (groupSize - 1) / 2) * BRANCH_Y_GAP
+        positionsMap.set(branchStep.stepKey, { x, y: currentY + offset })
+        nodeLayoutDataMap.set(branchStep.stepKey, { isCore: false, branchSide: side })
+      })
+    }
+  })
+
+  // 4. Generate Nodes
+  const nodes: Node<StepNodeData>[] = steps.map((step) => {
+    const layout = nodeLayoutDataMap.get(step.stepKey) ?? { isCore: true }
+    const pos = positionsMap.get(step.stepKey) ?? { x: 0, y: 0 }
+
     return {
       id: step.stepKey,
       type: 'roadmapStep',
-      position: getNodePosition(index, steps.length),
+      position: pos,
       data: {
         step,
         selected: step.stepKey === selectedStepKey,
@@ -92,15 +156,40 @@ export function createGraph(
         isLocked: lockDependencies && !getCompletedDepsStatus(step, progressMap, knownKeys),
         completedDeps: getCompletedDepsStatus(step, progressMap, knownKeys),
         onSelect,
+        isCore: layout.isCore,
+        branchSide: layout.branchSide,
       },
     }
   })
 
-  const edges: Edge[] = steps.flatMap((step, index) => {
+  // 5. Generate Edges
+  const edges: Edge[] = steps.flatMap((step) => {
     const deps = step.dependsOn?.filter((d) => knownKeys.has(d)) ?? []
-    const sources = deps.length > 0 ? deps : index > 0 ? [steps[index - 1].stepKey] : []
-    const isSelected =
-      step.stepKey === selectedStepKey || sources.includes(selectedStepKey)
+    
+    // In our layout:
+    // - Branch nodes connect to their single parent core node.
+    // - Core nodes connect to the next core node in the spine.
+    const targetLayout = nodeLayoutDataMap.get(step.stepKey)
+    const isBranch = !(targetLayout?.isCore ?? true)
+    
+    let sources: string[] = []
+    if (isBranch) {
+      sources = deps.slice(0, 1) // should have exactly 1 parent
+    } else {
+      // Find its dependencies that are also core nodes.
+      const coreDeps = deps.filter(d => nodeLayoutDataMap.get(d)?.isCore ?? true)
+      if (coreDeps.length > 0) {
+        sources = coreDeps
+      } else {
+        // Fallback to previous core node in sequence to make sure center spine is fully continuous
+        const myIndexInCore = coreSteps.findIndex(cs => cs.stepKey === step.stepKey)
+        if (myIndexInCore > 0) {
+          sources = [coreSteps[myIndexInCore - 1].stepKey]
+        }
+      }
+    }
+
+    const isSelected = step.stepKey === selectedStepKey || sources.includes(selectedStepKey)
     const stepStatus = progressMap.get(step.stepKey) ?? 'notStarted'
     const isDone = stepStatus === 'completed'
 
@@ -108,16 +197,32 @@ export function createGraph(
       const sourceStatus = progressMap.get(source) ?? 'notStarted'
       const edgeDone = sourceStatus === 'completed' && isDone
 
+      let sourceHandleId = 'core-bottom'
+      let targetHandleId = 'core-top'
+
+      if (targetLayout && !targetLayout.isCore) {
+        // Source is core, target is branch
+        if (targetLayout.branchSide === 'right') {
+          sourceHandleId = 'core-right'
+          targetHandleId = 'branch-left'
+        } else {
+          sourceHandleId = 'core-left'
+          targetHandleId = 'branch-right'
+        }
+      }
+
       return {
         id: `${source}->${step.stepKey}`,
         source,
         target: step.stepKey,
         type: 'smoothstep',
+        sourceHandle: sourceHandleId,
+        targetHandle: targetHandleId,
         animated: isSelected && !edgeDone,
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 18,
-          height: 18,
+          width: 14,
+          height: 14,
           color: edgeDone
             ? 'var(--gd-primary)'
             : isSelected
@@ -130,8 +235,8 @@ export function createGraph(
             : isSelected
               ? 'var(--accent-border)'
               : 'var(--border)',
-          strokeWidth: isSelected ? 2.5 : 1.5,
-          strokeDasharray: deps.length ? '6 4' : undefined,
+          strokeWidth: isSelected ? (targetLayout?.isCore ? 3.5 : 2.5) : (targetLayout?.isCore ? 2.5 : 1.5),
+          strokeDasharray: !targetLayout?.isCore ? '5 4' : undefined, // dashed connector lines for branches
           opacity: isSelected ? 1 : 0.6,
           transition: 'stroke 0.2s, stroke-width 0.2s',
         },

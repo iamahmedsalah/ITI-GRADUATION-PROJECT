@@ -11,7 +11,6 @@ import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import {
   AI_CHAT_CATALOG_CACHE_TTL_MS,
-  AI_RECOMMENDATIONS_CACHE_TTL_MS,
   AI_TOPIC_EXPLANATION_CACHE_TTL_MS,
   aiCache,
   createTtlCache,
@@ -28,6 +27,15 @@ import {
 import { AI_CHAT_SYSTEM_PROMPT } from "./ai/prompts/chat-system.prompt.js";
 import { buildRoadmapDraftPrompt } from "./ai/prompts/roadmap-draft.prompt.js";
 import { buildTopicExplainPrompt } from "./ai/prompts/topic-explain.prompt.js";
+import { generateRecommendations } from "./ai/recommendations.js";
+import {
+  createConversation as createAiChatConversationService,
+  deleteConversation as deleteAiChatConversationService,
+  getMessages as getAiChatMessagesService,
+  listConversations as listAiChatConversationsService,
+  sendMessage as sendAiChatMessageService,
+  updateConversation as updateAiChatConversationService,
+} from "./ai/chat.js";
 import {
   buildAiAccessPayload,
   ensureAiSubscriber,
@@ -74,8 +82,6 @@ const normalizeList = (values = []) =>
     : [];
 
 const unique = (values = []) => [...new Set(values.filter(Boolean))];
-
-const parseLimit = (value) => clamp(parseInt(value, 10) || 6, 1, 12);
 
 const stableJson = (value) => {
   if (Array.isArray(value)) {
@@ -439,163 +445,8 @@ const scoreRoadmap = ({ template, signals, preferences, hasActiveRoadmap }) => {
 };
 
 export const getAiRecommendations = async (req, res) => {
-  const userId = req.user._id;
-  const limit = parseLimit(req.query.limit);
-
   try {
-    const cacheKey = `ai-recommendations:${toId(userId)}:${limit}`;
-    const cached = aiCache.get(cacheKey);
-    if (cached) {
-      return res.status(200).json(cached);
-    }
-
-    const [
-      preferences,
-      coursesProgress,
-      roadmaps,
-      stepProgress,
-      activities,
-      publishedCourses,
-      activeTemplates,
-    ] = await Promise.all([
-      UserPreference.findOne({ user: userId }).lean(),
-      UserCourseProgress.find({ user: userId })
-        .populate(
-          "course",
-          "title slug shortDescription level category tags thumbnailUrl durationMinutes stats isFeatured deletedAt isPublished",
-        )
-        .sort({ lastAccessedAt: -1 })
-        .lean(),
-      UserRoadmap.find({ user: userId, status: { $ne: "archived" } })
-        .populate(
-          "template",
-          "title slug goal description targetLevel targetRole templateType tags steps estimatedTotalMinutes",
-        )
-        .sort({ lastAccessedAt: -1, updatedAt: -1 })
-        .lean(),
-      UserRoadmapStepProgress.find({ user: userId })
-        .select("roadmap template stepKey course status score timeSpentMinutes attempts")
-        .lean(),
-      UserActivity.find({ user: userId })
-        .populate("course", "title slug tags category level")
-        .populate({
-          path: "roadmap",
-          select: "template progressPercent",
-          populate: {
-            path: "template",
-            select: "title slug tags targetLevel templateType",
-          },
-        })
-        .sort({ occurredAt: -1, createdAt: -1 })
-        .limit(30)
-        .lean(),
-      Course.find({ deletedAt: null, isPublished: true })
-        .select(
-          "title slug shortDescription level category tags thumbnailUrl durationMinutes stats isFeatured prerequisites learningOutcomes roadmapTemplate",
-        )
-        .sort({ isFeatured: -1, createdAt: -1 })
-        .limit(100)
-        .lean(),
-      RoadmapTemplate.find({ isActive: true })
-        .select(
-          "title slug goal description targetLevel targetRole templateType tags steps estimatedTotalMinutes",
-        )
-        .sort({ createdAt: -1 })
-        .limit(100)
-        .lean(),
-    ]);
-
-    const courseProgressByCourseId = new Map(
-      coursesProgress
-        .filter((progress) => progress.course)
-        .map((progress) => [toId(progress.course), progress]),
-    );
-    const completedCourseIds = new Set(
-      coursesProgress
-        .filter((progress) => progress.status === "completed")
-        .map((progress) => toId(progress.course)),
-    );
-    const assignedTemplateIds = new Set(
-      roadmaps.map((roadmap) => toId(roadmap.template)),
-    );
-    const activeRoadmaps = roadmaps.filter((roadmap) =>
-      ["assigned", "inProgress", "paused"].includes(roadmap.status),
-    );
-    const activeRoadmapTerms = unique(
-      activeRoadmaps.flatMap((roadmap) => getRoadmapTerms(roadmap.template)),
-    );
-    const activeStepCourseIds = new Set(
-      stepProgress
-        .filter((progress) => !["completed", "skipped"].includes(progress.status))
-        .map((progress) => toId(progress.course))
-        .filter(Boolean),
-    );
-
-    const signals = buildSignals({ preferences, coursesProgress, roadmaps });
-    const activitySignals = unique(
-      activities.flatMap((activity) => [
-        ...getCourseTerms(activity.course),
-        ...getRoadmapTerms(activity.roadmap?.template),
-        ...tokenize(activity.searchQuery),
-      ]),
-    );
-    signals.signalTerms = unique([...signals.signalTerms, ...activitySignals]);
-
-    const nextSteps = buildNextStepRecommendations({
-      roadmaps,
-      stepProgress,
-      courseProgressByCourseId,
-      limit,
-    });
-
-    const courses = publishedCourses
-      .filter((course) => !completedCourseIds.has(toId(course._id)))
-      .map((course) =>
-        scoreCourse({
-          course,
-          signals,
-          preferences,
-          courseProgress: courseProgressByCourseId.get(toId(course._id)),
-          activeStepCourseIds,
-          activeRoadmapTerms,
-        }),
-      )
-      .sort((left, right) => right.matchScore - left.matchScore)
-      .slice(0, limit);
-
-    const roadmapsToRecommend = activeTemplates
-      .filter((template) => !assignedTemplateIds.has(toId(template._id)))
-      .map((template) =>
-        scoreRoadmap({
-          template,
-          signals,
-          preferences,
-          hasActiveRoadmap: activeRoadmaps.length > 0,
-        }),
-      )
-      .sort((left, right) => right.matchScore - left.matchScore)
-      .slice(0, limit);
-
-    const payload = {
-      success: true,
-      message: "AI recommendations generated successfully.",
-      data: {
-        engine: "ilma-recommendation-rules-v1",
-        generatedAt: new Date().toISOString(),
-        profile: summarizeProfile(
-          preferences,
-          signals.signalTerms,
-          signals.preferredLevel,
-        ),
-        recommendations: {
-          nextSteps,
-          courses,
-          roadmaps: roadmapsToRecommend,
-        },
-      },
-    };
-
-    aiCache.set(cacheKey, payload, AI_RECOMMENDATIONS_CACHE_TTL_MS);
+    const payload = await generateRecommendations(req.user._id, req.query.limit);
     return res.status(200).json(payload);
   } catch (error) {
     console.error("AI recommendations error:", error);
@@ -1247,19 +1098,13 @@ const buildLearningContextInstruction = (links = []) => {
 
 export const listAiChatConversations = async (req, res) => {
   try {
-    const conversations = await UserAiConversation.find({
-      user: req.user._id,
-      deletedAt: null,
-    })
-      .sort({ lastMessageAt: -1 })
-      .limit(50)
-      .lean();
+    const payload = await listAiChatConversationsService(req.user._id);
 
     return res.status(200).json({
       success: true,
       message: "AI chat conversations retrieved successfully.",
       data: {
-        conversations: conversations.map(serializeConversation),
+        conversations: payload.conversations,
       },
     });
   } catch (error) {
@@ -1274,34 +1119,30 @@ export const listAiChatConversations = async (req, res) => {
 
 export const createAiChatConversation = async (req, res) => {
   const { title, context, message } = req.body;
-  let conversation = null;
 
   try {
-    conversation = await UserAiConversation.create({
-      user: req.user._id,
-      title: title || (message ? buildChatTitle(message) : "New chat"),
-      context: context || {},
-      lastMessageAt: new Date(),
+    const payload = await createAiChatConversationService({
+      user: req.user,
+      title,
+      context,
+      message,
     });
 
-    if (!message) {
-      return res.status(201).json({
-        success: true,
-        message: "AI chat conversation created successfully.",
-        data: {
-          conversation: serializeConversation(conversation),
-          messages: [],
-        },
-      });
-    }
-
-    req.params.conversationId = toId(conversation._id);
-    return sendAiChatMessage(req, res);
+    return res.status(201).json({
+      success: true,
+      message: message
+        ? "AI chat response generated successfully."
+        : "AI chat conversation created successfully.",
+      data: payload,
+    });
   } catch (error) {
-    if (conversation && message) {
-      await UserAiConversation.findByIdAndUpdate(conversation._id, {
-        deletedAt: new Date(),
-      }).catch(() => {});
+    if (error.status === 402) {
+      const access = await buildAiAccessPayload(req.user);
+      return res.status(402).json({
+        success: false,
+        message: error.message,
+        data: access,
+      });
     }
 
     console.error("AI chat conversation create error:", {
@@ -1321,25 +1162,15 @@ export const createAiChatConversation = async (req, res) => {
 
 export const getAiChatMessages = async (req, res) => {
   try {
-    const conversation = await ensureOwnedAiConversation(
-      req.params.conversationId,
-      req.user._id,
-    );
-    const messages = await UserAiMessage.find({
-      conversation: conversation._id,
-      user: req.user._id,
-    })
-      .sort({ createdAt: 1 })
-      .limit(200)
-      .lean();
+    const payload = await getAiChatMessagesService({
+      conversationId: req.params.conversationId,
+      userId: req.user._id,
+    });
 
     return res.status(200).json({
       success: true,
       message: "AI chat messages retrieved successfully.",
-      data: {
-        conversation: serializeConversation(conversation),
-        messages: messages.map(serializeMessage),
-      },
+      data: payload,
     });
   } catch (error) {
     console.error("AI chat messages error:", error);
@@ -1355,124 +1186,28 @@ export const getAiChatMessages = async (req, res) => {
 };
 
 export const sendAiChatMessage = async (req, res) => {
-  const userId = req.user._id;
   const { message, context } = req.body;
-  let reservation = null;
 
   try {
-    const conversation = await ensureOwnedAiConversation(
-      req.params.conversationId,
-      userId,
-    );
-    const subscription = getAiSubscription(req.user);
+    const payload = await sendAiChatMessageService({
+      user: req.user,
+      conversationId: req.params.conversationId,
+      message,
+      context,
+    });
 
-    try {
-      reservation = await reserveAiChatUsage(userId, subscription);
-    } catch (error) {
-      if (error.status !== 402) throw error;
+    return res.status(201).json({
+      success: true,
+      message: "AI chat response generated successfully.",
+      data: payload,
+    });
+  } catch (error) {
+    if (error.status === 402) {
       const access = await buildAiAccessPayload(req.user);
       return res.status(402).json({
         success: false,
         message: error.message,
         data: access,
-      });
-    }
-
-    if (context) {
-      conversation.context = {
-        ...conversation.context,
-        ...context,
-      };
-    }
-
-    const history = await UserAiMessage.find({
-      conversation: conversation._id,
-      user: userId,
-      role: { $in: ["user", "assistant"] },
-    })
-      .sort({ createdAt: -1 })
-      .limit(12)
-      .lean();
-    const contextInstruction = buildChatContextInstruction(conversation.context);
-    const learningLinks = await searchAiLearningCatalog(message);
-    const learningInstruction = buildLearningContextInstruction(learningLinks);
-    const messages = [
-      ...history.reverse().map((item) => ({
-        role: item.role,
-        content: item.content,
-      })),
-      {
-        role: "user",
-        content: message,
-      },
-    ];
-    const system = [
-      AI_CHAT_SYSTEM_PROMPT,
-      contextInstruction,
-      learningInstruction,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-    const aiReply = await callAiText({
-      system,
-      messages,
-      maxTokens: 900,
-    });
-
-    const [userMessage, assistantMessage] = await UserAiMessage.insertMany([
-      {
-        conversation: conversation._id,
-        user: userId,
-        role: "user",
-        content: message,
-      },
-      {
-        conversation: conversation._id,
-        user: userId,
-        role: "assistant",
-        content: aiReply.content.slice(0, 6000),
-        provider: aiReply.provider,
-        model: aiReply.model,
-        promptTokens: aiReply.usage?.promptTokens || 0,
-        completionTokens: aiReply.usage?.completionTokens || 0,
-        totalTokens: aiReply.usage?.totalTokens || 0,
-        links: learningLinks,
-      },
-    ]);
-
-    conversation.lastMessageAt = new Date();
-    if (!conversation.title || conversation.title === "New chat") {
-      conversation.title = buildChatTitle(message);
-    }
-    await conversation.save();
-
-    await updateAiChatTokenUsage({
-      userId,
-      periodStart: reservation.periodStart,
-      usage: aiReply.usage,
-    });
-    await recordAiActivity(userId, "ai_chat", {
-      conversationId: conversation._id,
-      provider: aiReply.provider,
-      model: aiReply.model,
-    });
-    const access = await buildAiAccessPayload(req.user);
-
-    return res.status(201).json({
-      success: true,
-      message: "AI chat response generated successfully.",
-      data: {
-        conversation: serializeConversation(conversation),
-        messages: [serializeMessage(userMessage), serializeMessage(assistantMessage)],
-        access,
-      },
-    });
-  } catch (error) {
-    if (reservation) {
-      await releaseAiUsage({
-        userId,
-        type: "ai_chat",
-        periodStart: reservation.periodStart,
       });
     }
 
@@ -1493,20 +1228,16 @@ export const sendAiChatMessage = async (req, res) => {
 
 export const updateAiChatConversation = async (req, res) => {
   try {
-    const conversation = await ensureOwnedAiConversation(
-      req.params.conversationId,
-      req.user._id,
-    );
-
-    conversation.title = req.body.title;
-    await conversation.save();
+    const payload = await updateAiChatConversationService({
+      conversationId: req.params.conversationId,
+      userId: req.user._id,
+      title: req.body.title,
+    });
 
     return res.status(200).json({
       success: true,
       message: "AI chat conversation updated successfully.",
-      data: {
-        conversation: serializeConversation(conversation),
-      },
+      data: payload,
     });
   } catch (error) {
     console.error("AI chat conversation update error:", error);
@@ -1523,20 +1254,15 @@ export const updateAiChatConversation = async (req, res) => {
 
 export const deleteAiChatConversation = async (req, res) => {
   try {
-    const conversation = await ensureOwnedAiConversation(
-      req.params.conversationId,
-      req.user._id,
-    );
-
-    conversation.deletedAt = new Date();
-    await conversation.save();
+    const payload = await deleteAiChatConversationService({
+      conversationId: req.params.conversationId,
+      userId: req.user._id,
+    });
 
     return res.status(200).json({
       success: true,
       message: "AI chat conversation deleted successfully.",
-      data: {
-        conversation: serializeConversation(conversation),
-      },
+      data: payload,
     });
   } catch (error) {
     console.error("AI chat conversation delete error:", error);

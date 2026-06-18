@@ -47,7 +47,7 @@ import {
   confirmAccountDeletionUndo,
   startSocialAuth,
   handleSocialAuthCallback,
-} from "../services/users.service.js";
+} from "../controllers/auth.controller.js";
 
 const router = express.Router();
 

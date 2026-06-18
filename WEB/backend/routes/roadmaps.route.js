@@ -30,7 +30,7 @@ import {
   unpublishRoadmapTemplate,
   addStepToTemplate,
   removeStepFromTemplate,
-} from "../services/roadmaps.service.js";
+} from "../controllers/roadmap.controller.js";
 
 const router = express.Router();
 

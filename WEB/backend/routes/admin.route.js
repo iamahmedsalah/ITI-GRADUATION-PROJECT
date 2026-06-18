@@ -55,8 +55,8 @@ import {
   adminCheckAuth,
   getAdminContactMessages,
   replyToContactMessageByAdmin,
-} from "../services/admin.service.js";
-import { createRoadmapTemplate } from "../services/roadmaps.service.js";
+} from "../controllers/admin.controller.js";
+import { createRoadmapTemplate } from "../controllers/roadmap.controller.js";
 
 const router = express.Router();
 

@@ -25,8 +25,25 @@ const statusIcon: Record<StepStatus, string> = {
 }
 
 export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
-  const { step, selected, status, isLocked, onSelect } = data
+  const { step, selected, status, isLocked, onSelect, isCore = true, branchSide } = data
   const { t } = useTranslation()
+
+  // Custom styling classes for Core vs Branch nodes to create hierarchy
+  const nodeStyles = isCore
+    ? [
+        'min-w-52 max-w-60 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold',
+        statusStyles[status],
+      ].join(' ')
+    : [
+        'min-w-44 max-w-50 rounded-lg border px-3.5 py-2.5 text-xs font-medium bg-(--surface-2) opacity-90',
+        status === 'completed'
+          ? 'border-transparent bg-(--gd-primary) text-white shadow-sm'
+          : status === 'inProgress'
+            ? 'border-(--accent-border) bg-(--accent-bg) text-(--text-h)'
+            : 'border-(--border) bg-(--surface) text-(--text) hover:border-(--accent-border)',
+      ].join(' ')
+
+  const statusIndicatorClass = isCore ? 'size-7 text-base' : 'size-5.5 text-xs'
 
   return (
     <button
@@ -36,30 +53,69 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
       aria-pressed={selected}
       aria-label={`${step.title} — ${status}`}
       className={[
-        'group relative cursor-pointer flex min-w-50 max-w-55 items-center gap-3',
-        'rounded-squircle border-2 px-4 py-3 text-left text-sm font-medium',
-        'shadow-(--shadow) outline-none',
-        'transition-all duration-200 ease-out',
-        'focus-visible:ring-2 focus-visible:ring-(--gd-primary) focus-visible:ring-offset-2',
+        'group relative cursor-pointer flex items-center gap-2.5 text-left shadow-(--shadow) outline-none transition-all duration-200 ease-out',
+        nodeStyles,
         isLocked
           ? 'cursor-not-allowed border-(--border) bg-(--surface-2) opacity-50'
-          : statusStyles[status],
+          : '',
         selected && !isLocked
           ? 'ring-2 ring-(--gd-primary) ring-offset-2 ring-offset-(--bg) scale-[1.03]'
           : 'hover:-translate-y-0.5 hover:scale-[1.01]',
       ].join(' ')}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="size-2 border-0 bg-(--gd-primary) opacity-0"
-      />
+      {/* Conditional Handles based on core vs branch classification */}
+      {isCore ? (
+        <>
+          <Handle
+            type="target"
+            position={Position.Top}
+            id="core-top"
+            className="size-2 border-0 bg-(--gd-primary) opacity-0"
+          />
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="core-bottom"
+            className="size-2 border-0 bg-(--gd-primary) opacity-0"
+          />
+          <Handle
+            type="source"
+            position={Position.Left}
+            id="core-left"
+            className="size-2 border-0 bg-(--gd-primary) opacity-0"
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="core-right"
+            className="size-2 border-0 bg-(--gd-primary) opacity-0"
+          />
+        </>
+      ) : (
+        <>
+          {branchSide === 'right' ? (
+            <Handle
+              type="target"
+              position={Position.Left}
+              id="branch-left"
+              className="size-2 border-0 bg-(--gd-primary) opacity-0"
+            />
+          ) : (
+            <Handle
+              type="target"
+              position={Position.Right}
+              id="branch-right"
+              className="size-2 border-0 bg-(--gd-primary) opacity-0"
+            />
+          )}
+        </>
+      )}
 
       {/* Status indicator */}
       <span
         className={[
-          'flex size-7 shrink-0 items-center justify-center rounded-full text-base',
-          'transition-colors duration-200',
+          'flex shrink-0 items-center justify-center rounded-full text-center leading-none transition-colors duration-200',
+          statusIndicatorClass,
           status === 'completed'
             ? 'bg-white/20 text-white'
             : status === 'inProgress'
@@ -68,7 +124,11 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
         ].join(' ')}
         aria-hidden="true"
       >
-        {isLocked ? <HugeiconsIcon icon={SquareLock02Icon}  size={24}/> : statusIcon[status]}
+        {isLocked ? (
+          <HugeiconsIcon icon={SquareLock02Icon} size={isCore ? 20 : 16} />
+        ) : (
+          statusIcon[status]
+        )}
       </span>
 
       {/* Text */}
@@ -78,7 +138,7 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
         </span>
         <span
           className={[
-            'mt-0.5 block text-[11px] font-medium',
+            'mt-0.5 block text-[10px] font-medium leading-none',
             status === 'completed' ? 'text-white/70' : 'opacity-60',
           ].join(' ')}
         >
@@ -87,12 +147,6 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
             : t(`roadmapDetail.statusLabels.${status}`)}
         </span>
       </div>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="size-2 border-0 bg-(--gd-primary) opacity-0"
-      />
     </button>
   )
 }
