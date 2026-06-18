@@ -101,6 +101,40 @@ export default function AdminRoadmapDetailPage() {
             ) : null}
 
             <div className="overflow-hidden rounded-2xl border border-(--border)">
+              <div className="grid gap-3 p-3 lg:hidden">
+                {roadmap.steps?.length ? roadmap.steps.map((step) => (
+                  <article key={step.stepKey} className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-(--text)">
+                      {step.stepKey}
+                    </p>
+                    <h2 className="mt-2 text-base font-semibold text-(--text-h)">{step.title}</h2>
+                    <p className="mt-2 text-sm leading-6 text-(--text)">
+                      {step.description || t('adminUi.common.notAvailable')}
+                    </p>
+                    <div className="mt-4 grid gap-2 text-sm">
+                      <div className="rounded-lg border border-(--border) bg-(--surface) p-3">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-(--text)">
+                          {t('adminUi.roadmaps.detail.dependencies')}
+                        </span>
+                        <span className="mt-1 block wrap-break-word text-(--text-h)">
+                          {step.dependsOn?.join(', ') || t('adminUi.common.notAvailable')}
+                        </span>
+                      </div>
+                      <div className="rounded-lg border border-(--border) bg-(--surface) p-3">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-(--text)">
+                          {t('adminUi.roadmaps.detail.resources')}
+                        </span>
+                        <span className="mt-1 block text-(--text-h)">{step.resources?.length ?? 0}</span>
+                      </div>
+                    </div>
+                  </article>
+                )) : (
+                  <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
+                    {t('adminUi.roadmaps.detail.noSteps')}
+                  </p>
+                )}
+              </div>
+              <div className="hidden overflow-x-auto lg:block">
               <table className="min-w-full border-separate border-spacing-0 text-sm">
                 <thead className="bg-(--surface-soft)">
                   <tr className="text-left text-(--text)">
@@ -126,6 +160,7 @@ export default function AdminRoadmapDetailPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           </>
         ) : (

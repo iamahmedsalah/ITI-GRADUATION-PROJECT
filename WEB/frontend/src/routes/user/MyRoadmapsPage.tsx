@@ -141,6 +141,75 @@ export default function MyRoadmapsPage() {
         </div>
 
         <div className="overflow-hidden rounded-xl border border-(--border)">
+          <div className="grid gap-3 p-3 lg:hidden">
+            {roadmapsQuery.isLoading ? (
+              <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
+                {t('dashboard.loading')}
+              </p>
+            ) : roadmaps.length ? (
+              roadmaps.map((roadmap) => {
+                const progress = Math.round(roadmap.progressPercent ?? 0)
+
+                return (
+                  <article key={roadmap._id} className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(roadmap._id)}
+                        className="admin-checkbox mt-1"
+                        onChange={(event) => {
+                          setSelectedIds((current) =>
+                            event.target.checked
+                              ? Array.from(new Set([...current, roadmap._id]))
+                              : current.filter((id) => id !== roadmap._id),
+                          )
+                        }}
+                        aria-label={roadmap.template?.title ?? roadmap._id}
+                      />
+                      <span className="grid size-10 shrink-0 place-items-center rounded-squircle bg-(--surface) text-(--accent)">
+                        <HugeiconsIcon
+                          icon={roadmap.status === 'assigned' ? StarIcon : Route03Icon}
+                          size={19}
+                          className={roadmap.status === 'assigned' ? 'star-toggle-icon star-toggle-icon-active' : undefined}
+                        />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
+                          className="block text-base font-semibold leading-6 text-(--text-h) transition hover:text-(--accent)"
+                        >
+                          {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+                        </Link>
+                        <p className="mt-1 text-xs text-(--text)">
+                          {roadmap.template?.targetLevel
+                            ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
+                            : t('landing.levels.roadmap')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+                      <span className="rounded-lg border border-(--border) bg-(--surface) px-3 py-2 text-(--text)">
+                        {roadmap.template?.templateType === 'skillBased'
+                          ? t('landing.skillRoadmaps')
+                          : t('landing.roleRoadmaps')}
+                      </span>
+                      <span className="rounded-lg border border-(--border) bg-(--surface) px-3 py-2 text-(--text)">
+                        {statusLabel(roadmap.status)}
+                      </span>
+                      <span className="rounded-lg border border-(--border) bg-(--surface) px-3 py-2 font-semibold text-(--text-h)">
+                        {progress}%
+                      </span>
+                    </div>
+                  </article>
+                )
+              })
+            ) : (
+              <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
+                {t('dashboard.emptyRoadmaps')}
+              </p>
+            )}
+          </div>
+          <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full border-separate border-spacing-0 text-sm">
             <thead className="bg-(--surface-2) text-left text-(--text)">
               <tr>
@@ -232,6 +301,7 @@ export default function MyRoadmapsPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </section>
       <ConfirmActionModal

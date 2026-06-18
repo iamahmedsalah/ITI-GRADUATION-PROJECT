@@ -125,7 +125,7 @@ function DashboardPage() {
             </motion.div>
             <motion.div variants={cardVariants}>
               <Suspense fallback={<SectionFallback />}>
-                <PreferencesPreviewSection />
+                <PreferencesPreviewSection summary={summary} />
               </Suspense>
             </motion.div>
           </div>

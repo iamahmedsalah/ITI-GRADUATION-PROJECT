@@ -11,7 +11,7 @@ const userAiConversationSchema = new mongoose.Schema(
     title: {
       type: String,
       trim: true,
-      maxlength: 120,
+      maxlength: 30,
       default: "New chat",
     },
     context: {

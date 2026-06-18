@@ -369,7 +369,7 @@
     "renameModalTitle": "Rename chat",
     "renameModalText": "Give this conversation a short title you can recognize later.",
     "renameLabel": "Chat title",
-    "renameHelper": "{{count}}/120 characters",
+    "renameHelper": "{{count}}/30 characters",
     "saveRename": "Save",
     "savingRename": "Saving...",
     "renamed": "Chat renamed.",
@@ -748,6 +748,20 @@
         "goals": "Learning goals",
         "level": "Current skill level",
         "schedule": "Weekly study time"
+      },
+      "insights": {
+        "waiting": "Activity notes appear after your dashboard loads.",
+        "decreaseTime": "Recent activity is lighter than this target; decrease hours or split sessions.",
+        "increaseTime": "Your activity is steady; you can increase weekly time if it feels good.",
+        "keepTime": "Your current pace matches recent learning activity.",
+        "startTime": "Start a roadmap so ILMA can compare your target with real activity.",
+        "levelUp": "Progress suggests you may be ready for {{level}}.",
+        "levelBuilding": "You are building evidence for the next skill level.",
+        "levelHold": "Stay at this level until more roadmap work is completed.",
+        "goalReview": "A learning path ended; check whether your goals were reached.",
+        "goalNear": "A roadmap is near the end; prepare to review your goals.",
+        "goalTracking": "ILMA is tracking progress toward these goals.",
+        "goalStart": "When a roadmap ends, ILMA will ask if these goals were reached."
       }
     },
     "subscription": {

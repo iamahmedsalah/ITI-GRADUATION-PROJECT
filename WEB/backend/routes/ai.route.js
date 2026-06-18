@@ -113,7 +113,7 @@ const chatContextSchema = z
   .optional();
 
 const createChatConversationSchema = z.object({
-  title: z.string().trim().min(1).max(120).optional(),
+  title: z.string().trim().min(1).max(30).optional(),
   context: chatContextSchema,
   message: z.string().trim().min(1).max(2000).optional(),
 });
@@ -132,7 +132,7 @@ const updateChatConversationSchema = z.object({
     .string({ error: "Title is required." })
     .trim()
     .min(1, "Title is required.")
-    .max(120, "Title must be at most 120 characters."),
+    .max(30, "Title must be at most 30 characters."),
 });
 
 router.use(protect);

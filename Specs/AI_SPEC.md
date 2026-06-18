@@ -74,7 +74,7 @@ Validation behavior:
 - Invalid requests return `400` with `Validation failed.` and a field-level error array.
 - The route handlers receive normalized body payloads after validation.
 - Chat message content is trimmed and limited to 1-2000 characters.
-- Chat titles are trimmed and limited to 1-120 characters.
+- Chat titles are trimmed and limited to 1-30 characters.
 - Chat routes are student-only and return `404` for missing, deleted, or non-owned conversations.
 
 ## 5. OpenAI Flow

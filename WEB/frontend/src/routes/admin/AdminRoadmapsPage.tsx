@@ -325,7 +325,7 @@ export default function AdminRoadmapsPage() {
         </div> : null}
 
         <div className="overflow-hidden rounded-3xl border border-(--border)">
-          <div className="grid gap-3 p-2 sm:p-3 md:hidden">
+          <div className="grid gap-3 p-2 sm:p-3 lg:hidden">
             {isLoading ? (
               <div className="rounded-squircle border border-(--border) bg-(--surface-muted) p-4 text-sm text-(--text)">
                 {t('adminUi.roadmaps.loading')}
@@ -425,7 +425,7 @@ export default function AdminRoadmapsPage() {
             )}
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto lg:block">
             <table className="min-w-full border-separate border-spacing-0 text-sm">
             <thead className="bg-(--surface-soft)">
               <tr className="text-left text-(--text)">

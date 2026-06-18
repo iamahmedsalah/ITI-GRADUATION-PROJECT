@@ -250,7 +250,6 @@ export default function LearningConstellation({
     camera.position.set(CAMERA_START_X, CAMERA_START_Y, CAMERA_START_Z)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
 
@@ -427,13 +426,30 @@ export default function LearningConstellation({
       pitch: INITIAL_PITCH,
       zoom: CAMERA_START_Z,
     }
+    const sceneMetrics = {
+      targetY: SCENE_OFFSET_Y,
+      cameraY: CAMERA_START_Y,
+      minZoom: 5.6,
+      maxZoom: 9.2,
+    }
 
     const setSize = () => {
       const width = mount.clientWidth
       const height = mount.clientHeight
+      const isCompact = width < 520
+      const isTablet = width < 760
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.35 : 2))
       renderer.setSize(width, height, false)
       camera.aspect = width / Math.max(height, 1)
+      camera.fov = isCompact ? 48 : isTablet ? 43 : 38
       camera.updateProjectionMatrix()
+      root.scale.setScalar(isCompact ? 0.38 : isTablet ? 0.48 : SCENE_SCALE)
+      sceneMetrics.targetY = isCompact ? 0.16 : isTablet ? 0.55 : SCENE_OFFSET_Y
+      sceneMetrics.cameraY = isCompact ? -0.45 : isTablet ? -0.82 : CAMERA_START_Y
+      sceneMetrics.minZoom = isCompact ? 6.4 : 5.6
+      sceneMetrics.maxZoom = isCompact ? 10.4 : 9.2
+      root.position.set(SCENE_OFFSET_X, sceneMetrics.targetY, isCompact ? 0.45 : 0.9)
+      pointerState.zoom = Math.max(sceneMetrics.minZoom, Math.min(sceneMetrics.maxZoom, pointerState.zoom))
     }
 
     const updatePointer = (event: PointerEvent) => {
@@ -491,7 +507,7 @@ export default function LearningConstellation({
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault()
-      pointerState.zoom = Math.max(5.6, Math.min(9.2, pointerState.zoom + event.deltaY * 0.005))
+      pointerState.zoom = Math.max(sceneMetrics.minZoom, Math.min(sceneMetrics.maxZoom, pointerState.zoom + event.deltaY * 0.005))
     }
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
@@ -499,6 +515,8 @@ export default function LearningConstellation({
     renderer.domElement.addEventListener('pointerup', onPointerUp)
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('resize', setSize)
+    const resizeObserver = new ResizeObserver(setSize)
+    resizeObserver.observe(mount)
     setSize()
 
     let frameId = 0
@@ -516,8 +534,8 @@ export default function LearningConstellation({
       particles.rotation.y = elapsed * 0.025
       particles.rotation.x = Math.sin(elapsed * 0.18) * 0.08
       camera.position.z += (pointerState.zoom - camera.position.z) * 0.08
-      camera.position.y += (CAMERA_START_Y - camera.position.y) * 0.08
-      camera.lookAt(SCENE_OFFSET_X, SCENE_OFFSET_Y, 0)
+      camera.position.y += (sceneMetrics.cameraY - camera.position.y) * 0.08
+      camera.lookAt(SCENE_OFFSET_X, sceneMetrics.targetY, 0)
       nodeMeshes.forEach((mesh, index) => {
         const nodeId = String(mesh.userData.nodeId ?? '')
         const radius = Number(mesh.userData.radius ?? 1)
@@ -581,6 +599,7 @@ export default function LearningConstellation({
     return () => {
       cancelAnimationFrame(frameId)
       window.removeEventListener('resize', setSize)
+      resizeObserver.disconnect()
       renderer.domElement.removeEventListener('pointerdown', onPointerDown)
       renderer.domElement.removeEventListener('pointermove', onPointerMove)
       renderer.domElement.removeEventListener('pointerup', onPointerUp)
@@ -638,7 +657,7 @@ export default function LearningConstellation({
 
   return (
     <section
-      className="relative min-h-116 overflow-hidden rounded-none border-y sm:min-h-136"
+      className="relative min-h-130 overflow-hidden rounded-none border-y sm:min-h-136"
       style={{
         borderColor: sceneTheme.border,
         background: sceneTheme.shellBg,
@@ -648,7 +667,7 @@ export default function LearningConstellation({
     >
       <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
       <div
-        className={`pointer-events-none absolute inset-x-4 top-20 z-10 grid max-w-none gap-2 rounded-squircle border p-4 shadow-lg backdrop-blur-md sm:inset-x-auto sm:top-16 sm:max-w-sm sm:p-6 ${isRtl ? 'text-right sm:right-7' : 'text-left sm:left-7'}`}
+        className={`pointer-events-none absolute inset-x-4 top-24 z-10 grid max-w-[calc(100%-2rem)] gap-2 rounded-squircle border p-3 shadow-lg backdrop-blur-md sm:inset-x-auto sm:top-16 sm:max-w-sm sm:p-6 ${isRtl ? 'text-right sm:right-7' : 'text-left sm:left-7'}`}
         dir={isRtl ? 'rtl' : 'ltr'}
         style={{
           borderColor: sceneTheme.panelBorder,
@@ -659,10 +678,10 @@ export default function LearningConstellation({
       >
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-(--accent) sm:text-xs sm:tracking-[0.22em]">{t('dashboard.constellation.overline')}</p>
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-semibold sm:text-2xl" style={{ color: sceneTheme.shellText }}>
+          <h2 className="wrap-break-word text-base font-semibold leading-6 sm:text-2xl sm:leading-8" style={{ color: sceneTheme.shellText }}>
             {previewNode?.title ?? t('dashboard.constellation.emptyTitle')}
           </h2>
-          <p className="mt-1 truncate text-xs capitalize sm:text-sm" style={{ color: sceneTheme.shellMuted }}>
+          <p className="mt-1 line-clamp-2 wrap-break-word text-xs capitalize sm:text-sm" style={{ color: sceneTheme.shellMuted }}>
             {previewNode ? `${kindLabels[previewNode.kind]} / ${previewNode.detail}` : t('dashboard.constellation.emptyDetail')}
           </p>
         </div>
@@ -684,8 +703,8 @@ export default function LearningConstellation({
           </div>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-4 py-4 sm:px-7 sm:py-5" style={{ background: sceneTheme.legendGradient }}>
-        <div className={`flex flex-wrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] sm:gap-2 sm:text-xs sm:tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 overflow-x-auto px-4 py-4 sm:px-7 sm:py-5" style={{ background: sceneTheme.legendGradient }}>
+        <div className={`flex w-max min-w-full flex-nowrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] sm:w-auto sm:flex-wrap sm:gap-2 sm:text-xs sm:tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
           {legendItems.map((item) => (
             <span
               key={item.kind}

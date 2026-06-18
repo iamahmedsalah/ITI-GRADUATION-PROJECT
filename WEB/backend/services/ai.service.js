@@ -2025,7 +2025,7 @@ const buildChatTitle = (content = "") => {
 
   if (!normalized) return "New chat";
 
-  return normalized.length > 56 ? `${normalized.slice(0, 53)}...` : normalized;
+  return normalized.length > 30 ? `${normalized.slice(0, 27)}...` : normalized;
 };
 
 const buildChatContextInstruction = (context = {}) => {

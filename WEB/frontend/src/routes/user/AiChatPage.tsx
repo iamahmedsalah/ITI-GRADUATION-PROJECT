@@ -313,7 +313,7 @@ function MessageContent({ content, language }: { content: string; language: stri
             }
 
             return (
-              <p key={paragraphKey} className="whitespace-pre-wrap break-words">
+              <p key={paragraphKey} className="whitespace-pre-wrap wrap-break-word">
                 {renderInlineMarkdown(trimmed, language, paragraphKey)}
               </p>
             )
@@ -372,12 +372,12 @@ function RenameChatModal({
 }) {
   const { t } = useTranslation()
   const trimmedTitle = title.trim()
-  const isInvalid = trimmedTitle.length < 1 || trimmedTitle.length > 120
+  const isInvalid = trimmedTitle.length < 1 || trimmedTitle.length > 30
 
   if (!conversation) return null
 
   return (
-    <div className="fixed inset-0 z-[120] grid place-items-center bg-black/70 px-4 py-8">
+    <div className="fixed inset-0 z-120 grid place-items-center bg-black/70 px-4 py-8">
       <form
         className="w-full max-w-md rounded-xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
         onSubmit={(event) => {
@@ -392,7 +392,7 @@ function RenameChatModal({
           <input
             value={title}
             onChange={(event) => onTitleChange(event.target.value)}
-            maxLength={120}
+            maxLength={30}
             autoFocus
             className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text-h) outline-none transition focus:border-(--accent-border)"
           />
@@ -576,7 +576,7 @@ export default function AiChatPage() {
 
   const handleRename = (conversation: AiChatConversation) => {
     setRenameTarget(conversation)
-    setRenameTitle(conversation.title || '')
+    setRenameTitle((conversation.title || '').slice(0, 30))
   }
 
   const handleDelete = (conversation: AiChatConversation) => {
@@ -602,7 +602,7 @@ export default function AiChatPage() {
   )
 
   return (
-    <main className="h-[calc(100vh-4rem)] min-h-[680px] overflow-hidden bg-(--bg) px-4 py-4 text-(--text-h) sm:px-6 lg:px-8">
+    <main className="h-[calc(100vh-4rem)] min-h-170 overflow-hidden bg-(--bg) px-4 py-4 text-(--text-h) sm:px-6 lg:px-8">
       <div className="mx-auto grid h-full max-w-7xl gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="hidden min-h-0 lg:block">{sidebar}</div>
 

@@ -27,6 +27,8 @@ import type {
   AiRecommendationsData,
   DashboardActivity,
   DashboardRoadmap,
+  DashboardSummary,
+  UserPreferences,
 } from '../../libs/user-api'
 
 function relativeTime(value: string | number | undefined, t: (key: string, options?: Record<string, unknown>) => string) {
@@ -795,7 +797,78 @@ export function SubscriptionSection({
   )
 }
 
-export function PreferencesPreviewSection() {
+type DashboardTranslator = (key: string, options?: Record<string, unknown>) => string
+
+function countRecentActiveDays(activities: DashboardSummary['activities'] = []) {
+  const cutoff = Date.now() - 7 * 86400000
+  const activeDays = new Set<string>()
+
+  activities.forEach((activity) => {
+    const timestamp = new Date(activity.occurredAt ?? activity.createdAt ?? 0).getTime()
+    if (!timestamp || timestamp < cutoff) return
+    activeDays.add(new Date(timestamp).toDateString())
+  })
+
+  return activeDays.size
+}
+
+function nextSkillLevel(level?: UserPreferences['skillLevel']) {
+  if (level === 'beginner') return 'intermediate'
+  if (level === 'intermediate') return 'advanced'
+  return null
+}
+
+function buildPreferenceInsights({
+  preferences,
+  summary,
+  t,
+}: {
+  preferences?: UserPreferences | null
+  summary?: DashboardSummary
+  t: DashboardTranslator
+}) {
+  const activeDays = countRecentActiveDays(summary?.activities ?? [])
+  const weeklyHours = preferences?.weeklyStudyHours ?? 0
+  const activeLearning = (summary?.totals.activeRoadmaps ?? 0) + (summary?.totals.activeCourses ?? 0)
+  const completedLearning = (summary?.totals.completedRoadmaps ?? 0) + (summary?.totals.completedCourses ?? 0)
+  const averageProgress = Math.round(summary?.totals.averageRoadmapProgress ?? 0)
+  const latestRoadmapProgress = Math.max(0, ...(summary?.roadmaps ?? []).map((roadmap) => Math.round(roadmap.progressPercent ?? 0)))
+  const upgradeLevel = nextSkillLevel(preferences?.skillLevel)
+
+  const schedule =
+    !summary
+      ? t('dashboard.preferences.insights.waiting', { defaultValue: 'Activity notes appear after your dashboard loads.' })
+      : weeklyHours >= 6 && activeDays <= 1
+        ? t('dashboard.preferences.insights.decreaseTime', { defaultValue: 'Recent activity is lighter than this target; decrease hours or split sessions.' })
+        : weeklyHours <= 3 && activeDays >= 4
+          ? t('dashboard.preferences.insights.increaseTime', { defaultValue: 'Your activity is steady; you can increase weekly time if it feels good.' })
+          : activeLearning > 0
+            ? t('dashboard.preferences.insights.keepTime', { defaultValue: 'Your current pace matches recent learning activity.' })
+            : t('dashboard.preferences.insights.startTime', { defaultValue: 'Start a roadmap so ILMA can compare your target with real activity.' })
+
+  const level =
+    upgradeLevel && (completedLearning > 0 || averageProgress >= 75)
+      ? t('dashboard.preferences.insights.levelUp', {
+          level: t(`landing.levels.${upgradeLevel}`, { defaultValue: upgradeLevel }),
+          defaultValue: `Progress suggests you may be ready for ${upgradeLevel}.`,
+        })
+      : averageProgress >= 35 || activeDays >= 3
+        ? t('dashboard.preferences.insights.levelBuilding', { defaultValue: 'You are building evidence for the next skill level.' })
+        : t('dashboard.preferences.insights.levelHold', { defaultValue: 'Stay at this level until more roadmap work is completed.' })
+
+  const goals =
+    completedLearning > 0
+      ? t('dashboard.preferences.insights.goalReview', { defaultValue: 'A learning path ended; check whether your goals were reached.' })
+      : latestRoadmapProgress >= 85
+        ? t('dashboard.preferences.insights.goalNear', { defaultValue: 'A roadmap is near the end; prepare to review your goals.' })
+        : activeLearning > 0
+          ? t('dashboard.preferences.insights.goalTracking', { defaultValue: 'ILMA is tracking progress toward these goals.' })
+          : t('dashboard.preferences.insights.goalStart', { defaultValue: 'When a roadmap ends, ILMA will ask if these goals were reached.' })
+
+  return { schedule, level, goals }
+}
+
+export function PreferencesPreviewSection({ summary }: { summary?: DashboardSummary }) {
   const { t } = useTranslation()
   const { language } = useLanguage()
   const preferencesQuery = useQuery({
@@ -804,6 +877,7 @@ export function PreferencesPreviewSection() {
   })
   const preferences = preferencesQuery.data
   const hasPreferences = Boolean(preferences)
+  const insights = buildPreferenceInsights({ preferences, summary, t })
   const listLabel = (items?: string[], fallback = t('dashboard.preferences.notSet', 'Not set')) =>
     items?.length ? items.slice(0, 3).join(', ') : fallback
   const preferenceItems = hasPreferences
@@ -815,10 +889,12 @@ export function PreferencesPreviewSection() {
         {
           label: t('dashboard.preferences.items.goals', 'Learning goals'),
           value: listLabel(preferences?.learningGoals),
+          insight: insights.goals,
         },
         {
           label: t('dashboard.preferences.items.level', 'Current skill level'),
           value: preferences?.skillLevel ?? t('dashboard.preferences.notSet', 'Not set'),
+          insight: insights.level,
         },
         {
           label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
@@ -826,6 +902,7 @@ export function PreferencesPreviewSection() {
             count: preferences?.weeklyStudyHours ?? 0,
             defaultValue: `${preferences?.weeklyStudyHours ?? 0} hours / week`,
           }),
+          insight: insights.schedule,
         },
       ]
     : [
@@ -864,12 +941,19 @@ export function PreferencesPreviewSection() {
             {t('dashboard.loading')}
           </div>
         ) : preferenceItems.map((item) => (
-          <div key={item.label} className="flex items-start gap-3 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm">
-            <span className="size-1.5 rounded-full bg-(--accent)" />
-            <span className="grid min-w-0 gap-1">
-              <span className="font-semibold text-(--text-h)">{item.label}</span>
-              <span className="wrap-break-word text-xs text-(--text)">{item.value}</span>
+          <div key={item.label} className="grid gap-3 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-3 text-sm min-[520px]:grid-cols-[minmax(0,1fr)_minmax(9rem,0.9fr)]">
+            <span className="flex min-w-0 items-start gap-3">
+              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-(--accent)" />
+              <span className="grid min-w-0 gap-1">
+                <span className="font-semibold text-(--text-h)">{item.label}</span>
+                <span className="wrap-break-word text-xs text-(--text)">{item.value}</span>
+              </span>
             </span>
+            {'insight' in item && item.insight ? (
+              <span className="rounded-lg border border-(--accent-border) bg-(--accent-bg) px-3 py-2 text-xs leading-5 text-(--text-h)">
+                {item.insight}
+              </span>
+            ) : null}
           </div>
         ))}
       </div>
