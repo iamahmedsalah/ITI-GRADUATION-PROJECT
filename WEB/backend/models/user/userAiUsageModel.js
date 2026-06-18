@@ -11,7 +11,7 @@ const userAiUsageSchema = new mongoose.Schema(
     type: {
       type: String,
       required: [true, "Please add an AI usage type"],
-      enum: ["ai_roadmap_draft"],
+      enum: ["ai_roadmap_draft", "ai_chat", "ai_topic_explain"],
       index: true,
     },
     periodStart: {
@@ -20,6 +20,21 @@ const userAiUsageSchema = new mongoose.Schema(
       index: true,
     },
     count: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    promptTokens: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    completionTokens: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    totalTokens: {
       type: Number,
       min: 0,
       default: 0,

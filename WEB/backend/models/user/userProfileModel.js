@@ -23,6 +23,12 @@ const userProfileSchema = new mongoose.Schema(
       trim: true,
       default: "UTC",
     },
+    visibility: {
+      type: String,
+      enum: ["public", "private"],
+      default: "public",
+      index: true,
+    },
     location: {
       type: String,
       trim: true,
@@ -46,7 +52,7 @@ const userProfileSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userProfileSchema.set("toJSON", {
