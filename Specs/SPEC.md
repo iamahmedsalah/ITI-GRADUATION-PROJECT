@@ -65,6 +65,7 @@ The application is a serverless-aware monolith: the frontend is an SPA with rout
 | [WEB/package.json](WEB/package.json)                 | Root scripts and backend dependencies.                   |
 | [WEB/backend](WEB/backend)                           | Express API, services, models, middleware, docs, tests.  |
 | [WEB/frontend](WEB/frontend)                         | React/Vite frontend.                                     |
+| [SPECS](SPECS)                                       | Source-of-truth project documentation.                   |
 | [WEB/vercel.json](WEB/vercel.json)                   | Vercel deployment entry.                                 |
 | [WEB/README.MD](WEB/README.MD)                       | Empty in the inspected snapshot.                         |
 | [WEB/green-deck-DESIGN.md](WEB/green-deck-DESIGN.md) | Design direction reference.                              |
@@ -660,6 +661,14 @@ Reasonable MVP scale, but not yet optimized for heavy AI usage, high telemetry v
 - Dashboard and admin aggregate queries.
 - Regex-based search on some routes.
 - Mail send latency on contact/reply flows.
+
+### Optimization Priorities
+
+- Split the AI orchestration path into smaller provider helpers if future AI work expands, so prompt/provider changes do not stay concentrated in one large service file.
+- Reduce repeated multi-collection dashboard and admin aggregation work by adding caching, narrower projections, or read-side helpers where possible.
+- Replace placeholder or alias routes such as the client `roadmaps` route if a dedicated page is expected in the next product update.
+- Surface admin audit logs in the UI if moderation visibility becomes a product requirement.
+- Keep search paths efficient by limiting regex use and preferring indexed or paginated access patterns where possible.
 
 ## 25. Code Quality Assessment
 
