@@ -82,7 +82,7 @@ function DashboardPage() {
         </motion.div>
 
         <motion.div variants={cardVariants}>
-          <Suspense fallback={<div className="min-h-[23rem] border-y border-(--border) bg-[#101311]" />}>
+          <Suspense fallback={<div className="min-h-92 border-y border-(--border) bg-[#101311]" />}>
             <LearningConstellation
               roadmaps={summary?.roadmaps ?? []}
               courses={summary?.courses ?? []}

@@ -11,6 +11,7 @@ import {
 } from "../middleware/courseValidators.js";
 import {
   listPublishedCourses,
+  getPublishedCourseBySlug,
   enrollCourse,
   updateCourseProgress,
   completeCourse,
@@ -23,6 +24,7 @@ import {
 const router = express.Router();
 
 router.get("/published", listPublishedCourses);
+router.get("/published/:slug", getPublishedCourseBySlug);
 
 // All routes below require authentication
 router.use(protect);

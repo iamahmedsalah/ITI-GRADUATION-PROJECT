@@ -65,6 +65,47 @@ export const listPublishedCourses = async (req, res) => {
   }
 };
 
+export const getPublishedCourseBySlug = async (req, res) => {
+  const slug = String(req.params.slug || "").trim().toLowerCase();
+
+  if (!slug) {
+    return res.status(404).json({
+      success: false,
+      message: "Course not found.",
+    });
+  }
+
+  try {
+    const course = await Course.findOne({
+      slug,
+      deletedAt: null,
+      isPublished: true,
+    })
+      .select(
+        "title slug shortDescription description level category thumbnailUrl bannerUrl durationMinutes tags sections prerequisites learningOutcomes stats isFeatured createdAt updatedAt",
+      )
+      .lean();
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: course,
+    });
+  } catch (error) {
+    console.error("Get published course by slug error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch course.",
+    });
+  }
+};
+
 export const enrollCourse = async (req, res) => {
   const userId = req.user._id;
   const { courseId, roadmapId } = req.body;

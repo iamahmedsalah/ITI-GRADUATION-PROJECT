@@ -47,6 +47,7 @@ export const VerifyEmailPage = lazy(
   () => import("../routes/user/VerifyEmailPage"),
 );
 export const DashboardPage = lazy(() => import("../routes/user/DashboardPage"));
+export const AiChatPage = lazy(() => import("../routes/user/AiChatPage"));
 export const AiRoadmapPage = lazy(() => import("../routes/user/AiRoadmapPage"));
 export const UpgradePage = lazy(() => import("../routes/user/UpgradePage"));
 export const ProfilePage = lazy(() => import("../routes/user/ProfilePage"));
@@ -56,3 +57,4 @@ export const FaqsPage = lazy(() => import("../routes/user/FaqsPage"));
 export const ContactPage = lazy(() => import("../routes/user/ContactUsPage"));
 export const GuidePage = lazy(() => import("../routes/user/GuidePage"));
 export const RoadmapPage = lazy(() => import("../routes/user/RoadmapPage"));
+export const CoursePage = lazy(() => import("../routes/user/CoursePage"));

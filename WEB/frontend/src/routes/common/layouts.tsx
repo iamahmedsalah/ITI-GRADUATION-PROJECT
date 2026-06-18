@@ -113,7 +113,7 @@ export function ClientLayout() {
             dropdown: true,
             dropdownItems: [
               { label: t('navbar.aiRoadmapBuilder'), to: localizedPath(language, '/ai') },
-              { label: t('navbar.aiChatbot'), disabled: true },
+              { label: t('navbar.aiChatbot'), to: localizedPath(language, '/ai/chat') },
             ],
           },
           { label: t('navbar.upgrade', 'Upgrade'), to: localizedPath(language, '/upgrade') },

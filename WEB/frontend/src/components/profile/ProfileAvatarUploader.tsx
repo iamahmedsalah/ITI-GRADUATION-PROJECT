@@ -108,7 +108,14 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
             disabled={avatarMutation.isPending}
             className="inline-flex items-center gap-2 rounded-squircle bg-(--gd-primary) px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {avatarMutation.isPending ? t('profile.avatar.uploading') : t('profile.avatar.save')}
+            {avatarMutation.isPending ? (
+              <>
+                {t('profile.avatar.uploading')}
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              </>
+            ) : (
+              t('profile.avatar.save')
+            )}
           </button>
         ) : null}
       </div>

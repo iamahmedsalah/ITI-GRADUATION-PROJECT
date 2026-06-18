@@ -16,7 +16,7 @@ const userAiMessageSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "admin"],
+      enum: ["user", "assistant", "system"],
       required: true,
       index: true,
     },
@@ -49,6 +49,47 @@ const userAiMessageSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    links: [
+      {
+        type: {
+          type: String,
+          enum: ["roadmap", "course"],
+          required: true,
+        },
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 200,
+        },
+        description: {
+          type: String,
+          trim: true,
+          maxlength: 500,
+        },
+        path: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 240,
+        },
+        slug: {
+          type: String,
+          trim: true,
+          maxlength: 160,
+        },
+        level: {
+          type: String,
+          trim: true,
+          maxlength: 40,
+        },
+        category: {
+          type: String,
+          trim: true,
+          maxlength: 80,
+        },
+      },
+    ],
   },
   { timestamps: true },
 );

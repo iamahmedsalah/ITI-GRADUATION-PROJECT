@@ -24,6 +24,7 @@ const userActivitySchema = new mongoose.Schema(
         "roadmap_complete",
         "ai_roadmap_draft",
         "ai_roadmap_save",
+        "ai_chat",
         "ai_topic_explain",
         "rating",
         "quiz_attempt",

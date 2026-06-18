@@ -309,9 +309,7 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
           >
             <nav className="grid gap-2">
               {primaryLinks.map((link) => {
-                const isRoadmapDropdown =
-                  link.dropdown && link.to.includes("/roadmaps");
-                if (isRoadmapDropdown) {
+                if (link.dropdownItems?.length) {
                   return (
                     <div key={link.label} className="grid gap-2">
                       <NavLink
@@ -328,7 +326,10 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <span className="grid size-8 place-items-center rounded-2xl bg-[linear-gradient(135deg,rgba(29,185,84,0.18),rgba(10,140,70,0.08))] text-(--text-h)">
-                          <HugeiconsIcon icon={Route03Icon} size={16} />
+                          <HugeiconsIcon
+                            icon={link.to.includes("/ai") ? AiMagicIcon : Route03Icon}
+                            size={16}
+                          />
                         </span>
                         <span className="flex-1">{link.label}</span>
                         <span className="text-[10px] leading-none opacity-80">
@@ -336,20 +337,25 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                         </span>
                       </NavLink>
                       <div className="grid gap-2 px-3">
-                        <Link
-                          to={`/${language}/roadmaps?type=roleBased`}
-                          className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) transition hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {t("landing.roleRoadmaps")}
-                        </Link>
-                        <Link
-                          to={`/${language}/roadmaps?type=skillBased`}
-                          className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) transition hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {t("landing.skillRoadmaps")}
-                        </Link>
+                        {link.dropdownItems.map((item) =>
+                          item.disabled || !item.to ? (
+                            <span
+                              key={item.label}
+                              className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) opacity-60"
+                            >
+                              {item.label}
+                            </span>
+                          ) : (
+                            <Link
+                              key={item.label}
+                              to={item.to}
+                              className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary) transition hover:bg-(--surface-soft-hover) hover:text-(--text-h)"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              {item.label}
+                            </Link>
+                          ),
+                        )}
                       </div>
                     </div>
                   );

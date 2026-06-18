@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '../utils/api'
+import { apiGet, apiPost, apiRequest } from '../utils/api'
 import type { RoadmapTemplate, UserRoadmap } from './roadmaps-api'
 
 export type AiFeatureAccess = {
@@ -15,9 +15,16 @@ export type AiFeatureAccess = {
     freeDraftLimit: number
     proDraftLimit?: number
     draftsRemaining: number
+    chatUsed?: number
+    chatLimit?: number
+    planChatLimit?: number
+    freeChatLimit?: number
+    proChatLimit?: number
+    chatRemaining?: number
   }
   capabilities: {
     canGenerateDraft: boolean
+    canUseChat?: boolean
     canSaveRoadmap: boolean
     canExplainTopic: boolean
   }
@@ -80,10 +87,72 @@ type AiTopicExplanationResponse = {
   data?: AiTopicExplanation
 }
 
+export type AiChatContext = {
+  page?: string
+  courseTitle?: string
+  roadmapTitle?: string
+}
+
+export type AiChatConversation = {
+  _id: string
+  title: string
+  context?: AiChatContext
+  lastMessageAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type AiChatLink = {
+  type: 'roadmap' | 'course'
+  title: string
+  description?: string
+  path: string
+  slug?: string
+  level?: string
+  category?: string
+}
+
+export type AiChatMessage = {
+  _id: string
+  conversation: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  provider?: 'gemini' | 'openai'
+  model?: string
+  promptTokens?: number
+  completionTokens?: number
+  totalTokens?: number
+  links?: AiChatLink[]
+  createdAt: string
+  updatedAt: string
+}
+
+type AiChatConversationsResponse = {
+  success?: boolean
+  message?: string
+  error?: string
+  data?: {
+    conversations?: AiChatConversation[]
+  }
+}
+
+type AiChatMessagesResponse = {
+  success?: boolean
+  message?: string
+  error?: string
+  data?: {
+    conversation?: AiChatConversation
+    messages?: AiChatMessage[]
+    access?: AiFeatureAccess
+  }
+}
+
 const emptyAccessResponse: AiFeatureAccessResponse = {}
 const emptyDraftResponse: AiRoadmapDraftResponse = {}
 const emptySaveResponse: SaveAiRoadmapResponse = {}
 const emptyExplanationResponse: AiTopicExplanationResponse = {}
+const emptyChatConversationsResponse: AiChatConversationsResponse = {}
+const emptyChatMessagesResponse: AiChatMessagesResponse = {}
 
 function getApiMessage(data: { message?: string; error?: string }, fallback: string) {
   return data.error || data.message || fallback
@@ -156,4 +225,105 @@ export async function explainAiRoadmapTopic(input: {
   }
 
   return data.data
+}
+
+export async function fetchAiChatConversations() {
+  const { response, data } = await apiGet<AiChatConversationsResponse>(
+    '/ai/chat/conversations',
+    emptyChatConversationsResponse,
+  )
+
+  if (!response.ok || !data.data?.conversations) {
+    throw new Error(getApiMessage(data, 'Could not load AI chat conversations.'))
+  }
+
+  return data.data.conversations
+}
+
+export async function createAiChatConversation(input: {
+  title?: string
+  message?: string
+  context?: AiChatContext
+} = {}) {
+  const { response, data } = await apiPost<AiChatMessagesResponse>(
+    '/ai/chat/conversations',
+    emptyChatMessagesResponse,
+    { json: input },
+  )
+
+  if (!response.ok || !data.data?.conversation) {
+    const error = new Error(getApiMessage(data, 'Could not create AI chat conversation.'))
+    if (data.data?.access) {
+      ;(error as Error & { access?: AiFeatureAccess }).access = data.data.access
+    }
+    throw error
+  }
+
+  return data.data
+}
+
+export async function fetchAiChatMessages(conversationId: string) {
+  const { response, data } = await apiGet<AiChatMessagesResponse>(
+    `/ai/chat/conversations/${conversationId}/messages`,
+    emptyChatMessagesResponse,
+  )
+
+  if (!response.ok || !data.data?.conversation || !data.data.messages) {
+    throw new Error(getApiMessage(data, 'Could not load AI chat messages.'))
+  }
+
+  return data.data
+}
+
+export async function sendAiChatMessage(conversationId: string, input: {
+  message: string
+  context?: AiChatContext
+}) {
+  const { response, data } = await apiPost<AiChatMessagesResponse>(
+    `/ai/chat/conversations/${conversationId}/messages`,
+    emptyChatMessagesResponse,
+    { json: input },
+  )
+
+  if (!response.ok || !data.data?.conversation || !data.data.messages) {
+    const error = new Error(getApiMessage(data, 'Could not send AI chat message.'))
+    if (data.data?.access) {
+      ;(error as Error & { access?: AiFeatureAccess }).access = data.data.access
+    }
+    throw error
+  }
+
+  return data.data
+}
+
+export async function renameAiChatConversation(conversationId: string, title: string) {
+  const { response, data } = await apiRequest<AiChatMessagesResponse>(
+    `/ai/chat/conversations/${conversationId}`,
+    emptyChatMessagesResponse,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    },
+  )
+
+  if (!response.ok || !data.data?.conversation) {
+    throw new Error(getApiMessage(data, 'Could not rename AI chat conversation.'))
+  }
+
+  return data.data.conversation
+}
+
+export async function deleteAiChatConversation(conversationId: string) {
+  const { response, data } = await apiRequest<AiChatMessagesResponse>(
+    `/ai/chat/conversations/${conversationId}`,
+    emptyChatMessagesResponse,
+    { method: 'DELETE' },
+  )
+
+  if (!response.ok) {
+    throw new Error(getApiMessage(data, 'Could not delete AI chat conversation.'))
+  }
+
+  return data.data?.conversation
 }

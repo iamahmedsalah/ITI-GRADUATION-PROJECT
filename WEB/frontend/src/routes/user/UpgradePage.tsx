@@ -42,13 +42,22 @@ export default function UpgradePage() {
                 {t('upgrade.subtitle')}
               </p>
             </div>
-            <Link
-              to={`/${language}/ai`}
-              className="inline-flex w-fit items-center gap-2 rounded-squircle bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
-            >
-              <HugeiconsIcon icon={AiMagicIcon} size={18} />
-              {t('upgrade.openAi')}
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to={`/${language}/ai`}
+                className="inline-flex w-fit items-center gap-2 rounded-squircle bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
+              >
+                <HugeiconsIcon icon={AiMagicIcon} size={18} />
+                {t('upgrade.openAi')}
+              </Link>
+              <Link
+                to={`/${language}/ai/chat`}
+                className="inline-flex w-fit items-center gap-2 rounded-squircle border border-(--accent-border) bg-(--surface-2) px-5 py-3 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-3)"
+              >
+                <HugeiconsIcon icon={AiChat02Icon} size={18} />
+                {t('upgrade.openAiChat')}
+              </Link>
+            </div>
           </div>
         </section>
 

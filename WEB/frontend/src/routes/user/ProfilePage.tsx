@@ -45,11 +45,11 @@ function ProfilePage() {
         />
 
         <motion.div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.75fr)]" variants={staggerContainerVariants}>
-          <motion.div variants={heroLineVariants}>
+          <div>
             <Suspense fallback={<ProfileSectionFallback />}>
               <ProfileAvatarUploader user={user} />
             </Suspense>
-          </motion.div>
+          </div>
           <Suspense fallback={<ProfileSectionFallback />}>
             <ProfileStatusCard user={user} t={t} variants={heroLineVariants} />
           </Suspense>

@@ -31,8 +31,10 @@ import {
   AdminRoadmapDetailPage,
   AdminRoadmapsPage,
   AdminUsersPage,
+  AiChatPage,
   AiRoadmapPage,
   ContactPage,
+  CoursePage,
   DashboardPage,
   FaqsPage,
   ForgotPasswordPage,
@@ -108,6 +110,10 @@ export const appRouter = createBrowserRouter([
                 element: <AiRoadmapPage />,
               },
               {
+                path: "ai/chat",
+                element: <AiChatPage />,
+              },
+              {
                 path: "upgrade",
                 element: <UpgradePage />,
               },
@@ -147,6 +153,10 @@ export const appRouter = createBrowserRouter([
                 loader: roadmapLoader,
                 action: roadmapAction,
                 element: <RoadmapPage />,
+              },
+              {
+                path: "courses/:slug",
+                element: <CoursePage />,
               },
             ],
           },

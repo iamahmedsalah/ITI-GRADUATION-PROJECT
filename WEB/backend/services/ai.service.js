@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import Course from "../models/course/courseModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
+import UserAiConversation from "../models/user/userAiConversationModel.js";
+import UserAiMessage from "../models/user/userAiMessageModel.js";
 import UserAiUsage from "../models/user/userAiUsageModel.js";
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserPreference from "../models/user/userPreferenceModel.js";
@@ -32,6 +35,18 @@ const PRO_AI_ROADMAP_DRAFT_LIMIT = clamp(
   parseIntegerEnv(process.env.AI_PRO_ROADMAP_DRAFT_LIMIT, 10),
   0,
   50,
+);
+
+const FREE_AI_CHAT_MESSAGE_LIMIT = clamp(
+  parseIntegerEnv(process.env.AI_FREE_CHAT_MESSAGE_LIMIT, 30),
+  0,
+  1000,
+);
+
+const PRO_AI_CHAT_MESSAGE_LIMIT = clamp(
+  parseIntegerEnv(process.env.AI_PRO_CHAT_MESSAGE_LIMIT, 150),
+  0,
+  5000,
 );
 
 const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash";
@@ -74,6 +89,75 @@ const parseCsvEnv = (value = "") =>
 
 const parseLimit = (value) => clamp(parseInt(value, 10) || 6, 1, 12);
 
+const createTtlCache = () => {
+  const entries = new Map();
+
+  const get = (key) => {
+    const entry = entries.get(key);
+    if (!entry) return null;
+
+    if (entry.expiresAt <= Date.now()) {
+      entries.delete(key);
+      return null;
+    }
+
+    return entry.value;
+  };
+
+  const set = (key, value, ttlMs) => {
+    if (ttlMs <= 0) return value;
+
+    entries.set(key, {
+      value,
+      expiresAt: Date.now() + ttlMs,
+    });
+    return value;
+  };
+
+  const deleteByPrefix = (prefix) => {
+    for (const key of entries.keys()) {
+      if (key.startsWith(prefix)) {
+        entries.delete(key);
+      }
+    }
+  };
+
+  return {
+    get,
+    set,
+    deleteByPrefix,
+    clear: () => entries.clear(),
+    size: () => entries.size,
+  };
+};
+
+const aiCache = createTtlCache();
+const AI_ACCESS_CACHE_TTL_MS = 25 * 1000;
+const AI_RECOMMENDATIONS_CACHE_TTL_MS = 60 * 1000;
+const AI_CHAT_CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+const AI_TOPIC_EXPLANATION_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const stableJson = (value) => {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableJson).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+};
+
+const invalidateAiUserCache = (userId) => {
+  const id = toId(userId);
+  aiCache.deleteByPrefix(`ai-access:${id}:`);
+  aiCache.deleteByPrefix(`ai-recommendations:${id}:`);
+};
+
 const slugify = (value = "") =>
   normalizeText(value)
     .replace(/[^a-z0-9]+/g, "-")
@@ -105,12 +189,20 @@ const getAiSubscription = (user = {}) => {
 const getAiDraftLimit = (subscription) =>
   subscription?.isSubscriber ? PRO_AI_ROADMAP_DRAFT_LIMIT : FREE_AI_ROADMAP_DRAFT_LIMIT;
 
+const getAiChatLimit = (subscription) =>
+  subscription?.isSubscriber ? PRO_AI_CHAT_MESSAGE_LIMIT : FREE_AI_CHAT_MESSAGE_LIMIT;
+
 const getAiUsage = async (userId, subscription) => {
   const periodStart = getMonthlyUsageStart();
-  const [usage, activityDraftsUsed] = await Promise.all([
+  const [draftUsage, chatUsage, activityDraftsUsed, activityChatUsed] = await Promise.all([
     UserAiUsage.findOne({
       user: userId,
       type: "ai_roadmap_draft",
+      periodStart,
+    }).lean(),
+    UserAiUsage.findOne({
+      user: userId,
+      type: "ai_chat",
       periodStart,
     }).lean(),
     UserActivity.countDocuments({
@@ -118,9 +210,16 @@ const getAiUsage = async (userId, subscription) => {
       type: "ai_roadmap_draft",
       occurredAt: { $gte: periodStart },
     }),
+    UserActivity.countDocuments({
+      user: userId,
+      type: "ai_chat",
+      occurredAt: { $gte: periodStart },
+    }),
   ]);
-  const draftsUsed = Math.max(usage?.count || 0, activityDraftsUsed);
+  const draftsUsed = Math.max(draftUsage?.count || 0, activityDraftsUsed);
+  const chatUsed = Math.max(chatUsage?.count || 0, activityChatUsed);
   const draftLimit = getAiDraftLimit(subscription);
+  const chatLimit = getAiChatLimit(subscription);
 
   return {
     periodStart: periodStart.toISOString(),
@@ -130,6 +229,12 @@ const getAiUsage = async (userId, subscription) => {
     freeDraftLimit: FREE_AI_ROADMAP_DRAFT_LIMIT,
     proDraftLimit: PRO_AI_ROADMAP_DRAFT_LIMIT,
     draftsRemaining: Math.max(draftLimit - draftsUsed, 0),
+    chatUsed,
+    chatLimit,
+    planChatLimit: chatLimit,
+    freeChatLimit: FREE_AI_CHAT_MESSAGE_LIMIT,
+    proChatLimit: PRO_AI_CHAT_MESSAGE_LIMIT,
+    chatRemaining: Math.max(chatLimit - chatUsed, 0),
   };
 };
 
@@ -142,10 +247,20 @@ const buildAiAccessPayload = async (user) => {
     usage,
     capabilities: {
       canGenerateDraft: usage.draftsUsed < usage.draftLimit,
+      canUseChat: usage.chatUsed < usage.chatLimit,
       canSaveRoadmap: subscription.isSubscriber,
       canExplainTopic: subscription.isSubscriber,
     },
   };
+};
+
+const getCachedAiAccessPayload = async (user) => {
+  const cacheKey = `ai-access:${toId(user._id)}:${user.subscription?.plan || "free"}:${user.subscription?.status || "inactive"}`;
+  const cached = aiCache.get(cacheKey);
+  if (cached) return cached;
+
+  const payload = await buildAiAccessPayload(user);
+  return aiCache.set(cacheKey, payload, AI_ACCESS_CACHE_TTL_MS);
 };
 
 const ensureAiSubscriber = (user) => {
@@ -222,14 +337,20 @@ const reserveAiRoadmapDraftUsage = async (userId, subscription) => {
 
   try {
     const usage = await reserve(true);
-    if (usage) return { periodStart, draftLimit };
+    if (usage) {
+      invalidateAiUserCache(userId);
+      return { periodStart, draftLimit };
+    }
   } catch (error) {
     if (error.code !== 11000) {
       throw error;
     }
 
     const usage = await reserve(false);
-    if (usage) return { periodStart, draftLimit };
+    if (usage) {
+      invalidateAiUserCache(userId);
+      return { periodStart, draftLimit };
+    }
   }
 
   const error = new Error("Your AI roadmap draft limit has been used this month.");
@@ -241,7 +362,7 @@ const releaseAiRoadmapDraftUsage = async (userId, periodStart) => {
   if (!periodStart) return;
 
   try {
-    await UserAiUsage.findOneAndUpdate(
+    const usage = await UserAiUsage.findOneAndUpdate(
       {
         user: userId,
         type: "ai_roadmap_draft",
@@ -250,10 +371,107 @@ const releaseAiRoadmapDraftUsage = async (userId, periodStart) => {
       },
       { $inc: { count: -1 } },
     );
+    if (usage) invalidateAiUserCache(userId);
   } catch (error) {
     console.warn("Unable to release AI roadmap draft usage:", error.message);
   }
 };
+
+const reserveAiUsage = async ({ userId, type, limit, limitMessage }) => {
+  const periodStart = getMonthlyUsageStart();
+
+  if (limit <= 0) {
+    const error = new Error(limitMessage);
+    error.status = 402;
+    throw error;
+  }
+
+  const activityCount = await UserActivity.countDocuments({
+    user: userId,
+    type,
+    occurredAt: { $gte: periodStart },
+  });
+
+  try {
+    await UserAiUsage.updateOne(
+      { user: userId, type, periodStart },
+      {
+        $setOnInsert: {
+          user: userId,
+          type,
+          periodStart,
+          count: activityCount,
+        },
+      },
+      { upsert: true },
+    );
+  } catch (error) {
+    if (error.code !== 11000) {
+      throw error;
+    }
+  }
+
+  const reserve = async (upsert) =>
+    UserAiUsage.findOneAndUpdate(
+      {
+        user: userId,
+        type,
+        periodStart,
+        count: { $lt: limit },
+      },
+      { $inc: { count: 1 } },
+      { returnDocument: "after", upsert },
+    );
+
+  try {
+    const usage = await reserve(true);
+    if (usage) {
+      invalidateAiUserCache(userId);
+      return { periodStart, limit };
+    }
+  } catch (error) {
+    if (error.code !== 11000) {
+      throw error;
+    }
+
+    const usage = await reserve(false);
+    if (usage) {
+      invalidateAiUserCache(userId);
+      return { periodStart, limit };
+    }
+  }
+
+  const error = new Error(limitMessage);
+  error.status = 402;
+  throw error;
+};
+
+const releaseAiUsage = async ({ userId, type, periodStart }) => {
+  if (!periodStart) return;
+
+  try {
+    const usage = await UserAiUsage.findOneAndUpdate(
+      {
+        user: userId,
+        type,
+        periodStart,
+        count: { $gt: 0 },
+      },
+      { $inc: { count: -1 } },
+    );
+    if (usage) invalidateAiUserCache(userId);
+  } catch (error) {
+    console.warn("Unable to release AI usage:", error.message);
+  }
+};
+
+const reserveAiChatUsage = async (userId, subscription) =>
+  reserveAiUsage({
+    userId,
+    type: "ai_chat",
+    limit: getAiChatLimit(subscription),
+    limitMessage: "Your AI chat message limit has been used this month.",
+  });
 
 const getGeminiConfig = () => ({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
@@ -293,11 +511,11 @@ const getGeminiThinkingLevel = () => {
   return GEMINI_THINKING_LEVELS.has(thinkingLevel) ? thinkingLevel : null;
 };
 
-const buildGeminiGenerationConfig = (maxTokens) => {
+const buildGeminiGenerationConfig = (maxTokens, responseMimeType = "application/json") => {
   const thinkingLevel = getGeminiThinkingLevel();
   const generationConfig = {
     maxOutputTokens: maxTokens,
-    responseMimeType: "application/json",
+    responseMimeType,
   };
 
   if (thinkingLevel) {
@@ -491,6 +709,182 @@ const callAiJson = async ({ system, user, maxTokens = 2200 }) => {
           message: sanitizeAiProviderMessage(error.message),
         },
       );
+    }
+  }
+
+  const openAiAuthFailure = failedProviders.find(
+    (failure) => failure.provider === "openai" && isProviderAuthError(failure),
+  );
+  const geminiTemporaryFailure = failedProviders.find(
+    (failure) =>
+      failure.provider === "gemini" &&
+      [429, 500, 502, 503, 504].includes(failure.status),
+  );
+
+  if (openAiAuthFailure && geminiTemporaryFailure) {
+    const error = new Error(
+      "Gemini is temporarily unavailable and the OpenAI fallback key is invalid. Fix OPENAI_API_KEY or wait and retry Gemini.",
+    );
+    error.status = geminiTemporaryFailure.status;
+    throw error;
+  }
+
+  throw lastError || Object.assign(new Error("AI provider request failed."), { status: 502 });
+};
+
+const callOpenAiText = async ({ system, messages, maxTokens, config }) => {
+  const client = createOpenAiClient(config);
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: config.model,
+      temperature: 0.5,
+      max_tokens: maxTokens,
+      messages: [
+        { role: "system", content: system },
+        ...messages.map((message) => ({
+          role: message.role === "assistant" ? "assistant" : "user",
+          content: message.content,
+        })),
+      ],
+    });
+    const content = completion.choices?.[0]?.message?.content?.trim();
+
+    if (!content) {
+      throw new Error("AI provider returned an empty response.");
+    }
+
+    return {
+      content,
+      model: config.model,
+      provider: "openai",
+      usage: {
+        promptTokens: completion.usage?.prompt_tokens || 0,
+        completionTokens: completion.usage?.completion_tokens || 0,
+        totalTokens: completion.usage?.total_tokens || 0,
+      },
+    };
+  } catch (providerError) {
+    throw toAiProviderError(providerError);
+  }
+};
+
+const callGeminiText = async ({ system, messages, maxTokens, config }) => {
+  const modelPath = getGeminiModelPath(config.model);
+  const url = new URL(`${config.baseURL}/models/${encodeURIComponent(modelPath)}:generateContent`);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": config.apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: system }],
+        },
+        contents: messages.map((message) => ({
+          role: message.role === "assistant" ? "model" : "user",
+          parts: [{ text: message.content }],
+        })),
+        generationConfig: buildGeminiGenerationConfig(maxTokens, "text/plain"),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const error = new Error(data?.error?.message || "Gemini provider request failed.");
+      error.status = response.status;
+      throw error;
+    }
+
+    const content = data?.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text)
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+
+    if (!content) {
+      const blockReason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
+      throw new Error(blockReason ? `Gemini returned no chat content: ${blockReason}` : "Gemini returned an empty response.");
+    }
+
+    const promptTokens = data?.usageMetadata?.promptTokenCount || 0;
+    const completionTokens = data?.usageMetadata?.candidatesTokenCount || 0;
+    const totalTokens = data?.usageMetadata?.totalTokenCount || promptTokens + completionTokens;
+
+    return {
+      content,
+      model: config.model,
+      provider: "gemini",
+      usage: {
+        promptTokens,
+        completionTokens,
+        totalTokens,
+      },
+    };
+  } catch (providerError) {
+    throw toAiProviderError(providerError, "Gemini provider request failed.");
+  }
+};
+
+const callAiText = async ({ system, messages, maxTokens = 900 }) => {
+  const geminiConfig = getGeminiConfig();
+  const openAiConfig = getOpenAiConfig();
+  const providers = [];
+
+  if (geminiConfig.apiKey) {
+    geminiConfig.models.forEach((model) => {
+      providers.push({
+        name: `gemini:${model}`,
+        provider: "gemini",
+        call: () =>
+          callGeminiText({
+            system,
+            messages,
+            maxTokens,
+            config: { ...geminiConfig, model },
+          }),
+      });
+    });
+  }
+
+  if (openAiConfig.apiKey) {
+    providers.push({
+      name: `openai:${openAiConfig.model}`,
+      provider: "openai",
+      call: () => callOpenAiText({ system, messages, maxTokens, config: openAiConfig }),
+    });
+  }
+
+  if (!providers.length) {
+    const error = new Error("AI API key is not configured. Set GEMINI_API_KEY or OPENAI_API_KEY.");
+    error.status = 503;
+    throw error;
+  }
+
+  let lastError = null;
+  const failedProviders = [];
+
+  for (const provider of providers) {
+    try {
+      return await provider.call();
+    } catch (error) {
+      lastError = error;
+      failedProviders.push({
+        provider: provider.provider,
+        name: provider.name,
+        status: error.status || 502,
+        message: sanitizeAiProviderMessage(error.message),
+      });
+      if (provider.name === providers[providers.length - 1]?.name) {
+        break;
+      }
+      console.warn(`AI provider ${provider.name} failed; trying fallback provider.`, {
+        status: error.status || 502,
+        message: sanitizeAiProviderMessage(error.message),
+      });
     }
   }
 
@@ -852,6 +1246,12 @@ export const getAiRecommendations = async (req, res) => {
   const limit = parseLimit(req.query.limit);
 
   try {
+    const cacheKey = `ai-recommendations:${toId(userId)}:${limit}`;
+    const cached = aiCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const [
       preferences,
       coursesProgress,
@@ -979,7 +1379,7 @@ export const getAiRecommendations = async (req, res) => {
       .sort((left, right) => right.matchScore - left.matchScore)
       .slice(0, limit);
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: "AI recommendations generated successfully.",
       data: {
@@ -996,7 +1396,10 @@ export const getAiRecommendations = async (req, res) => {
           roadmaps: roadmapsToRecommend,
         },
       },
-    });
+    };
+
+    aiCache.set(cacheKey, payload, AI_RECOMMENDATIONS_CACHE_TTL_MS);
+    return res.status(200).json(payload);
   } catch (error) {
     console.error("AI recommendations error:", error);
     return res.status(500).json({
@@ -1290,7 +1693,7 @@ const createStepProgressRecords = (userId, roadmap, template) =>
 
 export const getAiFeatureAccess = async (req, res) => {
   try {
-    const access = await buildAiAccessPayload(req.user);
+    const access = await getCachedAiAccessPayload(req.user);
 
     return res.status(200).json({
       success: true,
@@ -1481,6 +1884,16 @@ export const explainAiRoadmapTopic = async (req, res) => {
 
   try {
     ensureAiSubscriber(req.user);
+    const cacheKey = `ai-topic-explain:${stableJson({
+      roadmapTitle: normalizeText(roadmapTitle),
+      roadmapGoal: normalizeText(roadmapGoal),
+      stepTitle: normalizeText(stepTitle),
+      stepDescription: normalizeText(stepDescription),
+    })}`;
+    const cached = aiCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     const { json, model, provider } = await callAiJson({
       maxTokens: 1400,
@@ -1508,7 +1921,7 @@ export const explainAiRoadmapTopic = async (req, res) => {
       stepTitle: String(stepTitle || "").slice(0, 120),
     });
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: "AI topic explanation generated successfully.",
       data: {
@@ -1528,7 +1941,10 @@ export const explainAiRoadmapTopic = async (req, res) => {
             : [],
         },
       },
-    });
+    };
+
+    aiCache.set(cacheKey, payload, AI_TOPIC_EXPLANATION_CACHE_TTL_MS);
+    return res.status(200).json(payload);
   } catch (error) {
     console.error("AI topic explanation error:", {
       status: error.status || 500,
@@ -1545,6 +1961,589 @@ export const explainAiRoadmapTopic = async (req, res) => {
   }
 };
 
+const AI_CHAT_SYSTEM_PROMPT = [
+  "You are ILMA's general AI learning assistant.",
+  "Help students with software engineering, study planning, debugging concepts, career learning, and ILMA learning questions.",
+  "Be practical, concise, and friendly. Ask a short follow-up question when the user's request is unclear.",
+  "When the user asks for ILMA roadmaps or courses, prefer the provided ILMA catalog items over external websites.",
+  "If catalog links are provided, include useful recommendations with markdown links using the exact provided app paths, for example [Frontend](/roadmaps/frontend).",
+  "Do not recommend roadmap.sh or other external roadmap sites unless the user explicitly asks for external references.",
+  "Do not claim you changed account data, enrolled the user, saved roadmaps, or performed actions outside this chat.",
+  "If the user asks for unsafe, private, or credential-related actions, refuse briefly and redirect to safe learning guidance.",
+].join(" ");
+
+const serializeConversation = (conversation) => ({
+  _id: toId(conversation._id),
+  title: conversation.title,
+  context: conversation.context || {},
+  lastMessageAt: conversation.lastMessageAt,
+  createdAt: conversation.createdAt,
+  updatedAt: conversation.updatedAt,
+});
+
+const serializeMessage = (message) => ({
+  _id: toId(message._id),
+  conversation: toId(message.conversation),
+  role: message.role,
+  content: message.content,
+  provider: message.provider,
+  model: message.model,
+  promptTokens: message.promptTokens || 0,
+  completionTokens: message.completionTokens || 0,
+  totalTokens: message.totalTokens || 0,
+  links: Array.isArray(message.links) ? message.links : [],
+  createdAt: message.createdAt,
+  updatedAt: message.updatedAt,
+});
+
+const ensureOwnedAiConversation = async (conversationId, userId) => {
+  if (!mongoose.isValidObjectId(conversationId)) {
+    const error = new Error("AI conversation was not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  const conversation = await UserAiConversation.findOne({
+    _id: conversationId,
+    user: userId,
+    deletedAt: null,
+  });
+
+  if (!conversation) {
+    const error = new Error("AI conversation was not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  return conversation;
+};
+
+const buildChatTitle = (content = "") => {
+  const normalized = String(content || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalized) return "New chat";
+
+  return normalized.length > 56 ? `${normalized.slice(0, 53)}...` : normalized;
+};
+
+const buildChatContextInstruction = (context = {}) => {
+  const contextParts = [
+    context.page ? `Page: ${context.page}` : "",
+    context.courseTitle ? `Course: ${context.courseTitle}` : "",
+    context.roadmapTitle ? `Roadmap: ${context.roadmapTitle}` : "",
+  ].filter(Boolean);
+
+  return contextParts.length
+    ? `Current ILMA context for this chat: ${contextParts.join("; ")}.`
+    : "";
+};
+
+const CHAT_SEARCH_STOPWORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "about",
+  "roadmap",
+  "roadmaps",
+  "course",
+  "courses",
+  "learn",
+  "learning",
+  "اريد",
+  "عايز",
+  "كورس",
+  "كورسات",
+  "خريطة",
+  "تعلم",
+]);
+
+const escapeRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getChatSearchTerms = (message = "") =>
+  unique(tokenize(message))
+    .filter((term) => term.length > 2 && !CHAT_SEARCH_STOPWORDS.has(term))
+    .slice(0, 6);
+
+const messageRequestsLearningCatalog = (message = "") => {
+  const normalized = normalizeText(message);
+  return [
+    "roadmap",
+    "roadmaps",
+    "course",
+    "courses",
+    "path",
+    "recommend",
+    "خريطة",
+    "خرائط",
+    "كورس",
+    "كورسات",
+    "دورة",
+    "دورات",
+    "رشح",
+  ].some((term) => normalized.includes(term));
+};
+
+const buildLearningSearchQuery = (terms, fields) => {
+  if (!terms.length) return null;
+
+  const regexes = terms.map((term) => new RegExp(escapeRegex(term), "i"));
+  return {
+    $or: fields.flatMap((field) => regexes.map((regex) => ({ [field]: regex }))),
+  };
+};
+
+const serializeLearningLink = (type, item) => ({
+  type,
+  title: item.title,
+  description: String(item.shortDescription || item.description || item.goal || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 240),
+  path: `/${type === "roadmap" ? "roadmaps" : "courses"}/${item.slug}`,
+  slug: item.slug,
+  level: item.targetLevel || item.level,
+  category: item.category || item.templateType || item.targetRole,
+});
+
+const searchAiLearningCatalog = async (message = "") => {
+  const terms = getChatSearchTerms(message);
+  const wantsCatalog = messageRequestsLearningCatalog(message);
+  if (!terms.length && !wantsCatalog) return [];
+
+  const cacheKey = `ai-chat-catalog:${normalizeText(terms.join(" ") || message).slice(0, 200)}`;
+  const cached = aiCache.get(cacheKey);
+  if (cached) return cached;
+
+  const roadmapTextQuery = buildLearningSearchQuery(terms, [
+    "title",
+    "goal",
+    "description",
+    "tags",
+    "targetRole",
+    "targetLevel",
+    "steps.title",
+    "steps.description",
+  ]);
+  const courseTextQuery = buildLearningSearchQuery(terms, [
+    "title",
+    "description",
+    "shortDescription",
+    "tags",
+    "category",
+    "level",
+    "sections.title",
+    "sections.lessons.title",
+  ]);
+
+  let [roadmaps, courses] = await Promise.all([
+    RoadmapTemplate.find({
+      isActive: true,
+      visibility: "public",
+      ...(roadmapTextQuery || {}),
+    })
+      .select("title slug goal description targetLevel targetRole templateType tags estimatedTotalMinutes")
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean(),
+    Course.find({
+      deletedAt: null,
+      isPublished: true,
+      ...(courseTextQuery || {}),
+    })
+      .select("title slug shortDescription description level category tags durationMinutes isFeatured createdAt")
+      .sort({ isFeatured: -1, createdAt: -1 })
+      .limit(3)
+      .lean(),
+  ]);
+
+  if (wantsCatalog && roadmaps.length + courses.length === 0) {
+    [roadmaps, courses] = await Promise.all([
+      RoadmapTemplate.find({
+        isActive: true,
+        visibility: "public",
+      })
+        .select("title slug goal description targetLevel targetRole templateType tags estimatedTotalMinutes")
+        .sort({ createdAt: -1 })
+        .limit(3)
+        .lean(),
+      Course.find({
+        deletedAt: null,
+        isPublished: true,
+      })
+        .select("title slug shortDescription description level category tags durationMinutes isFeatured createdAt")
+        .sort({ isFeatured: -1, createdAt: -1 })
+        .limit(3)
+        .lean(),
+    ]);
+  }
+
+  const links = [
+    ...roadmaps.map((roadmap) => serializeLearningLink("roadmap", roadmap)),
+    ...courses.map((course) => serializeLearningLink("course", course)),
+  ];
+
+  return aiCache.set(cacheKey, links, AI_CHAT_CATALOG_CACHE_TTL_MS);
+};
+
+const buildLearningContextInstruction = (links = []) => {
+  if (!links.length) return "";
+
+  const rows = links
+    .map((link) =>
+      [
+        `- ${link.type}: ${link.title}`,
+        link.path ? `markdown=[${link.title}](${link.path})` : "",
+        link.path ? `path=${link.path}` : "",
+        link.level ? `level=${link.level}` : "",
+        link.category ? `category=${link.category}` : "",
+        link.description ? `description=${link.description}` : "",
+      ]
+        .filter(Boolean)
+        .join("; "),
+    )
+    .join("\n");
+
+  return [
+    "Relevant ILMA catalog links found for this message. Mention them only when useful, and do not invent links.",
+    rows,
+  ].join("\n");
+};
+
+const updateAiChatTokenUsage = async ({ userId, periodStart, usage }) => {
+  if (!periodStart || !usage) return;
+
+  try {
+    const updatedUsage = await UserAiUsage.findOneAndUpdate(
+      { user: userId, type: "ai_chat", periodStart },
+      {
+        $inc: {
+          promptTokens: usage.promptTokens || 0,
+          completionTokens: usage.completionTokens || 0,
+          totalTokens: usage.totalTokens || 0,
+        },
+      },
+    );
+    if (updatedUsage) invalidateAiUserCache(userId);
+  } catch (error) {
+    console.warn("Unable to update AI chat token usage:", error.message);
+  }
+};
+
+export const listAiChatConversations = async (req, res) => {
+  try {
+    const conversations = await UserAiConversation.find({
+      user: req.user._id,
+      deletedAt: null,
+    })
+      .sort({ lastMessageAt: -1 })
+      .limit(50)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "AI chat conversations retrieved successfully.",
+      data: {
+        conversations: conversations.map(serializeConversation),
+      },
+    });
+  } catch (error) {
+    console.error("AI chat conversation list error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load AI chat conversations.",
+      error: error.message,
+    });
+  }
+};
+
+export const createAiChatConversation = async (req, res) => {
+  const { title, context, message } = req.body;
+  let conversation = null;
+
+  try {
+    conversation = await UserAiConversation.create({
+      user: req.user._id,
+      title: title || (message ? buildChatTitle(message) : "New chat"),
+      context: context || {},
+      lastMessageAt: new Date(),
+    });
+
+    if (!message) {
+      return res.status(201).json({
+        success: true,
+        message: "AI chat conversation created successfully.",
+        data: {
+          conversation: serializeConversation(conversation),
+          messages: [],
+        },
+      });
+    }
+
+    req.params.conversationId = toId(conversation._id);
+    return sendAiChatMessage(req, res);
+  } catch (error) {
+    if (conversation && message) {
+      await UserAiConversation.findByIdAndUpdate(conversation._id, {
+        deletedAt: new Date(),
+      }).catch(() => {});
+    }
+
+    console.error("AI chat conversation create error:", {
+      status: error.status || 500,
+      message: sanitizeAiProviderMessage(error.message),
+    });
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 402
+          ? error.message
+          : "Failed to create AI chat conversation.",
+      error: sanitizeAiProviderMessage(error.message),
+    });
+  }
+};
+
+export const getAiChatMessages = async (req, res) => {
+  try {
+    const conversation = await ensureOwnedAiConversation(
+      req.params.conversationId,
+      req.user._id,
+    );
+    const messages = await UserAiMessage.find({
+      conversation: conversation._id,
+      user: req.user._id,
+    })
+      .sort({ createdAt: 1 })
+      .limit(200)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "AI chat messages retrieved successfully.",
+      data: {
+        conversation: serializeConversation(conversation),
+        messages: messages.map(serializeMessage),
+      },
+    });
+  } catch (error) {
+    console.error("AI chat messages error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 404
+          ? error.message
+          : "Failed to load AI chat messages.",
+      error: error.message,
+    });
+  }
+};
+
+export const sendAiChatMessage = async (req, res) => {
+  const userId = req.user._id;
+  const { message, context } = req.body;
+  let reservation = null;
+
+  try {
+    const conversation = await ensureOwnedAiConversation(
+      req.params.conversationId,
+      userId,
+    );
+    const subscription = getAiSubscription(req.user);
+
+    try {
+      reservation = await reserveAiChatUsage(userId, subscription);
+    } catch (error) {
+      if (error.status !== 402) throw error;
+      const access = await buildAiAccessPayload(req.user);
+      return res.status(402).json({
+        success: false,
+        message: error.message,
+        data: access,
+      });
+    }
+
+    if (context) {
+      conversation.context = {
+        ...conversation.context,
+        ...context,
+      };
+    }
+
+    const history = await UserAiMessage.find({
+      conversation: conversation._id,
+      user: userId,
+      role: { $in: ["user", "assistant"] },
+    })
+      .sort({ createdAt: -1 })
+      .limit(12)
+      .lean();
+    const contextInstruction = buildChatContextInstruction(conversation.context);
+    const learningLinks = await searchAiLearningCatalog(message);
+    const learningInstruction = buildLearningContextInstruction(learningLinks);
+    const messages = [
+      ...history.reverse().map((item) => ({
+        role: item.role,
+        content: item.content,
+      })),
+      {
+        role: "user",
+        content: message,
+      },
+    ];
+    const system = [
+      AI_CHAT_SYSTEM_PROMPT,
+      contextInstruction,
+      learningInstruction,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const aiReply = await callAiText({
+      system,
+      messages,
+      maxTokens: 900,
+    });
+
+    const [userMessage, assistantMessage] = await UserAiMessage.insertMany([
+      {
+        conversation: conversation._id,
+        user: userId,
+        role: "user",
+        content: message,
+      },
+      {
+        conversation: conversation._id,
+        user: userId,
+        role: "assistant",
+        content: aiReply.content.slice(0, 6000),
+        provider: aiReply.provider,
+        model: aiReply.model,
+        promptTokens: aiReply.usage?.promptTokens || 0,
+        completionTokens: aiReply.usage?.completionTokens || 0,
+        totalTokens: aiReply.usage?.totalTokens || 0,
+        links: learningLinks,
+      },
+    ]);
+
+    conversation.lastMessageAt = new Date();
+    if (!conversation.title || conversation.title === "New chat") {
+      conversation.title = buildChatTitle(message);
+    }
+    await conversation.save();
+
+    await updateAiChatTokenUsage({
+      userId,
+      periodStart: reservation.periodStart,
+      usage: aiReply.usage,
+    });
+    await recordAiActivity(userId, "ai_chat", {
+      conversationId: conversation._id,
+      provider: aiReply.provider,
+      model: aiReply.model,
+    });
+    const access = await buildAiAccessPayload(req.user);
+
+    return res.status(201).json({
+      success: true,
+      message: "AI chat response generated successfully.",
+      data: {
+        conversation: serializeConversation(conversation),
+        messages: [serializeMessage(userMessage), serializeMessage(assistantMessage)],
+        access,
+      },
+    });
+  } catch (error) {
+    if (reservation) {
+      await releaseAiUsage({
+        userId,
+        type: "ai_chat",
+        periodStart: reservation.periodStart,
+      });
+    }
+
+    console.error("AI chat send error:", {
+      status: error.status || 500,
+      message: sanitizeAiProviderMessage(error.message),
+    });
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 402 || error.status === 404
+          ? error.message
+          : "Failed to generate AI chat response.",
+      error: sanitizeAiProviderMessage(error.message),
+    });
+  }
+};
+
+export const updateAiChatConversation = async (req, res) => {
+  try {
+    const conversation = await ensureOwnedAiConversation(
+      req.params.conversationId,
+      req.user._id,
+    );
+
+    conversation.title = req.body.title;
+    await conversation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "AI chat conversation updated successfully.",
+      data: {
+        conversation: serializeConversation(conversation),
+      },
+    });
+  } catch (error) {
+    console.error("AI chat conversation update error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 404
+          ? error.message
+          : "Failed to update AI chat conversation.",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteAiChatConversation = async (req, res) => {
+  try {
+    const conversation = await ensureOwnedAiConversation(
+      req.params.conversationId,
+      req.user._id,
+    );
+
+    conversation.deletedAt = new Date();
+    await conversation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "AI chat conversation deleted successfully.",
+      data: {
+        conversation: serializeConversation(conversation),
+      },
+    });
+  } catch (error) {
+    console.error("AI chat conversation delete error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message:
+        error.status === 404
+          ? error.message
+          : "Failed to delete AI chat conversation.",
+      error: error.message,
+    });
+  }
+};
+
+export const __aiTestHooks = {
+  createTtlCache,
+  stableJson,
+};
+
 export default {
   getAiRecommendations,
   generateAiRoadmapDraft,
@@ -1552,4 +2551,10 @@ export default {
   generateUserAiRoadmapDraft,
   saveUserAiRoadmap,
   explainAiRoadmapTopic,
+  listAiChatConversations,
+  createAiChatConversation,
+  getAiChatMessages,
+  sendAiChatMessage,
+  updateAiChatConversation,
+  deleteAiChatConversation,
 };

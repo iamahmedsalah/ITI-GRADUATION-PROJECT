@@ -3,12 +3,18 @@ import { z } from "zod";
 import { protect, authorizeRoles } from "../middleware/protectsRoutes.js";
 import { aiRecommendationLimiter } from "../utils/rateLimiter.js";
 import {
+  createAiChatConversation,
+  deleteAiChatConversation,
   explainAiRoadmapTopic,
   generateAiRoadmapDraft,
   generateUserAiRoadmapDraft,
   getAiFeatureAccess,
+  getAiChatMessages,
   getAiRecommendations,
+  listAiChatConversations,
   saveUserAiRoadmap,
+  sendAiChatMessage,
+  updateAiChatConversation,
 } from "../services/ai.service.js";
 
 const router = express.Router();
@@ -97,6 +103,38 @@ const explainTopicSchema = z.object({
   stepDescription: z.string().trim().max(1000).optional(),
 });
 
+const chatContextSchema = z
+  .object({
+    page: z.string().trim().max(120).optional(),
+    courseTitle: z.string().trim().max(120).optional(),
+    roadmapTitle: z.string().trim().max(120).optional(),
+  })
+  .partial()
+  .optional();
+
+const createChatConversationSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  context: chatContextSchema,
+  message: z.string().trim().min(1).max(2000).optional(),
+});
+
+const sendChatMessageSchema = z.object({
+  message: z
+    .string({ error: "Message is required." })
+    .trim()
+    .min(1, "Message is required.")
+    .max(2000, "Message must be at most 2000 characters."),
+  context: chatContextSchema,
+});
+
+const updateChatConversationSchema = z.object({
+  title: z
+    .string({ error: "Title is required." })
+    .trim()
+    .min(1, "Title is required.")
+    .max(120, "Title must be at most 120 characters."),
+});
+
 router.use(protect);
 
 /**
@@ -134,6 +172,51 @@ router.get(
   authorizeRoles("student"),
   aiRecommendationLimiter,
   getAiFeatureAccess,
+);
+
+router.get(
+  "/chat/conversations",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  listAiChatConversations,
+);
+
+router.post(
+  "/chat/conversations",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  validateBody(createChatConversationSchema),
+  createAiChatConversation,
+);
+
+router.get(
+  "/chat/conversations/:conversationId/messages",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  getAiChatMessages,
+);
+
+router.post(
+  "/chat/conversations/:conversationId/messages",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  validateBody(sendChatMessageSchema),
+  sendAiChatMessage,
+);
+
+router.patch(
+  "/chat/conversations/:conversationId",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  validateBody(updateChatConversationSchema),
+  updateAiChatConversation,
+);
+
+router.delete(
+  "/chat/conversations/:conversationId",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  deleteAiChatConversation,
 );
 
 router.post(
