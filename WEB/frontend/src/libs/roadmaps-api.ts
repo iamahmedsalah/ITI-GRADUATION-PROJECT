@@ -284,3 +284,62 @@ export async function deleteUserRoadmap(roadmapId: string) {
 
   return true
 }
+
+export type NestRoadmap = {
+  id: string
+  name: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type NestTopicTree = {
+  topicId: string
+  name: string
+  label: string
+  description: string
+  type: 'topic' | 'subtopic'
+  roadmapId: string
+  position: { x: number; y: number }
+  resources: Array<{ type: string; title: string; link: string }>
+  parentTopicId?: string
+  path: string[]
+  childTopics: NestTopicTree[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type NestRoadmapTreeResponse = {
+  id: string
+  name: string
+  childTopics: NestTopicTree[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export async function fetchNestRoadmaps(): Promise<NestRoadmap[]> {
+  const { response, data } = await apiGet<{ success?: boolean; data?: NestRoadmap[]; message?: string }>(
+    '/v1/roadmaps',
+    {},
+    { authRetry: true },
+  )
+
+  if (!response.ok) {
+    throw new Error(data?.message || `HTTP ${response.status}: Failed to fetch NestJS roadmaps`)
+  }
+
+  return data.data ?? []
+}
+
+export async function fetchNestRoadmapTree(id: string): Promise<NestRoadmapTreeResponse | null> {
+  const { response, data } = await apiGet<{ success?: boolean; data?: NestRoadmapTreeResponse; message?: string }>(
+    `/v1/roadmaps/${encodeURIComponent(id)}`,
+    {},
+    { authRetry: true },
+  )
+
+  if (!response.ok) {
+    throw new Error(data?.message || `HTTP ${response.status}: Failed to fetch NestJS roadmap tree`)
+  }
+
+  return data.data ?? null
+}

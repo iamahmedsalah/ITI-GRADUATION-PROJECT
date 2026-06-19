@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import User from "../models/user/userAccountModel.js";
+import logger from "../utils/logger.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserPreference from "../models/user/userPreferenceModel.js";
@@ -17,7 +18,7 @@ export const getPreferences = async (req, res) => {
       data: preferences ?? null,
     });
   } catch (error) {
-    console.error("Get preferences error:", error);
+    logger.error("Get preferences error", error);
     return res.status(500).json({
       success: false,
       message: "Could not load preferences.",
@@ -50,7 +51,7 @@ export const updatePreferences = async (req, res) => {
       user: toPublicUser(req.user, { hasPreferences: true }),
     });
   } catch (error) {
-    console.error("Update preferences error:", error);
+    logger.error("Update preferences error", error);
     return res.status(500).json({
       success: false,
       message: "Could not save preferences.",
@@ -166,7 +167,7 @@ export const getDashboardSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Dashboard summary error:", error);
+    logger.error("Dashboard summary error", error);
     return res.status(500).json({
       success: false,
       message: "Could not load dashboard summary.",
@@ -203,7 +204,7 @@ export const deleteUserActivity = async (req, res) => {
       data: deletedActivity,
     });
   } catch (error) {
-    console.error("Delete user activity error:", error);
+    logger.error("Delete user activity error", error);
     return res.status(500).json({
       success: false,
       message: "Could not delete activity.",
@@ -263,7 +264,7 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-    console.error("Update profile error:", error);
+    logger.error("Update profile error", error);
     return res.status(500).json({
       success: false,
       message: "Could not update profile.",
@@ -297,7 +298,7 @@ export const updatePassword = async (req, res) => {
       message: "Password updated successfully.",
     });
   } catch (error) {
-    console.error("Update password error:", error);
+    logger.error("Update password error", error);
     return res.status(500).json({
       success: false,
       message: "Could not update password.",
@@ -328,7 +329,7 @@ export const updateAvatar = async (req, res) => {
       user: toPublicUser(user, { hasPreferences }),
     });
   } catch (error) {
-    console.error("Update avatar error:", error);
+    logger.error("Update avatar error", error);
     return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Could not update avatar.",

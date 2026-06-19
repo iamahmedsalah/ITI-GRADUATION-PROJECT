@@ -58,3 +58,4 @@ export const ContactPage = lazy(() => import("../routes/user/ContactUsPage"));
 export const GuidePage = lazy(() => import("../routes/user/GuidePage"));
 export const RoadmapPage = lazy(() => import("../routes/user/RoadmapPage"));
 export const CoursePage = lazy(() => import("../routes/user/CoursePage"));
+export const NestTestPage = lazy(() => import("../routes/user/NestTestPage"));

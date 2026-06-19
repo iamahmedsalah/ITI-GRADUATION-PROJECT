@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user/userAccountModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import UserAiUsage from "../models/user/userAiUsageModel.js";
+import logger from "../utils/logger.js";
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserPreference from "../models/user/userPreferenceModel.js";
 import UserProfile from "../models/user/userProfileModel.js";
@@ -282,7 +283,7 @@ export const signup = async (req, res) => {
       const messages = Object.values(error.errors).map((e) => e.message);
       return res.status(400).json({ success: false, message: messages[0] });
     }
-    console.error("Signup Error Details:", error);
+    logger.error("Signup Error Details", error);
     return res.status(500).json({
       success: false,
       message: "Registration failed.",
@@ -423,7 +424,7 @@ export const login = async (req, res) => {
       });
     }
 
-    console.error("Login Error Details:", error);
+    logger.error("Login Error Details", error);
     return res.status(500).json({
       success: false,
       message: "Login failed.",

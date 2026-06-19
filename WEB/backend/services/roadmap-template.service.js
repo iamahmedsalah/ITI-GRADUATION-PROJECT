@@ -2,112 +2,16 @@ import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
-
-const slugifyStepKey = (value) =>
-  String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "step";
-
-const ensureUniqueStepKeys = (steps = []) => {
-  const used = new Map();
-
-  return steps.map((step, index) => {
-    const base = slugifyStepKey(
-      step.stepKey || step.title || `step-${index + 1}`,
-    );
-    const count = used.get(base) || 0;
-    used.set(base, count + 1);
-
-    return {
-      ...step,
-      stepKey: count === 0 ? base : `${base}-${count + 1}`,
-      order: typeof step.order === "number" ? step.order : index,
-      required: step.required !== false,
-      estimatedMinutes: Number(step.estimatedMinutes) || 0,
-      dependsOn: Array.isArray(step.dependsOn) ? step.dependsOn : [],
-    };
-  });
-};
-
-const parseRoadmapMarkdownToSteps = (markdown = "") => {
-  const lines = String(markdown || "").split(/\r?\n/);
-  const steps = [];
-  let currentStep = null;
-
-  const pushCurrentStep = () => {
-    if (!currentStep) return;
-
-    currentStep.description = currentStep.description.trim() || undefined;
-    steps.push(currentStep);
-    currentStep = null;
-  };
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-
-    if (!line) {
-      if (currentStep) currentStep.description += "\n";
-      continue;
-    }
-
-    const headingMatch = line.match(/^#{2,3}\s+(.+)$/);
-    if (headingMatch) {
-      pushCurrentStep();
-      currentStep = {
-        stepKey: slugifyStepKey(headingMatch[1]),
-        title: headingMatch[1].trim(),
-        description: "",
-        resources: [],
-        order: steps.length,
-        required: true,
-        estimatedMinutes: 0,
-        dependsOn: [],
-      };
-      continue;
-    }
-
-    if (!currentStep) continue;
-
-    const resourceMatch = line.match(
-      /^[-*]\s+\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/i,
-    );
-    if (resourceMatch) {
-      currentStep.resources.push({
-        title: resourceMatch[1].trim(),
-        url: resourceMatch[2].trim(),
-      });
-      continue;
-    }
-
-    currentStep.description += `${line}\n`;
-  }
-
-  pushCurrentStep();
-
-  return ensureUniqueStepKeys(steps);
-};
-
-const calculateEstimatedTotalMinutes = (steps = []) =>
-  steps.reduce(
-    (total, step) => total + (Number(step.estimatedMinutes) || 0),
-    0,
-  );
-
-const escapeRegex = (value = "") =>
-  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const createServiceError = (status, message) => {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-};
-
-const publicTemplateFilter = () => ({
-  isActive: true,
-  $or: [{ visibility: "public" }, { visibility: { $exists: false } }],
-});
+import logger from "../utils/logger.js";
+import {
+  slugifyStepKey,
+  ensureUniqueStepKeys,
+  parseRoadmapMarkdownToSteps,
+  calculateEstimatedTotalMinutes,
+  escapeRegex,
+  createServiceError,
+  publicTemplateFilter,
+} from "../helpers/roadmap.helpers.js";
 
 //  ROADMAP TEMPLATE SERVICES
 
@@ -187,7 +91,7 @@ export const createRoadmapTemplate = async (req, res) => {
       data: populatedTemplate,
     });
   } catch (error) {
-    console.error("Create roadmap template error:", error);
+    logger.error("Create roadmap template error", error);
 
     if (error.code === 11000) {
       const duplicatedField = Object.keys(error.keyPattern || {})[0] || "field";
@@ -236,7 +140,7 @@ export const getRoadmapTemplate = async (req, res) => {
       data: template,
     });
   } catch (error) {
-    console.error("Get roadmap template error:", error);
+    logger.error("Get roadmap template error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap template.",
@@ -268,7 +172,7 @@ export const getRoadmapTemplateBySlug = async (req, res) => {
       data: template,
     });
   } catch (error) {
-    console.error("Get roadmap template by slug error:", error);
+    logger.error("Get roadmap template by slug error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap template.",
@@ -306,7 +210,7 @@ export const getMyRoadmapTemplateBySlug = async (req, res) => {
       data: template,
     });
   } catch (error) {
-    console.error("Get my roadmap template by slug error:", error);
+    logger.error("Get my roadmap template by slug error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap template.",
@@ -351,7 +255,7 @@ export const getRoadmapTopic = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get roadmap topic error:", error);
+    logger.error("Get roadmap topic error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap topic.",
@@ -402,7 +306,7 @@ export const getAllRoadmapTemplates = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get all roadmap templates error:", error);
+    logger.error("Get all roadmap templates error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap templates.",
@@ -493,7 +397,7 @@ export const searchRoadmapsAndTopics = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Search roadmaps/topics error:", error);
+    logger.error("Search roadmaps/topics error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to search roadmaps/topics.",
@@ -517,7 +421,7 @@ export const updateRoadmapTemplate = async (req, res) => {
       data: updatedTemplate,
     });
   } catch (error) {
-    console.error("Update roadmap template error:", error);
+    logger.error("Update roadmap template error", error);
 
     if (error.status) {
       return res.status(error.status).json({
@@ -562,7 +466,7 @@ export const deleteRoadmapTemplate = async (req, res) => {
       data: deletedTemplate,
     });
   } catch (error) {
-    console.error("Delete roadmap template error:", error);
+    logger.error("Delete roadmap template error", error);
 
     if (error.status) {
       return res.status(error.status).json({
@@ -591,7 +495,7 @@ export const publishRoadmapTemplate = async (req, res) => {
       data: publishedTemplate,
     });
   } catch (error) {
-    console.error("Publish roadmap template error:", error);
+    logger.error("Publish roadmap template error", error);
 
     if (error.status) {
       return res.status(error.status).json({
@@ -622,7 +526,7 @@ export const unpublishRoadmapTemplate = async (req, res) => {
       data: unpublishedTemplate,
     });
   } catch (error) {
-    console.error("Unpublish roadmap template error:", error);
+    logger.error("Unpublish roadmap template error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to unpublish roadmap template.",
@@ -813,7 +717,7 @@ export const addStepToTemplate = async (req, res) => {
       data: template,
     });
   } catch (error) {
-    console.error("Add step error:", error);
+    logger.error("Add step error", error);
 
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((e) => e.message);
@@ -852,7 +756,7 @@ export const removeStepFromTemplate = async (req, res) => {
       data: template,
     });
   } catch (error) {
-    console.error("Remove step error:", error);
+    logger.error("Remove step error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to remove step.",

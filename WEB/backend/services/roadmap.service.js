@@ -2,113 +2,16 @@ import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
-
-
-const slugifyStepKey = (value) =>
-  String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "step";
-
-const ensureUniqueStepKeys = (steps = []) => {
-  const used = new Map();
-
-  return steps.map((step, index) => {
-    const base = slugifyStepKey(
-      step.stepKey || step.title || `step-${index + 1}`,
-    );
-    const count = used.get(base) || 0;
-    used.set(base, count + 1);
-
-    return {
-      ...step,
-      stepKey: count === 0 ? base : `${base}-${count + 1}`,
-      order: typeof step.order === "number" ? step.order : index,
-      required: step.required !== false,
-      estimatedMinutes: Number(step.estimatedMinutes) || 0,
-      dependsOn: Array.isArray(step.dependsOn) ? step.dependsOn : [],
-    };
-  });
-};
-
-const parseRoadmapMarkdownToSteps = (markdown = "") => {
-  const lines = String(markdown || "").split(/\r?\n/);
-  const steps = [];
-  let currentStep = null;
-
-  const pushCurrentStep = () => {
-    if (!currentStep) return;
-
-    currentStep.description = currentStep.description.trim() || undefined;
-    steps.push(currentStep);
-    currentStep = null;
-  };
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-
-    if (!line) {
-      if (currentStep) currentStep.description += "\n";
-      continue;
-    }
-
-    const headingMatch = line.match(/^#{2,3}\s+(.+)$/);
-    if (headingMatch) {
-      pushCurrentStep();
-      currentStep = {
-        stepKey: slugifyStepKey(headingMatch[1]),
-        title: headingMatch[1].trim(),
-        description: "",
-        resources: [],
-        order: steps.length,
-        required: true,
-        estimatedMinutes: 0,
-        dependsOn: [],
-      };
-      continue;
-    }
-
-    if (!currentStep) continue;
-
-    const resourceMatch = line.match(
-      /^[-*]\s+\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/i,
-    );
-    if (resourceMatch) {
-      currentStep.resources.push({
-        title: resourceMatch[1].trim(),
-        url: resourceMatch[2].trim(),
-      });
-      continue;
-    }
-
-    currentStep.description += `${line}\n`;
-  }
-
-  pushCurrentStep();
-
-  return ensureUniqueStepKeys(steps);
-};
-
-const calculateEstimatedTotalMinutes = (steps = []) =>
-  steps.reduce(
-    (total, step) => total + (Number(step.estimatedMinutes) || 0),
-    0,
-  );
-
-const escapeRegex = (value = "") =>
-  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const createServiceError = (status, message) => {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-};
-
-const publicTemplateFilter = () => ({
-  isActive: true,
-  $or: [{ visibility: "public" }, { visibility: { $exists: false } }],
-});
+import logger from "../utils/logger.js";
+import {
+  slugifyStepKey,
+  ensureUniqueStepKeys,
+  parseRoadmapMarkdownToSteps,
+  calculateEstimatedTotalMinutes,
+  escapeRegex,
+  createServiceError,
+  publicTemplateFilter,
+} from "../helpers/roadmap.helpers.js";
 
 const logRoadmapActivity = async (userId, type, roadmapId, metadata = {}) => {
   try {
@@ -119,7 +22,7 @@ const logRoadmapActivity = async (userId, type, roadmapId, metadata = {}) => {
       metadata,
     });
   } catch (error) {
-    console.error("Error logging roadmap activity:", error);
+    logger.error("Error logging roadmap activity", error);
   }
 };
 
@@ -184,7 +87,7 @@ export const assignRoadmapToUser = async (req, res) => {
       data: populatedRoadmap,
     });
   } catch (error) {
-    console.error("Assign roadmap error:", error);
+    logger.error("Assign roadmap error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to assign roadmap.",
@@ -270,7 +173,7 @@ export const updateStepProgress = async (req, res) => {
       data: updatedProgress,
     });
   } catch (error) {
-    console.error("Update step progress error:", error);
+    logger.error("Update step progress error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update step progress.",
@@ -306,7 +209,7 @@ const updateRoadmapProgress = async (roadmapId, userId) => {
 
     await UserRoadmap.findByIdAndUpdate(roadmapId, updateData);
   } catch (error) {
-    console.error("Error updating roadmap progress:", error);
+    logger.error("Error updating roadmap progress", error);
   }
 };
 
@@ -342,7 +245,7 @@ export const getRoadmapProgress = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get roadmap progress error:", error);
+    logger.error("Get roadmap progress error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap progress.",
@@ -367,7 +270,7 @@ export const getUserRoadmaps = async (req, res) => {
       data: roadmaps,
     });
   } catch (error) {
-    console.error("Get user roadmaps error:", error);
+    logger.error("Get user roadmaps error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmaps.",
@@ -405,7 +308,7 @@ export const deleteUserRoadmap = async (req, res) => {
       data: { _id: roadmap._id },
     });
   } catch (error) {
-    console.error("Delete user roadmap error:", error);
+    logger.error("Delete user roadmap error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete roadmap.",

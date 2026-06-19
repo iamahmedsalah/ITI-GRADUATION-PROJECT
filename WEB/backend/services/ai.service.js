@@ -1,4 +1,5 @@
 import { createTtlCache } from "./ai/cache.js";
+import logger from "../utils/logger.js";
 import { sanitizeAiProviderMessage } from "./ai/provider.js";
 import { generateRecommendations } from "./ai/recommendations.js";
 import {
@@ -23,12 +24,13 @@ import {
   getCachedAiAccessPayload,
 } from "./ai/usage.js";
 
+
 export const getAiRecommendations = async (req, res) => {
   try {
     const payload = await generateRecommendations(req.user._id, req.query.limit);
     return res.status(200).json(payload);
   } catch (error) {
-    console.error("AI recommendations error:", error);
+    logger.error("AI recommendations error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to generate AI recommendations.",
@@ -63,7 +65,7 @@ export const generateAiRoadmapDraft = async (req, res) => {
       data: draftPayload,
     });
   } catch (error) {
-    console.error("AI roadmap draft error:", {
+    logger.error("AI roadmap draft error", {
       status: error.status || 500,
       message: sanitizeAiProviderMessage(error.message),
     });
@@ -85,7 +87,7 @@ export const getAiFeatureAccess = async (req, res) => {
       data: access,
     });
   } catch (error) {
-    console.error("AI feature access error:", error);
+    logger.error("AI feature access error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to load AI feature access.",
@@ -126,7 +128,7 @@ export const generateUserAiRoadmapDraft = async (req, res) => {
       });
     }
 
-    console.error("User AI roadmap draft error:", {
+    logger.error("User AI roadmap draft error", {
       status: error.status || 500,
       message: sanitizeAiProviderMessage(error.message),
     });
@@ -153,7 +155,7 @@ export const saveUserAiRoadmap = async (req, res) => {
       data: payload,
     });
   } catch (error) {
-    console.error("Save AI roadmap error:", error);
+    logger.error("Save AI roadmap error", error);
     return res.status(error.status || 500).json({
       success: false,
       message:
@@ -183,7 +185,7 @@ export const explainAiRoadmapTopic = async (req, res) => {
       data: payload,
     });
   } catch (error) {
-    console.error("AI topic explanation error:", {
+    logger.error("AI topic explanation error", {
       status: error.status || 500,
       message: sanitizeAiProviderMessage(error.message),
     });
@@ -211,7 +213,7 @@ export const listAiChatConversations = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("AI chat conversation list error:", error);
+    logger.error("AI chat conversation list error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to load AI chat conversations.",
@@ -248,7 +250,7 @@ export const createAiChatConversation = async (req, res) => {
       });
     }
 
-    console.error("AI chat conversation create error:", {
+    logger.error("AI chat conversation create error", {
       status: error.status || 500,
       message: sanitizeAiProviderMessage(error.message),
     });
@@ -276,7 +278,7 @@ export const getAiChatMessages = async (req, res) => {
       data: payload,
     });
   } catch (error) {
-    console.error("AI chat messages error:", error);
+    logger.error("AI chat messages error", error);
     return res.status(error.status || 500).json({
       success: false,
       message:
@@ -314,7 +316,7 @@ export const sendAiChatMessage = async (req, res) => {
       });
     }
 
-    console.error("AI chat send error:", {
+    logger.error("AI chat send error", {
       status: error.status || 500,
       message: sanitizeAiProviderMessage(error.message),
     });
@@ -343,7 +345,7 @@ export const updateAiChatConversation = async (req, res) => {
       data: payload,
     });
   } catch (error) {
-    console.error("AI chat conversation update error:", error);
+    logger.error("AI chat conversation update error", error);
     return res.status(error.status || 500).json({
       success: false,
       message:
@@ -368,7 +370,7 @@ export const deleteAiChatConversation = async (req, res) => {
       data: payload,
     });
   } catch (error) {
-    console.error("AI chat conversation delete error:", error);
+    logger.error("AI chat conversation delete error", error);
     return res.status(error.status || 500).json({
       success: false,
       message:

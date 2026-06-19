@@ -1,7 +1,7 @@
 import UserCourseProgress from "../models/user/userCourseProgressModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
 import Course from "../models/course/courseModel.js";
-
+import logger from "../utils/logger.js";
 
 const logActivity = async (userId, type, courseId, metadata = {}) => {
   try {
@@ -12,7 +12,7 @@ const logActivity = async (userId, type, courseId, metadata = {}) => {
       metadata,
     });
   } catch (error) {
-    console.error("Error logging activity:", error);
+    logger.error("Error logging activity", error);
   }
 };
 
@@ -57,7 +57,7 @@ export const listPublishedCourses = async (req, res) => {
       data: courses,
     });
   } catch (error) {
-    console.error("List published courses error:", error);
+    logger.error("List published courses error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch published courses.",
@@ -98,7 +98,7 @@ export const getPublishedCourseBySlug = async (req, res) => {
       data: course,
     });
   } catch (error) {
-    console.error("Get published course by slug error:", error);
+    logger.error("Get published course by slug error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch course.",
@@ -178,7 +178,7 @@ export const enrollCourse = async (req, res) => {
       data: populatedEnrollment,
     });
   } catch (error) {
-    console.error("Enroll course error:", error);
+    logger.error("Enroll course error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to enroll in course.",
@@ -265,7 +265,7 @@ export const updateCourseProgress = async (req, res) => {
       data: updatedProgress,
     });
   } catch (error) {
-    console.error("Update course progress error:", error);
+    logger.error("Update course progress error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update course progress.",
@@ -318,7 +318,7 @@ export const completeCourse = async (req, res) => {
       data: completedProgress,
     });
   } catch (error) {
-    console.error("Complete course error:", error);
+    logger.error("Complete course error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to complete course.",
@@ -366,7 +366,7 @@ export const rateCourse = async (req, res) => {
       data: ratedProgress,
     });
   } catch (error) {
-    console.error("Rate course error:", error);
+    logger.error("Rate course error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to rate course.",
@@ -403,7 +403,7 @@ export const getCourseProgress = async (req, res) => {
       data: progress,
     });
   } catch (error) {
-    console.error("Get course progress error:", error);
+    logger.error("Get course progress error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch course progress.",
@@ -448,7 +448,7 @@ export const getUserCourses = async (req, res) => {
       data: activeCourses,
     });
   } catch (error) {
-    console.error("Get user courses error:", error);
+    logger.error("Get user courses error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch courses.",
@@ -493,7 +493,7 @@ export const abandonCourse = async (req, res) => {
       data: abandonedProgress,
     });
   } catch (error) {
-    console.error("Abandon course error:", error);
+    logger.error("Abandon course error", error);
     return res.status(500).json({
       success: false,
       message: "Failed to abandon course.",

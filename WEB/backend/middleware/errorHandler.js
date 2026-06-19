@@ -29,7 +29,11 @@ export default function errorHandler(err, req, res, _next) {
 
   // Expose known http status if provided
   if (err?.status && Number.isInteger(err.status) && err.status >= 400 && err.status < 600) {
-    return res.status(err.status).json({ success: false, message: err.message || "Error" });
+    return res.status(err.status).json({
+      success: false,
+      message: err.message || "Error",
+      ...(err.errors ? { errors: err.errors } : {}),
+    });
   }
 
   return res.status(500).json({ success: false, message: "Internal server error." });
