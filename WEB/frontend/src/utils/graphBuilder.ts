@@ -210,6 +210,7 @@ export function createGraph(
           targetHandleId = 'branch-right'
         }
       }
+      const isCoreTarget = targetLayout?.isCore ?? true
 
       return {
         id: `${source}->${step.stepKey}`,
@@ -219,24 +220,27 @@ export function createGraph(
         sourceHandle: sourceHandleId,
         targetHandle: targetHandleId,
         animated: isSelected && !edgeDone,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 14,
-          height: 14,
-          color: edgeDone
-            ? 'var(--gd-primary)'
-            : isSelected
-              ? 'var(--accent-border)'
-              : 'var(--border)',
-        },
+        borderRadius: 16,
+        markerEnd: isCoreTarget
+          ? {
+              type: MarkerType.ArrowClosed,
+              width: 12,
+              height: 12,
+              color: edgeDone
+                ? 'var(--gd-primary)'
+                : isSelected
+                  ? 'var(--accent-border)'
+                  : 'var(--border)',
+            }
+          : undefined,
         style: {
           stroke: edgeDone
             ? 'var(--gd-primary)'
             : isSelected
               ? 'var(--accent-border)'
               : 'var(--border)',
-          strokeWidth: isSelected ? (targetLayout?.isCore ? 3.5 : 2.5) : (targetLayout?.isCore ? 2.5 : 1.5),
-          strokeDasharray: !targetLayout?.isCore ? '5 4' : undefined, // dashed connector lines for branches
+          strokeWidth: isSelected ? (isCoreTarget ? 3.5 : 2) : (isCoreTarget ? 2.5 : 1.5),
+          strokeDasharray: !isCoreTarget ? '5 4' : undefined, // dashed connector lines for branches
           opacity: isSelected ? 1 : 0.6,
           transition: 'stroke 0.2s, stroke-width 0.2s',
         },

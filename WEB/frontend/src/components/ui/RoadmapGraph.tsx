@@ -291,6 +291,29 @@ export function RoadmapGraph({
               pannable
               zoomable
             />
+
+            {/* Floating Zoom Hint Overlay */}
+            <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-squircle border border-(--border)/80 bg-(--surface-2)/80 px-3.5 py-1.5 text-xs text-(--text-h) shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-(--surface-2)">
+              <kbd className="inline-flex items-center rounded border border-(--border) bg-(--surface) px-1.5 py-0.5 text-[10px] font-bold text-(--text) shadow-sm">
+                Ctrl
+              </kbd>
+              <span className="text-(--text)">+</span>
+              <svg
+                className="size-4 text-(--gd-primary)"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="5" y="2" width="14" height="20" rx="7" />
+                <line x1="12" y1="6" x2="12" y2="10" className="animate-bounce" />
+              </svg>
+              <span className="font-semibold select-none">
+                {t('roadmapDetail.zoomHint', 'Hold Ctrl + Scroll to zoom')}
+              </span>
+            </div>
           </ReactFlow>
         </div>
       )}

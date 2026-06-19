@@ -1,10 +1,10 @@
+import { useAuthSessionStore } from '../stores/useAuthSessionStore'
+
 const DEFAULT_DEV_API_BASE = 'http://localhost:5000/api'
 const DEFAULT_PRODUCTION_API_BASE = 'https://ilma-backend-seven.vercel.app/api'
 const DEFAULT_ACCEPT_HEADERS = {
   Accept: 'application/json',
 } as const
-
-let accessToken: string | null = null
 
 type ApiRequestInit = RequestInit & {
   json?: unknown
@@ -29,28 +29,24 @@ const REFRESH_SESSION_ERROR_CODES = new Set([
   'REFRESH_SESSION_EXPIRED',
 ])
 
-let lastAuthFailureCode: string | null = null
-
 export function setAccessToken(nextToken: string | null) {
-  accessToken = nextToken && nextToken.trim() ? nextToken : null
+  useAuthSessionStore.getState().setAccessToken(nextToken)
 }
 
 export function clearAccessToken() {
-  accessToken = null
+  useAuthSessionStore.getState().clearAccessToken()
 }
 
 export function getAccessToken() {
-  return accessToken
+  return useAuthSessionStore.getState().getAccessToken()
 }
 
 export function setLastAuthFailureCode(code: string | null) {
-  lastAuthFailureCode = code && code.trim() ? code : null
+  useAuthSessionStore.getState().setLastAuthFailureCode(code)
 }
 
 export function consumeLastAuthFailureCode() {
-  const code = lastAuthFailureCode
-  lastAuthFailureCode = null
-  return code
+  return useAuthSessionStore.getState().consumeLastAuthFailureCode()
 }
 
 export function getApiBaseUrl() {
@@ -119,8 +115,10 @@ function mergeHeaders(base?: HeadersInit, override?: HeadersInit) {
 }
 
 function attachAccessToken(headers: Headers) {
-  if (accessToken && !headers.has('authorization')) {
-    headers.set('authorization', `Bearer ${accessToken}`)
+  const token = getAccessToken()
+
+  if (token && !headers.has('authorization')) {
+    headers.set('authorization', `Bearer ${token}`)
   }
 }
 

@@ -113,21 +113,37 @@ export async function roadmapAction() {
   return null
 }
 
-export async function dashboardLoader({ request, params }: LoaderFunctionArgs): Promise<DashboardLoaderData | Response> {
-  const language = normalizeLanguage(params.language)
-
+function redirectIfLanguageMismatch(request: Request, params: LoaderFunctionArgs['params'], language: LanguagePref) {
   if (params.language !== language) {
     const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
 
     return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
   }
 
+  return null
+}
+
+async function fetchLoaderUser() {
+  return queryClient.fetchQuery({
+    queryKey: authQueryKey,
+    queryFn: fetchCurrentUser,
+    staleTime: 0,
+  })
+}
+
+async function requireUserLoader(
+  { request, params }: LoaderFunctionArgs,
+  options: { requirePreferences?: boolean } = {},
+): Promise<DashboardLoaderData | Response> {
+  const language = normalizeLanguage(params.language)
+  const languageRedirect = redirectIfLanguageMismatch(request, params, language)
+
+  if (languageRedirect) {
+    return languageRedirect
+  }
+
   try {
-    const user = await queryClient.fetchQuery({
-      queryKey: authQueryKey,
-      queryFn: fetchCurrentUser,
-      staleTime: 0,
-    })
+    const user = await fetchLoaderUser()
 
     if (!user) {
       return redirectToLogin(language, consumeLastAuthFailureCode())
@@ -139,7 +155,7 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
       return redirect(verifyPath)
     }
 
-    if (!user.hasPreferences) {
+    if (options.requirePreferences && !user.hasPreferences) {
       return redirect(`/${language}/preferences`)
     }
 
@@ -152,21 +168,20 @@ export async function dashboardLoader({ request, params }: LoaderFunctionArgs): 
   }
 }
 
+export async function dashboardLoader(args: LoaderFunctionArgs): Promise<DashboardLoaderData | Response> {
+  return requireUserLoader(args, { requirePreferences: true })
+}
+
 export async function preferencesLoader({ request, params }: LoaderFunctionArgs): Promise<PreferencesLoaderData | Response> {
   const language = normalizeLanguage(params.language)
+  const languageRedirect = redirectIfLanguageMismatch(request, params, language)
 
-  if (params.language !== language) {
-    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
-
-    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  if (languageRedirect) {
+    return languageRedirect
   }
 
   try {
-    const user = await queryClient.fetchQuery({
-      queryKey: authQueryKey,
-      queryFn: fetchCurrentUser,
-      staleTime: 0,
-    })
+    const user = await fetchLoaderUser()
 
     if (!user) {
       return redirectToLogin(language, consumeLastAuthFailureCode())
@@ -185,56 +200,20 @@ export async function preferencesLoader({ request, params }: LoaderFunctionArgs)
   }
 }
 
-export async function profileLoader({ request, params }: LoaderFunctionArgs): Promise<ProfileLoaderData | Response> {
-  const language = normalizeLanguage(params.language)
-
-  if (params.language !== language) {
-    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
-
-    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
-  }
-
-  try {
-    const user = await queryClient.fetchQuery({
-      queryKey: authQueryKey,
-      queryFn: fetchCurrentUser,
-      staleTime: 0,
-    })
-
-    if (!user) {
-      return redirectToLogin(language, consumeLastAuthFailureCode())
-    }
-
-    if (!user.isVerified) {
-      const verifyPath = `/${language}/verify-email?email=${encodeURIComponent(user.email)}`
-
-      return redirect(verifyPath)
-    }
-
-    return {
-      language,
-      user,
-    }
-  } catch {
-    return redirectToLogin(language, consumeLastAuthFailureCode())
-  }
+export async function profileLoader(args: LoaderFunctionArgs): Promise<ProfileLoaderData | Response> {
+  return requireUserLoader(args)
 }
 
 export async function authPageLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
   const language = normalizeLanguage(params.language)
+  const languageRedirect = redirectIfLanguageMismatch(request, params, language)
 
-  if (params.language !== language) {
-    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
-
-    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  if (languageRedirect) {
+    return languageRedirect
   }
 
   try {
-    const user = await queryClient.fetchQuery({
-      queryKey: authQueryKey,
-      queryFn: fetchCurrentUser,
-      staleTime: 0,
-    })
+    const user = await fetchLoaderUser()
 
     if (user) {
       if (!user.isVerified) {
@@ -252,11 +231,10 @@ export async function authPageLoader({ request, params }: LoaderFunctionArgs): P
 
 export async function adminAuthPageLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
   const language = normalizeLanguage(params.language)
+  const languageRedirect = redirectIfLanguageMismatch(request, params, language)
 
-  if (params.language !== language) {
-    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
-
-    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  if (languageRedirect) {
+    return languageRedirect
   }
 
   try {
@@ -278,11 +256,10 @@ export async function adminAuthPageLoader({ request, params }: LoaderFunctionArg
 
 export async function adminProtectedLoader({ request, params }: LoaderFunctionArgs): Promise<Response | null> {
   const language = normalizeLanguage(params.language)
+  const languageRedirect = redirectIfLanguageMismatch(request, params, language)
 
-  if (params.language !== language) {
-    const currentPath = stripLanguagePrefix(new URL(request.url).pathname)
-
-    return redirect(`/${language}${currentPath === '/' ? '' : currentPath}`)
+  if (languageRedirect) {
+    return languageRedirect
   }
 
   try {

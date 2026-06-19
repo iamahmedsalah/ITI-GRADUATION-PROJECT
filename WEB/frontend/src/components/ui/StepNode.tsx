@@ -31,11 +31,11 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
   // Custom styling classes for Core vs Branch nodes to create hierarchy
   const nodeStyles = isCore
     ? [
-        'min-w-52 max-w-60 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold',
+        'min-w-52 max-w-60 rounded-squircle border-2 px-5 py-3.5 text-sm font-semibold',
         statusStyles[status],
       ].join(' ')
     : [
-        'min-w-44 max-w-50 rounded-lg border px-3.5 py-2.5 text-xs font-medium bg-(--surface-2) opacity-90',
+        'min-w-44 max-w-50 rounded-full border px-3.5 py-2.5 text-xs font-medium bg-(--surface-2) opacity-90',
         status === 'completed'
           ? 'border-transparent bg-(--gd-primary) text-white shadow-sm'
           : status === 'inProgress'

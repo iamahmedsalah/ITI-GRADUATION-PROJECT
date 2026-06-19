@@ -1,23 +1,19 @@
 export {
-  assignRoadmapToUser,
-  deleteUserRoadmap,
-  getRoadmapProgress,
-  getUserRoadmaps,
-  updateStepProgress,
-} from "../services/roadmap.service.js";
-
-export {
   addStepToTemplate,
   createRoadmapTemplate,
   deleteRoadmapTemplate,
+  deleteRoadmapTemplateCore,
   getAllRoadmapTemplates,
   getMyRoadmapTemplateBySlug,
   getRoadmapTemplate,
   getRoadmapTemplateBySlug,
   getRoadmapTopic,
   publishRoadmapTemplate,
+  publishRoadmapTemplateCore,
   removeStepFromTemplate,
   searchRoadmapsAndTopics,
   unpublishRoadmapTemplate,
+  unpublishRoadmapTemplateCore,
   updateRoadmapTemplate,
-} from "../services/roadmap-template.service.js";
+  updateRoadmapTemplateCore,
+} from "./roadmaps.service.js";

@@ -22,6 +22,9 @@ import generateTokenSetCookie, {
   clearAuthCookies,
   hashRefreshToken,
 } from "../utils/generateTokenSetCookie.js";
+import { REFRESH_TOKEN_MAX_AGE_MS } from "../helpers/auth.helpers.js";
+import { escapeRegex } from "../helpers/text.js";
+import { normalizePagination } from "../helpers/pagination.js";
 import {
   updateRoadmapTemplateCore,
   deleteRoadmapTemplateCore,
@@ -29,26 +32,10 @@ import {
   unpublishRoadmapTemplateCore,
 } from "./roadmaps.service.js";
 
-const REFRESH_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
 const parseBooleanQuery = (value) => {
   if (value === undefined) return undefined;
   return value === "true";
 };
-
-const escapeRegex = (value = "") =>
-  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-const normalizePagination = (page = 1, limit = 20) => {
-  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
-  const safePage = Math.max(Number(page) || 1, 1);
-  return {
-    page: safePage,
-    limit: safeLimit,
-    skip: (safePage - 1) * safeLimit,
-  };
-};
-
 
 const getRequestIp = (req) =>
   req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||

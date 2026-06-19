@@ -444,6 +444,7 @@
   },
   "roadmapDetail": {
     "backToRoadmaps": "Back to all roadmaps",
+    "zoomHint": "Hold Ctrl + Scroll to zoom in/out",
     "badge": "Roadmap template",
     "loading": "Loading roadmap...",
     "subtitleFallback": "Step by step guide for this learning path.",

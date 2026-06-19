@@ -2,21 +2,25 @@ import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useLoaderData } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
 import { useLanguage } from '../../context/LanguageContext'
 import { createCardVariants, createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
 import type { DashboardLoaderData } from '../../utils/route-utils'
-import { fetchAiRecommendations, fetchDashboardSummary } from '../../libs/user-api'
+import { useDashboardSummary } from '../../hooks/queries/useDashboard'
+import { useAiRecommendations } from '../../hooks/queries/useAiRecommendations'
 
 const LearningConstellation = lazy(() => import('../../components/dashboard/LearningConstellation'))
-const loadDashboardSections = () => import('../../components/dashboard/DashboardSections')
-const SavedRoadmapsSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.SavedRoadmapsSection })))
-const ContinueFollowingSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.ContinueFollowingSection })))
-const AiRecommendationsSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.AiRecommendationsSection })))
-const StreakCard = lazy(() => loadDashboardSections().then((module) => ({ default: module.StreakCard })))
-const SubscriptionSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.SubscriptionSection })))
-const PreferencesPreviewSection = lazy(() => loadDashboardSections().then((module) => ({ default: module.PreferencesPreviewSection })))
-const LearningActivitySection = lazy(() => loadDashboardSections().then((module) => ({ default: module.LearningActivitySection })))
+const loadDashboardRoadmaps = () => import('../../components/dashboard/DashboardRoadmaps')
+const loadDashboardRecommendations = () => import('../../components/dashboard/DashboardRecommendations')
+const loadDashboardStats = () => import('../../components/dashboard/DashboardStats')
+const loadDashboardPreferences = () => import('../../components/dashboard/DashboardPreferences')
+const loadDashboardActivity = () => import('../../components/dashboard/DashboardActivity')
+const SavedRoadmapsSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.SavedRoadmapsSection })))
+const ContinueFollowingSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.ContinueFollowingSection })))
+const AiRecommendationsSection = lazy(() => loadDashboardRecommendations().then((module) => ({ default: module.AiRecommendationsSection })))
+const StreakCard = lazy(() => loadDashboardStats().then((module) => ({ default: module.StreakCard })))
+const SubscriptionSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.SubscriptionSection })))
+const PreferencesPreviewSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.PreferencesPreviewSection })))
+const LearningActivitySection = lazy(() => loadDashboardActivity().then((module) => ({ default: module.LearningActivitySection })))
 
 function DashboardStat({ value, label }: { value: string | number; label: string }) {
   return (
@@ -47,14 +51,8 @@ function DashboardPage() {
   const heroLineVariants = createHeroLineVariants(direction)
   const staggerContainerVariants = createStaggerContainerVariants(direction)
   const cardVariants = createCardVariants(direction)
-  const summaryQuery = useQuery({
-    queryKey: ['dashboard', 'summary'],
-    queryFn: fetchDashboardSummary,
-  })
-  const recommendationsQuery = useQuery({
-    queryKey: ['dashboard', 'ai-recommendations'],
-    queryFn: () => fetchAiRecommendations(6),
-  })
+  const summaryQuery = useDashboardSummary()
+  const recommendationsQuery = useAiRecommendations(6)
   const summary = summaryQuery.data
   const streak = summary?.streak ?? user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null }
   const currentlyLearning = (summary?.totals.activeRoadmaps ?? 0) + (summary?.totals.activeCourses ?? 0)
