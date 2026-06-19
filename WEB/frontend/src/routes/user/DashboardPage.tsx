@@ -24,9 +24,9 @@ const LearningActivitySection = lazy(() => loadDashboardActivity().then((module)
 
 function DashboardStat({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="grid min-h-25 place-items-center border-r border-(--border) px-2 py-4 text-center last:border-r-0 sm:min-h-32 sm:px-4 sm:py-6">
+    <div className="grid min-h-20 place-items-center px-2 py-4 text-center sm:min-h-32 sm:px-4 sm:py-6">
       <strong className="text-3xl font-semibold leading-none text-(--text-h) sm:text-5xl">{value}</strong>
-      <span className="mt-2 text-[11px] leading-4 text-(--text) sm:mt-3 sm:text-sm">{label}</span>
+      <span className="mt-2 text-xs leading-4 text-(--text) sm:mt-3 sm:text-sm">{label}</span>
     </div>
   )
 }
@@ -73,13 +73,13 @@ function DashboardPage() {
           </Link>
         </motion.div>
 
-        <motion.div variants={cardVariants} className="grid grid-cols-3 overflow-hidden rounded-squircle border border-(--border) bg-(--surface)">
+        <motion.div variants={cardVariants} className="grid grid-cols-1 divide-y divide-(--border) overflow-hidden rounded-squircle border border-(--border) bg-(--surface) sm:grid-cols-3 sm:divide-y-0 sm:divide-x sm:rtl:divide-x-reverse">
           <DashboardStat value={summary?.totals.totalCompletedSteps ?? 0} label={t('dashboard.stats.topicsCompleted')} />
           <DashboardStat value={currentlyLearning} label={t('dashboard.stats.currentlyLearning')} />
           <DashboardStat value={`${streak.current}d`} label={t('dashboard.stats.visitStreak')} />
         </motion.div>
 
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} className="w-full max-w-full overflow-hidden">
           <Suspense fallback={<div className="min-h-92 border-y border-(--border) bg-[#101311]" />}>
             <LearningConstellation
               roadmaps={summary?.roadmaps ?? []}

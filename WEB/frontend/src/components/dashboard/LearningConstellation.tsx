@@ -251,6 +251,9 @@ export default function LearningConstellation({
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setClearColor(0x000000, 0)
+    renderer.domElement.style.width = '100%'
+    renderer.domElement.style.height = '100%'
+    renderer.domElement.style.display = 'block'
     mount.appendChild(renderer.domElement)
 
     const root = new THREE.Group()
@@ -703,8 +706,8 @@ export default function LearningConstellation({
           </div>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 overflow-x-auto px-4 py-4 sm:px-7 sm:py-5" style={{ background: sceneTheme.legendGradient }}>
-        <div className={`flex w-max min-w-full flex-nowrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] sm:w-auto sm:flex-wrap sm:gap-2 sm:text-xs sm:tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 px-4 py-4 sm:px-7 sm:py-5" style={{ background: sceneTheme.legendGradient }}>
+        <div className={`flex flex-wrap gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] sm:gap-2 sm:text-xs sm:tracking-[0.12em] ${isRtl ? 'justify-start' : 'justify-end'}`} dir={isRtl ? 'rtl' : 'ltr'}>
           {legendItems.map((item) => (
             <span
               key={item.kind}

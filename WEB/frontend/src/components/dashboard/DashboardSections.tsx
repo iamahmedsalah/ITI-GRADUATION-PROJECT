@@ -66,7 +66,7 @@ export function StreakCard({ current, longest }: { current: number; longest: num
   const days = Array.from({ length: 8 }, (_, index) => index + 1)
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5 shadow-(--shadow)">
+    <section className="rounded-lg border border-(--border) bg-(--surface) p-4 sm:p-5 shadow-(--shadow)">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-(--text)">
           {t('dashboard.streak.current')} <strong className="text-(--text-h)">{current}</strong>
@@ -76,7 +76,7 @@ export function StreakCard({ current, longest }: { current: number; longest: num
         </p>
       </div>
 
-      <div className="mt-6 grid grid-cols-8 gap-2">
+      <div className="mt-6 grid grid-cols-8 gap-1.5 sm:gap-2">
         {days.map((day) => {
           const active = day <= Math.min(current, 8)
           const today = day === Math.min(Math.max(current, 1), 8)
@@ -84,14 +84,14 @@ export function StreakCard({ current, longest }: { current: number; longest: num
           return (
             <div key={day} className="grid place-items-center gap-1 text-center">
               <span className={[
-                'grid size-8 place-items-center rounded-full border text-sm transition',
+                'grid size-7 sm:size-8 place-items-center rounded-full border text-xs sm:text-sm transition',
                 active ? 'border-(--accent-border) bg-(--accent-soft) text-(--accent)' : 'border-(--border) bg-(--surface-2) text-(--text)',
                 today ? 'ring-2 ring-(--accent-border)' : '',
               ].join(' ')}
               >
-                <HugeiconsIcon icon={ZapIcon} size={17} />
+                <HugeiconsIcon icon={ZapIcon} size={15} />
               </span>
-              <span className={active ? 'text-xs font-semibold text-(--accent)' : 'text-xs text-(--text)'}>
+              <span className={active ? 'text-[10px] sm:text-xs font-semibold text-(--accent)' : 'text-[10px] sm:text-xs text-(--text)'}>
                 {day}
               </span>
             </div>
