@@ -59,7 +59,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         success: false,
         message: 'Validation failed.',
         errors: exception.issues.map((issue) => ({
-          path: issue.path.join('.'),
+          field: issue.path.length ? issue.path.join('.') : 'body',
           message: issue.message,
         })),
       });
