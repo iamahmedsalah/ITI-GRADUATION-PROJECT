@@ -4,8 +4,6 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
-import { createProxyMiddleware } from "http-proxy-middleware";
 import User from "./models/user/userAccountModel.js";
 
 // Load Env variables
@@ -222,53 +220,7 @@ app.use("/api", async (req, res, next) => {
   }
 });
 
-// NestJS Roadmaps Proxy Gateway
-const nestjsUrl = process.env.NESTJS_URL || "http://localhost:3000";
 
-const optionalAuthForProxy = async (req, res, next) => {
-  try {
-    let token;
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies && (req.cookies.accessToken || req.cookies.token)) {
-      token = req.cookies.accessToken || req.cookies.token;
-    }
-
-    if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select("_id role");
-      if (user) {
-        req.proxyUser = { id: String(user._id), role: user.role };
-      }
-    }
-  } catch (err) {
-    // Ignore error, request will proceed without proxyUser headers
-  }
-  next();
-};
-
-app.use(
-  "/api/v1",
-  optionalAuthForProxy,
-  createProxyMiddleware({
-    target: nestjsUrl,
-    changeOrigin: true,
-    pathRewrite: {
-      "^/": "/api/v1/",
-    },
-    on: {
-      proxyReq: (proxyReq, req) => {
-        if (req.proxyUser) {
-          proxyReq.setHeader("x-user-id", req.proxyUser.id);
-          proxyReq.setHeader("x-user-role", req.proxyUser.role);
-        }
-      }
-    }
-  })
-);
 
 // Auth Routes
 app.use("/api/auth", authRoutes);

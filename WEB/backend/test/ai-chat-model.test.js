@@ -4,7 +4,8 @@ import { setTimeout as delay } from "node:timers/promises";
 
 process.env.NODE_ENV = "test";
 
-const { __aiTestHooks } = await import("../services/ai.service.js");
+const { createTtlCache } = await import("../services/ai/cache.js");
+const { stableJson } = await import("../services/ai/topic-explain.js");
 const { default: UserActivity } = await import("../models/user/userActivityModel.js");
 const { default: UserAiConversation } = await import("../models/user/userAiConversationModel.js");
 const { default: UserAiMessage } = await import("../models/user/userAiMessageModel.js");
@@ -105,7 +106,7 @@ test("UserAiMessage rejects the old student/admin role shape", async () => {
 });
 
 test("AI TTL cache returns hits, expires entries, and clears prefixes", async () => {
-  const cache = __aiTestHooks.createTtlCache();
+  const cache = createTtlCache();
 
   cache.set("ai-access:user-1:free", { ok: true }, 100);
   cache.set("ai-recommendations:user-1:6", { ok: true }, 100);
@@ -123,8 +124,8 @@ test("AI TTL cache returns hits, expires entries, and clears prefixes", async ()
 
 test("stable JSON normalizes object key order for cache keys", () => {
   assert.equal(
-    __aiTestHooks.stableJson({ b: 2, a: { d: 4, c: 3 } }),
-    __aiTestHooks.stableJson({ a: { c: 3, d: 4 }, b: 2 }),
+    stableJson({ b: 2, a: { d: 4, c: 3 } }),
+    stableJson({ a: { c: 3, d: 4 }, b: 2 }),
   );
 });
 

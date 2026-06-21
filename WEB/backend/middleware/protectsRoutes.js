@@ -50,9 +50,7 @@ export const protect = async (req, res, next) => {
             });
         }
 
-        const requestPath = req.path
-            ? `/api${req.path}`
-            : req.originalUrl?.split("?")[0];
+        const requestPath = req.originalUrl?.split("?")[0]?.replace(/\/$/, "") || "";
 
         if (user.isVerified === false && !ALLOW_UNVERIFIED_PATHS.has(requestPath)) {
             return res.status(403).json({

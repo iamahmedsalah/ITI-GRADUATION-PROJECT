@@ -1,10 +1,13 @@
 import express from "express";
 import { protect, authorizeRoles } from "../middleware/protectsRoutes.js";
+import { validateRequest } from "../middleware/validate.js";
 import {
-  enrollCourseValidation,
-  updateCourseProgressValidation,
-  rateCourseValidation,
-  completeCourseValidation,
+  enrollCourseSchema,
+  updateCourseProgressSchema,
+  rateCourseSchema,
+  completeCourseSchema,
+} from "../validation/course.schemas.js";
+import {
   validateCourseExists,
   validateEnrollmentStatus,
   validateUserEnrollment,
@@ -19,7 +22,7 @@ import {
   getCourseProgress,
   getUserCourses,
   abandonCourse,
-} from "../services/courses.service.js";
+} from "../controllers/course.controller.js";
 
 const router = express.Router();
 
@@ -54,7 +57,7 @@ router.use(authorizeRoles("student"));
  */
 router.post(
   "/enroll",
-  enrollCourseValidation,
+  validateRequest(enrollCourseSchema),
   validateCourseExists,
   validateEnrollmentStatus,
   enrollCourse,
@@ -128,7 +131,7 @@ router.get("/:courseId", validateUserEnrollment, getCourseProgress);
  */
 router.put(
   "/:courseId/progress",
-  updateCourseProgressValidation,
+  validateRequest(updateCourseProgressSchema),
   validateUserEnrollment,
   updateCourseProgress,
 );
@@ -151,7 +154,7 @@ router.put(
  */
 router.post(
   "/:courseId/complete",
-  completeCourseValidation,
+  validateRequest(completeCourseSchema),
   validateUserEnrollment,
   completeCourse,
 );
@@ -186,7 +189,7 @@ router.post(
  */
 router.post(
   "/:courseId/rate",
-  rateCourseValidation,
+  validateRequest(rateCourseSchema),
   validateUserEnrollment,
   rateCourse,
 );

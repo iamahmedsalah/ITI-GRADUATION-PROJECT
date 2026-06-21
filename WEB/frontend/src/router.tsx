@@ -50,7 +50,6 @@ import {
   SignupPage,
   UpgradePage,
   VerifyEmailPage,
-  NestTestPage,
 } from "./utils/routes.lazy";
 
 export const appRouter = createBrowserRouter([
@@ -158,10 +157,6 @@ export const appRouter = createBrowserRouter([
               {
                 path: "courses/:slug",
                 element: <CoursePage />,
-              },
-              {
-                path: "nest-test",
-                element: <NestTestPage />,
               },
             ],
           },

@@ -1,13 +1,16 @@
 import express from "express";
 import { protect, authorizeRoles } from "../middleware/protectsRoutes.js";
+import { validateRequest } from "../middleware/validate.js";
 import {
-  assignRoadmapValidation,
-  updateStepProgressValidation,
+  assignRoadmapSchema,
+  updateStepProgressSchema,
+  createRoadmapTemplateSchema,
+  updateRoadmapTemplateSchema,
+  publishTemplateSchema,
+} from "../validation/roadmap.schemas.js";
+import {
   validateRoadmapExists,
   validateTemplateExists,
-  createRoadmapTemplateValidation,
-  updateRoadmapTemplateValidation,
-  publishTemplateValidation,
   validateTemplateExistsInParams,
   validateUniqueSlug,
 } from "../middleware/roadmapValidators.js";
@@ -209,7 +212,7 @@ router.get("/my-templates/by-slug/:slug", getMyRoadmapTemplateBySlug);
 router.post(
   "/templates",
   authorizeRoles("admin"),
-  createRoadmapTemplateValidation,
+  validateRequest(createRoadmapTemplateSchema),
   createRoadmapTemplate,
 );
 
@@ -245,7 +248,7 @@ router.post(
 router.put(
   "/templates/:templateId",
   authorizeRoles("admin"),
-  updateRoadmapTemplateValidation,
+  validateRequest(updateRoadmapTemplateSchema),
   validateTemplateExistsInParams,
   validateUniqueSlug,
   updateRoadmapTemplate,
@@ -293,7 +296,7 @@ router.delete(
 router.post(
   "/templates/:templateId/publish",
   authorizeRoles("admin"),
-  publishTemplateValidation,
+  validateRequest(publishTemplateSchema),
   validateTemplateExistsInParams,
   publishRoadmapTemplate,
 );
@@ -317,7 +320,7 @@ router.post(
 router.post(
   "/templates/:templateId/unpublish",
   authorizeRoles("admin"),
-  publishTemplateValidation,
+  validateRequest(publishTemplateSchema),
   validateTemplateExistsInParams,
   unpublishRoadmapTemplate,
 );
@@ -414,7 +417,7 @@ router.use(authorizeRoles("student"));
  */
 router.post(
   "/assign",
-  assignRoadmapValidation,
+  validateRequest(assignRoadmapSchema),
   validateTemplateExists,
   assignRoadmapToUser,
 );
@@ -489,7 +492,7 @@ router.delete("/:roadmapId", validateRoadmapExists, deleteUserRoadmap);
  */
 router.put(
   "/:roadmapId/steps/:stepKey/progress",
-  updateStepProgressValidation,
+  validateRequest(updateStepProgressSchema),
   validateRoadmapExists,
   updateStepProgress,
 );

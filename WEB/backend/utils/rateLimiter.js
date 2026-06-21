@@ -10,6 +10,14 @@ export const loginLimiter = rateLimit({
   message: { success: false, message: "Too many login attempts from this IP, try again later." },
 });
 
+export const signupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.SIGNUP_RATE_LIMIT || "10", 10), // limit each IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many signup attempts from this IP, try again later." },
+});
+
 // Forgot-password limiter: prefer per-email throttling to prevent mass email abuse.
 const forgotPasswordLimiterOptions = {
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -94,4 +102,4 @@ export const adminPublishLimiter = rateLimit({
   message: { success: false, message: "Too many publish requests, try again later." },
 });
 
-export default { loginLimiter, forgotPasswordLimiter, resendVerificationLimiter, contactLimiter, aiRecommendationLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };
+export default { loginLimiter, signupLimiter, forgotPasswordLimiter, resendVerificationLimiter, contactLimiter, aiRecommendationLimiter, adminListLimiter, adminWriteLimiter, adminPublishLimiter };

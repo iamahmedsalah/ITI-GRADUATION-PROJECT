@@ -138,9 +138,9 @@ export const getDashboardSummary = async (req, res) => {
     const completedCourses = courses.filter((course) => course.status === "completed").length;
     const averageRoadmapProgress = roadmapItems.length
       ? Math.round(
-          roadmapItems.reduce((sum, roadmap) => sum + (roadmap.progressPercent ?? 0), 0) /
-            roadmapItems.length,
-        )
+        roadmapItems.reduce((sum, roadmap) => sum + (roadmap.progressPercent ?? 0), 0) /
+        roadmapItems.length,
+      )
       : 0;
 
     return res.status(200).json({

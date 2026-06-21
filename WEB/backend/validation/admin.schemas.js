@@ -21,36 +21,7 @@ const imageInputSchema = z.union([
   z.null(),
 ]);
 
-const formatZodErrors = (issues) =>
-  issues.map((issue) => ({
-    field: issue.path.length ? issue.path.join(".") : "request",
-    message: issue.message,
-  }));
-
-const validateRequest = (schema) => async (req, res, next) => {
-  const result = await schema.safeParseAsync({
-    body: req.body ?? {},
-    params: req.params ?? {},
-    query: req.query ?? {},
-  });
-
-  if (!result.success) {
-    return res.status(400).json({
-      success: false,
-      message: "Validation failed.",
-      errors: formatZodErrors(result.error.issues),
-    });
-  }
-
-  if (req.body) {
-    Object.assign(req.body, result.data.body);
-  }
-  Object.assign(req.params, result.data.params);
-  Object.assign(req.query, result.data.query);
-  return next();
-};
-
-const paginationQuerySchema = z.object({
+export const paginationQuerySchema = z.object({
   page: z.coerce
     .number({ error: "Page must be a number." })
     .int("Page must be a whole number.")
@@ -65,7 +36,7 @@ const paginationQuerySchema = z.object({
     .default(20),
 });
 
-const usersListSchema = z.object({
+export const usersListSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
@@ -77,7 +48,7 @@ const usersListSchema = z.object({
   }),
 });
 
-const userIdParamsSchema = z.object({
+export const userIdParamsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({
     userId: objectIdSchema,
@@ -85,7 +56,7 @@ const userIdParamsSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
-const updateUserSchema = z
+export const updateUserSchema = z
   .object({
     body: z.object({
       role: z.enum(["student", "instructor", "admin"]).optional(),
@@ -126,7 +97,7 @@ const updateUserSchema = z
     }
   });
 
-const roadmapsListSchema = z.object({
+export const roadmapsListSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
@@ -142,7 +113,7 @@ const roadmapsListSchema = z.object({
   }),
 });
 
-const templateIdParamsSchema = z.object({
+export const templateIdParamsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({
     templateId: objectIdSchema,
@@ -150,7 +121,7 @@ const templateIdParamsSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
-const adminRoadmapStepSchema = z.object({
+export const adminRoadmapStepSchema = z.object({
   stepKey: z
     .string({ error: "Step key is required." })
     .trim()
@@ -190,7 +161,7 @@ const adminRoadmapStepSchema = z.object({
   dependsOn: z.array(z.string().trim()).optional(),
 });
 
-const updateRoadmapSchema = z
+export const updateRoadmapSchema = z
   .object({
     body: z.object({
       title: z.string().trim().min(3).max(150).optional(),
@@ -238,7 +209,7 @@ const updateRoadmapSchema = z
     }
   });
 
-const coursesListSchema = z.object({
+export const coursesListSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
@@ -249,7 +220,7 @@ const coursesListSchema = z.object({
   }),
 });
 
-const courseIdParamsSchema = z.object({
+export const courseIdParamsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({
     courseId: objectIdSchema,
@@ -263,7 +234,7 @@ const optionalUrlSchema = z
   .url("Invalid URL")
   .optional();
 
-const courseLessonSchema = z.object({
+export const courseLessonSchema = z.object({
   lessonKey: z
     .string({ error: "Lesson key is required." })
     .trim()
@@ -288,7 +259,7 @@ const courseLessonSchema = z.object({
     .optional(),
 });
 
-const courseSectionSchema = z.object({
+export const courseSectionSchema = z.object({
   sectionKey: z
     .string({ error: "Section key is required." })
     .trim()
@@ -307,7 +278,7 @@ const courseSectionSchema = z.object({
   lessons: z.array(courseLessonSchema).optional(),
 });
 
-const createCourseSchema = z.object({
+export const createCourseSchema = z.object({
   body: z.object({
     title: z.string().trim().min(3).max(200),
     slug: z
@@ -338,7 +309,7 @@ const createCourseSchema = z.object({
   query: z.object({}).passthrough(),
 });
 
-const updateCourseSchema = z
+export const updateCourseSchema = z
   .object({
     body: z.object({
       title: z.string().trim().min(3).max(200).optional(),
@@ -382,7 +353,7 @@ const updateCourseSchema = z
     }
   });
 
-const adminLogsSchema = z.object({
+export const adminLogsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
@@ -391,7 +362,7 @@ const adminLogsSchema = z.object({
   }),
 });
 
-const contactMessagesListSchema = z.object({
+export const contactMessagesListSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
@@ -400,7 +371,7 @@ const contactMessagesListSchema = z.object({
   }),
 });
 
-const contactMessageReplySchema = z.object({
+export const contactMessageReplySchema = z.object({
   body: z.object({
     reply: z
       .string({ error: "Reply message is required." })
@@ -413,17 +384,3 @@ const contactMessageReplySchema = z.object({
   }),
   query: z.object({}).passthrough(),
 });
-
-export const adminUsersListValidation = validateRequest(usersListSchema);
-export const adminUserIdValidation = validateRequest(userIdParamsSchema);
-export const adminUpdateUserValidation = validateRequest(updateUserSchema);
-export const adminRoadmapsListValidation = validateRequest(roadmapsListSchema);
-export const adminTemplateIdValidation = validateRequest(templateIdParamsSchema);
-export const adminUpdateRoadmapValidation = validateRequest(updateRoadmapSchema);
-export const adminCoursesListValidation = validateRequest(coursesListSchema);
-export const adminCourseIdValidation = validateRequest(courseIdParamsSchema);
-export const adminCreateCourseValidation = validateRequest(createCourseSchema);
-export const adminUpdateCourseValidation = validateRequest(updateCourseSchema);
-export const adminLogsListValidation = validateRequest(adminLogsSchema);
-export const adminContactMessagesListValidation = validateRequest(contactMessagesListSchema);
-export const adminContactMessageReplyValidation = validateRequest(contactMessageReplySchema);

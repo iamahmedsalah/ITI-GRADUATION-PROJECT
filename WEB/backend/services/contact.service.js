@@ -100,10 +100,10 @@ ${message}`,
       message: "Message sent successfully.",
       data: contactRecord
         ? {
-            _id: contactRecord._id,
-            status: contactRecord.status,
-            createdAt: contactRecord.createdAt,
-          }
+          _id: contactRecord._id,
+          status: contactRecord.status,
+          createdAt: contactRecord.createdAt,
+        }
         : undefined,
     });
   } catch (error) {

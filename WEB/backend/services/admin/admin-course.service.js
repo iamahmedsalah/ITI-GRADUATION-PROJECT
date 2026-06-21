@@ -1,6 +1,7 @@
 import Course from "../../models/course/courseModel.js";
 import RoadmapTemplate from "../../models/roadmap/roadmapTemplateModel.js";
 import User from "../../models/user/userAccountModel.js";
+import UserCourseProgress from "../../models/user/userCourseProgressModel.js";
 import { resolveCourseImageUrls } from "../../config/cloudinary.js";
 import { normalizePagination } from "../../helpers/pagination.js";
 import { escapeRegex } from "../../helpers/text.js";

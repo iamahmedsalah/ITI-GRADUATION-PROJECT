@@ -6,29 +6,30 @@ import {
   loginLimiter,
   forgotPasswordLimiter,
 } from "../utils/rateLimiter.js";
+import { validateRequest } from "../middleware/validate.js";
 import {
-  adminUsersListValidation,
-  adminUserIdValidation,
-  adminUpdateUserValidation,
-  adminRoadmapsListValidation,
-  adminTemplateIdValidation,
-  adminCreateCourseValidation,
-  adminUpdateRoadmapValidation,
-  adminCoursesListValidation,
-  adminCourseIdValidation,
-  adminUpdateCourseValidation,
-  adminLogsListValidation,
-  adminContactMessagesListValidation,
-  adminContactMessageReplyValidation,
-} from "../middleware/adminValidators.js";
+  usersListSchema,
+  userIdParamsSchema,
+  updateUserSchema,
+  roadmapsListSchema,
+  templateIdParamsSchema,
+  updateRoadmapSchema,
+  coursesListSchema,
+  courseIdParamsSchema,
+  createCourseSchema,
+  updateCourseSchema,
+  adminLogsSchema,
+  contactMessagesListSchema,
+  contactMessageReplySchema,
+} from "../validation/admin.schemas.js";
 import {
-  loginValidation,
-  verifyEmailValidation,
-  forgetPasswordValidation,
-  resetPasswordValidation,
-} from "../middleware/authValidators.js";
+  loginSchema,
+  verifyEmailSchema,
+  forgetPasswordSchema,
+  resetPasswordSchema,
+} from "../validation/auth.schemas.js";
+import { createRoadmapTemplateSchema } from "../validation/roadmap.schemas.js";
 import { protect, authorizeRoles } from "../middleware/protectsRoutes.js";
-import { createRoadmapTemplateValidation } from "../middleware/roadmapValidators.js";
 import {
   getAdminOverview,
   getAdminUsers,
@@ -80,7 +81,7 @@ const router = express.Router();
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/auth/login", loginLimiter, loginValidation, adminLogin);
+router.post("/auth/login", loginLimiter, validateRequest(loginSchema), adminLogin);
 /**
  * @openapi
  * /admin/auth/verify-email:
@@ -99,7 +100,7 @@ router.post("/auth/login", loginLimiter, loginValidation, adminLogin);
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/auth/verify-email", verifyEmailValidation, adminVerifyEmail);
+router.post("/auth/verify-email", validateRequest(verifyEmailSchema), adminVerifyEmail);
 /**
  * @openapi
  * /admin/auth/forgot-password:
@@ -121,7 +122,7 @@ router.post("/auth/verify-email", verifyEmailValidation, adminVerifyEmail);
 router.post(
   "/auth/forgot-password",
   forgotPasswordLimiter,
-  forgetPasswordValidation,
+  validateRequest(forgetPasswordSchema),
   adminForgetPassword,
 );
 /**
@@ -151,7 +152,7 @@ router.post(
  */
 router.post(
   "/auth/reset-password/:token",
-  resetPasswordValidation,
+  validateRequest(resetPasswordSchema),
   adminResetPassword,
 );
 
@@ -233,7 +234,7 @@ router.get("/overview", adminListLimiter, getAdminOverview);
  *           type: string
  *           enum: ["true", "false"]
  */
-router.get("/users", adminListLimiter, adminUsersListValidation, getAdminUsers);
+router.get("/users", adminListLimiter, validateRequest(usersListSchema), getAdminUsers);
 /**
  * @openapi
  * /admin/users/{userId}:
@@ -252,7 +253,7 @@ router.get("/users", adminListLimiter, adminUsersListValidation, getAdminUsers);
 router.get(
   "/users/:userId",
   adminListLimiter,
-  adminUserIdValidation,
+  validateRequest(userIdParamsSchema),
   getAdminUserById,
 );
 /**
@@ -293,13 +294,13 @@ router.get(
 router.patch(
   "/users/:userId",
   adminWriteLimiter,
-  adminUpdateUserValidation,
+  validateRequest(updateUserSchema),
   updateUserByAdmin,
 );
 router.delete(
   "/users/:userId",
   adminWriteLimiter,
-  adminUserIdValidation,
+  validateRequest(userIdParamsSchema),
   deleteUserByAdmin,
 );
 
@@ -354,7 +355,7 @@ router.delete(
 router.get(
   "/roadmaps",
   adminListLimiter,
-  adminRoadmapsListValidation,
+  validateRequest(roadmapsListSchema),
   getAdminRoadmaps,
 );
 /**
@@ -402,7 +403,7 @@ router.get(
 router.post(
   "/roadmaps/templates",
   adminWriteLimiter,
-  createRoadmapTemplateValidation,
+  validateRequest(createRoadmapTemplateSchema),
   createRoadmapTemplate,
 );
 /**
@@ -423,7 +424,7 @@ router.post(
 router.get(
   "/roadmaps/:templateId",
   adminListLimiter,
-  adminTemplateIdValidation,
+  validateRequest(templateIdParamsSchema),
   getAdminRoadmapById,
 );
 /**
@@ -457,7 +458,7 @@ router.get(
 router.patch(
   "/roadmaps/:templateId",
   adminWriteLimiter,
-  adminUpdateRoadmapValidation,
+  validateRequest(updateRoadmapSchema),
   updateRoadmapByAdmin,
 );
 /**
@@ -478,7 +479,7 @@ router.patch(
 router.delete(
   "/roadmaps/:templateId",
   adminWriteLimiter,
-  adminTemplateIdValidation,
+  validateRequest(templateIdParamsSchema),
   deleteRoadmapByAdmin,
 );
 /**
@@ -499,7 +500,7 @@ router.delete(
 router.post(
   "/roadmaps/:templateId/publish",
   adminPublishLimiter,
-  adminTemplateIdValidation,
+  validateRequest(templateIdParamsSchema),
   publishRoadmapByAdmin,
 );
 /**
@@ -520,7 +521,7 @@ router.post(
 router.post(
   "/roadmaps/:templateId/unpublish",
   adminPublishLimiter,
-  adminTemplateIdValidation,
+  validateRequest(templateIdParamsSchema),
   unpublishRoadmapByAdmin,
 );
 
@@ -570,7 +571,7 @@ router.post(
 router.get(
   "/courses",
   adminListLimiter,
-  adminCoursesListValidation,
+  validateRequest(coursesListSchema),
   getAdminCourses,
 );
 /**
@@ -624,7 +625,7 @@ router.get(
 router.post(
   "/courses",
   adminWriteLimiter,
-  adminCreateCourseValidation,
+  validateRequest(createCourseSchema),
   createCourseByAdmin,
 );
 /**
@@ -645,7 +646,7 @@ router.post(
 router.get(
   "/courses/:courseId",
   adminListLimiter,
-  adminCourseIdValidation,
+  validateRequest(courseIdParamsSchema),
   getAdminCourseById,
 );
 /**
@@ -686,7 +687,7 @@ router.get(
 router.patch(
   "/courses/:courseId",
   adminWriteLimiter,
-  adminUpdateCourseValidation,
+  validateRequest(updateCourseSchema),
   updateCourseByAdmin,
 );
 /**
@@ -707,7 +708,7 @@ router.patch(
 router.delete(
   "/courses/:courseId",
   adminWriteLimiter,
-  adminCourseIdValidation,
+  validateRequest(courseIdParamsSchema),
   deleteCourseByAdmin,
 );
 
@@ -723,7 +724,7 @@ router.delete(
 router.get(
   "/contact-messages",
   adminListLimiter,
-  adminContactMessagesListValidation,
+  validateRequest(contactMessagesListSchema),
   getAdminContactMessages,
 );
 
@@ -757,7 +758,7 @@ router.get(
 router.post(
   "/contact-messages/:contactMessageId/reply",
   adminWriteLimiter,
-  adminContactMessageReplyValidation,
+  validateRequest(contactMessageReplySchema),
   replyToContactMessageByAdmin,
 );
 
@@ -797,7 +798,7 @@ router.post(
 router.get(
   "/logs",
   adminListLimiter,
-  adminLogsListValidation,
+  validateRequest(adminLogsSchema),
   getAdminActionLogs,
 );
 

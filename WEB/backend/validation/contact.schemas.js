@@ -1,31 +1,6 @@
 import { z } from "zod";
 
-const formatZodErrors = (issues) =>
-  issues.map((issue) => ({
-    field: issue.path.length ? issue.path.join(".") : "body",
-    message: issue.message,
-  }));
-
-const validateRequest = (schema) => async (req, res, next) => {
-  const result = await schema.safeParseAsync({
-    body: req.body ?? {},
-    params: req.params ?? {},
-  });
-
-  if (!result.success) {
-    return res.status(400).json({
-      success: false,
-      message: "Validation failed.",
-      errors: formatZodErrors(result.error.issues),
-    });
-  }
-
-  req.body = result.data.body;
-  req.params = result.data.params;
-  return next();
-};
-
-const contactSchema = z.object({
+export const contactSchema = z.object({
   body: z.object({
     name: z
       .string({ error: "Name is required." })
@@ -46,5 +21,3 @@ const contactSchema = z.object({
   }),
   params: z.object({}).passthrough(),
 });
-
-export const contactValidation = validateRequest(contactSchema);

@@ -1,7 +1,8 @@
 import express from "express";
 import { contactLimiter } from "../utils/rateLimiter.js";
-import { contactValidation } from "../middleware/contactValidators.js";
-import { sendContactMessage } from "../services/contact.service.js";
+import { validateRequest } from "../middleware/validate.js";
+import { contactSchema } from "../validation/contact.schemas.js";
+import { sendContactMessage } from "../controllers/contact.controller.js";
 
 const router = express.Router();
 
@@ -42,6 +43,6 @@ const router = express.Router();
  *       503:
  *         description: Email service is not configured
  */
-router.post("/", contactLimiter, contactValidation, sendContactMessage);
+router.post("/", contactLimiter, validateRequest(contactSchema), sendContactMessage);
 
 export default router;

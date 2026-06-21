@@ -1,27 +1,28 @@
 import express from "express";
 import {
   loginLimiter,
+  signupLimiter,
   forgotPasswordLimiter,
   resendVerificationLimiter,
 } from "../utils/rateLimiter.js";
 
 import { protect } from "../middleware/protectsRoutes.js";
+import { validateRequest } from "../middleware/validate.js";
 import {
-  signupValidation,
-  signupUniquenessValidation,
-  verifyEmailValidation,
-  resendVerificationValidation,
-  loginValidation,
-  forgetPasswordValidation,
-  resetPasswordValidation,
-  profileUpdateValidation,
-  updatePasswordValidation,
-  avatarUpdateValidation,
-  preferencesUpdateValidation,
-  accountPasswordActionValidation,
-  accountDeleteCodeValidation,
-  accountDeleteUndoRequestValidation,
-} from "../middleware/authValidators.js";
+  signupSchema,
+  verifyEmailSchema,
+  loginSchema,
+  forgetPasswordSchema,
+  resetPasswordSchema,
+  profileUpdateSchema,
+  updatePasswordSchema,
+  avatarUpdateSchema,
+  preferencesUpdateSchema,
+  accountPasswordActionSchema,
+  accountDeleteCodeSchema,
+  accountDeleteUndoRequestSchema,
+} from "../validation/auth.schemas.js";
+import { signupUniquenessValidation } from "../middleware/authValidators.js";
 import {
   signup,
   verifyEmail,
@@ -76,7 +77,7 @@ const router = express.Router();
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/signup", signupValidation, signupUniquenessValidation, signup);
+router.post("/signup", signupLimiter, validateRequest(signupSchema), signupUniquenessValidation, signup);
 /**
  * @openapi
  * /auth/verify-email:
@@ -95,7 +96,7 @@ router.post("/signup", signupValidation, signupUniquenessValidation, signup);
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/verify-email", verifyEmailValidation, verifyEmail);
+router.post("/verify-email", validateRequest(verifyEmailSchema), verifyEmail);
 /**
  * @openapi
  * /auth/resend-verification-code:
@@ -119,7 +120,7 @@ router.post("/verify-email", verifyEmailValidation, verifyEmail);
 router.post(
   "/resend-verification-code",
   resendVerificationLimiter,
-  resendVerificationValidation,
+  validateRequest(forgetPasswordSchema),
   resendVerificationEmail,
 );
 /**
@@ -143,7 +144,7 @@ router.post(
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/login", loginLimiter, loginValidation, login);
+router.post("/login", loginLimiter, validateRequest(loginSchema), login);
 /**
  * @openapi
  * /auth/refresh:
@@ -178,7 +179,7 @@ router.post("/refresh", refreshAuth);
 router.post(
   "/forgot-password",
   forgotPasswordLimiter,
-  forgetPasswordValidation,
+  validateRequest(forgetPasswordSchema),
   forgetPassword,
 );
 /**
@@ -204,7 +205,7 @@ router.post(
 router.post(
   "/resend-reset-password",
   forgotPasswordLimiter,
-  forgetPasswordValidation,
+  validateRequest(forgetPasswordSchema),
   resendPasswordReset,
 );
 
@@ -237,16 +238,16 @@ router.get("/oauth/google/callback", handleSocialAuthCallback("google"));
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  */
-router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
+router.post("/reset-password/:token", validateRequest(resetPasswordSchema), resetPassword);
 router.post(
   "/account/delete/undo/request",
   loginLimiter,
-  accountDeleteUndoRequestValidation,
+  validateRequest(accountDeleteUndoRequestSchema),
   requestAccountDeletionUndo,
 );
 router.post(
   "/account/delete/undo/confirm",
-  accountDeleteCodeValidation,
+  validateRequest(accountDeleteCodeSchema),
   confirmAccountDeletionUndo,
 );
 
@@ -260,7 +261,7 @@ router.post(
  *     security:
  *       - bearerAuth: []
  */
-router.post("/logout", logout);
+router.post("/logout", protect, logout);
 /**
  * @openapi
  * /auth/check-auth:
@@ -272,14 +273,14 @@ router.post("/logout", logout);
  */
 router.get("/check-auth", protect, checkAuth);
 router.get("/preferences", protect, getPreferences);
-router.patch("/preferences", protect, preferencesUpdateValidation, updatePreferences);
+router.patch("/preferences", protect, validateRequest(preferencesUpdateSchema), updatePreferences);
 router.get("/dashboard-summary", protect, getDashboardSummary);
 router.delete("/activities/:activityId", protect, deleteUserActivity);
-router.patch("/profile", protect, profileUpdateValidation, updateProfile);
-router.patch("/profile/avatar", protect, avatarUpdateValidation, updateAvatar);
-router.patch("/password", protect, updatePasswordValidation, updatePassword);
-router.post("/account/deactivate", protect, accountPasswordActionValidation, deactivateCurrentAccount);
-router.post("/account/delete/request", protect, accountPasswordActionValidation, requestAccountDeletion);
-router.post("/account/delete/confirm", protect, accountDeleteCodeValidation, confirmAccountDeletion);
+router.patch("/profile", protect, validateRequest(profileUpdateSchema), updateProfile);
+router.patch("/profile/avatar", protect, validateRequest(avatarUpdateSchema), updateAvatar);
+router.patch("/password", protect, validateRequest(updatePasswordSchema), updatePassword);
+router.post("/account/deactivate", protect, validateRequest(accountPasswordActionSchema), deactivateCurrentAccount);
+router.post("/account/delete/request", protect, validateRequest(accountPasswordActionSchema), requestAccountDeletion);
+router.post("/account/delete/confirm", protect, validateRequest(accountDeleteCodeSchema), confirmAccountDeletion);
 
 export default router;
