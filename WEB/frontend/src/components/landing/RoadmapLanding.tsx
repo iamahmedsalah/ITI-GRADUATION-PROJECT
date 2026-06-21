@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
+import { StarIcon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useLanguage } from '../../context/LanguageContext'
@@ -113,13 +113,6 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
       >
         <HugeiconsIcon icon={StarIcon} size={17} className={isStarred ? 'star-toggle-icon star-toggle-icon-active' : 'star-toggle-icon'} />
       </button>
-      <Link
-        to={`/${language}/roadmaps/${roadmap.slug}`}
-        className="grid size-9 shrink-0 place-items-center rounded-squircle border border-(--border) text-(--text) transition group-hover:border-(--accent-border) group-hover:text-(--accent)"
-        aria-label={roadmap.title}
-      >
-        <HugeiconsIcon icon={Route03Icon} size={17} />
-      </Link>
     </article>
   )
 }

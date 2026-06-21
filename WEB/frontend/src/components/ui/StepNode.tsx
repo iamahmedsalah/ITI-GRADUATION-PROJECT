@@ -4,6 +4,10 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import type { StepNodeData, StepStatus } from '../../types/roadmap'
 import {
   SquareLock02Icon,
+  CheckmarkCircle01Icon,
+  MinusSignCircleIcon,
+  Cancel01Icon,
+  CircleIcon,
 } from '@hugeicons/core-free-icons';
 
 const statusStyles: Record<StepStatus, string> = {
@@ -17,11 +21,11 @@ const statusStyles: Record<StepStatus, string> = {
     'border-(--border) bg-(--surface-2) text-(--text) opacity-60',
 }
 
-const statusIcon: Record<StepStatus, string> = {
-  notStarted: '○',
-  inProgress: '◑',
-  completed: '✓',
-  skipped: '⊘',
+const statusIcon: Record<StepStatus, typeof SquareLock02Icon> = {
+  notStarted: CircleIcon,
+  inProgress: MinusSignCircleIcon,
+  completed: CheckmarkCircle01Icon,
+  skipped: Cancel01Icon,
 }
 
 export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
@@ -127,7 +131,7 @@ export function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
         {isLocked ? (
           <HugeiconsIcon icon={SquareLock02Icon} size={isCore ? 20 : 16} />
         ) : (
-          statusIcon[status]
+          <HugeiconsIcon icon={statusIcon[status]} size={isCore ? 18 : 14} />
         )}
       </span>
 

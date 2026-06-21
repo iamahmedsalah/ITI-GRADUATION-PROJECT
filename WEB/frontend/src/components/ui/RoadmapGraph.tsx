@@ -9,6 +9,8 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useTranslation } from 'react-i18next'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Alert02Icon, AiMagicIcon } from '@hugeicons/core-free-icons'
 import { StepNode } from './StepNode'
 import type { StepNodeData } from '../../types/roadmap'
 
@@ -166,6 +168,7 @@ type Props = {
   stepCount: number
   isPanelOpen: boolean
   onTogglePanel: () => void
+  isAiGenerated?: boolean
 }
 
 export function RoadmapGraph({
@@ -175,6 +178,7 @@ export function RoadmapGraph({
   stepCount,
   isPanelOpen,
   onTogglePanel,
+  isAiGenerated = false,
 }: Props) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -205,13 +209,13 @@ export function RoadmapGraph({
         {/* Legend */}
         <div className="hidden items-center gap-4 text-xs text-(--text) sm:flex">
           {[
-            { color: 'bg-(--border)', label: 'Not started' },
-            { color: 'bg-(--accent-border)', label: 'In progress' },
-            { color: 'bg-(--gd-primary)', label: 'Done' },
-          ].map(({ color, label }) => (
-            <div key={label} className="flex items-center gap-1.5">
+            { color: 'bg-(--border)', labelKey: 'roadmapDetail.statusLabels.notStarted' },
+            { color: 'bg-(--accent-border)', labelKey: 'roadmapDetail.statusLabels.inProgress' },
+            { color: 'bg-(--gd-primary)', labelKey: 'roadmapDetail.statusLabels.completed' },
+          ].map(({ color, labelKey }) => (
+            <div key={labelKey} className="flex items-center gap-1.5">
               <span className={`inline-block size-2.5 rounded-full ${color}`} />
-              {label}
+              {t(labelKey)}
             </div>
           ))}
         </div>
@@ -291,6 +295,17 @@ export function RoadmapGraph({
               pannable
               zoomable
             />
+
+            {/* Floating AI Disclaimer Overlay */}
+            {isAiGenerated && (
+              <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-squircle border border-(--accent-border)/80 bg-(--surface-2)/90 px-4 py-1.5 text-xs text-(--text-h) shadow-md backdrop-blur-sm">
+                <HugeiconsIcon icon={Alert02Icon} size={14} className="shrink-0 text-(--accent) animate-pulse" />
+                <span className="font-semibold select-none">
+                  {t('aiRoadmap.untrustedWarning')}
+                </span>
+                <HugeiconsIcon icon={AiMagicIcon} size={13} className="shrink-0 text-(--accent) opacity-60" />
+              </div>
+            )}
 
             {/* Floating Zoom Hint Overlay */}
             <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-squircle border border-(--border)/80 bg-(--surface-2)/80 px-3.5 py-1.5 text-xs text-(--text-h) shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-(--surface-2)">

@@ -9,7 +9,6 @@ import {
   AiMagicIcon,
   Delete02Icon,
   MailSend01Icon,
-  SentIcon,
   UserEdit01Icon,
 } from '@hugeicons/core-free-icons'
 import {
@@ -355,6 +354,48 @@ function MessageBubble({ message, language }: { message: AiChatMessage; language
   )
 }
 
+function IlmaThinkingLoader() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 shadow-sm">
+      {/* Animated green dots */}
+      <div className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-(--accent) animate-[bounce_1.2s_infinite_0ms]" />
+        <span className="size-2 rounded-full bg-(--accent) animate-[bounce_1.2s_infinite_150ms]" />
+        <span className="size-2 rounded-full bg-(--accent) animate-[bounce_1.2s_infinite_300ms]" />
+      </div>
+
+      {/* Text */}
+      <div className="flex flex-col min-w-0">
+        <span className="text-sm font-semibold text-(--text-h) truncate">
+          {t('aiChat.thinking')}
+          <span className="animate-[pulse_1.5s_ease-in-out_infinite] opacity-60">...</span>
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-(--accent) opacity-75">
+          {t('aiChat.aiAssistant')}
+        </span>
+      </div>
+
+      {/* AI icon orb on the right */}
+      <div className="relative ms-auto flex shrink-0 size-9 items-center justify-center">
+        {/* Outer ring */}
+        <div className="absolute inset-0 rounded-full border-2 border-dashed border-(--accent)/40 animate-[spin_8s_linear_infinite]" />
+        {/* Inner ring */}
+        <div className="absolute inset-1 rounded-full border border-dotted border-(--accent)/60 animate-[spin_4s_linear_infinite_reverse]" />
+        {/* Glow bg */}
+        <div className="absolute inset-2 rounded-full bg-(--accent)/10 animate-pulse" />
+        {/* Icon */}
+        <HugeiconsIcon
+          icon={AiMagicIcon}
+          size={15}
+          className="relative z-10 text-(--accent) animate-[pulse_2s_ease-in-out_infinite]"
+        />
+      </div>
+    </div>
+  )
+}
+
 function RenameChatModal({
   conversation,
   title,
@@ -664,9 +705,7 @@ export default function AiChatPage() {
                   ))}
                   {isSending ? (
                     <article className="flex justify-start">
-                      <div className="rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text)">
-                        {t('aiChat.thinking')}
-                      </div>
+                      <IlmaThinkingLoader />
                     </article>
                   ) : null}
                   <div ref={messagesEndRef} />
@@ -697,10 +736,22 @@ export default function AiChatPage() {
                 <button
                   type="submit"
                   disabled={!draftMessage.trim() || !isAuthenticated || !canUseChat || isSending}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
+                  className="relative inline-flex min-h-12 items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) px-6 py-3 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:translate-y-0 disabled:scale-100 disabled:opacity-50"
                 >
-                  <HugeiconsIcon icon={isSending ? SentIcon : MailSend01Icon} size={18} />
-                  {isSending ? t('aiChat.sending') : t('aiChat.send')}
+                  {isSending ? (
+                    <>
+                      <svg className="size-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span>{t('aiChat.sending')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon icon={MailSend01Icon} size={18} />
+                      <span>{t('aiChat.send')}</span>
+                    </>
+                  )}
                 </button>
               </div>
               {isAuthenticated && !canUseChat ? (
