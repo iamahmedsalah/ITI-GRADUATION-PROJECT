@@ -5,11 +5,17 @@
   "license": "ISC",
   "author": "ITI-ALEX-TEAM-",
   "type": "module",
-  "main": "backend/server.js",
+  "main": "backend-nestjs/dist/main.js",
   "scripts": {
-    "test": "node --test \"backend/test/**/*.test.js\"",
-    "start": "cross-env NODE_ENV=production node backend/server.js",
-    "dev": "cross-env  NODE_ENV=development nodemon backend/server.js"
+    "test": "npm test --prefix backend-nestjs",
+    "test:express": "node --test \"backend/test/**/*.test.js\"",
+    "start": "npm run start:prod --prefix backend-nestjs",
+    "start:express": "cross-env NODE_ENV=production node backend/server.js",
+    "dev": "npm run start:dev --prefix backend-nestjs",
+    "dev:express": "cross-env  NODE_ENV=development nodemon backend/server.js",
+    "dev:nestjs": "npm run start:dev --prefix backend-nestjs",
+    "start:nestjs": "npm run start:prod --prefix backend-nestjs",
+    "build:nestjs": "npm run build --prefix backend-nestjs"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
