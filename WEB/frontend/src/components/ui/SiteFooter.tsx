@@ -7,10 +7,12 @@ import {
   GithubIcon,
   GitlabIcon,
   Linkedin02Icon,
-} from '@hugeicons/core-free-icons';
+} from "@hugeicons/core-free-icons";
 import { motion } from "framer-motion";
-import { createListItemVariants, createStaggerContainerVariants } from "../../libs/motionVariants";
-
+import {
+  createListItemVariants,
+  createStaggerContainerVariants,
+} from "../../libs/motionVariants";
 
 function localizedPath(language: string, pathname: string) {
   if (!pathname || pathname === "/") {
@@ -25,7 +27,6 @@ export default function SiteFooter() {
   const { language, direction } = useLanguage();
   const MotionLink = motion(Link);
 
-
   const navLinks = [
     {
       label: t("footer.roadmaps"),
@@ -38,8 +39,6 @@ export default function SiteFooter() {
     { label: t("footer.faqs"), to: localizedPath(language, "/faqs") },
     { label: t("footer.contact"), to: localizedPath(language, "/contact") },
   ];
-
-
 
   const soicalLinks = [
     {
@@ -57,7 +56,7 @@ export default function SiteFooter() {
     {
       icon: <HugeiconsIcon icon={GitlabIcon} size={18} />,
       url: "https://gitlab.com",
-    }
+    },
   ];
 
   return (
@@ -94,7 +93,7 @@ export default function SiteFooter() {
               </span>
               <span className="text-lg text-(--text)">{t("footer.by")}</span>
               <span className="rounded-squircle bg-(--gd-primary) px-2 py-1 text-sm font-semibold text-white">
-                @ITI
+                @Ilma Group
               </span>
             </div>
 
@@ -119,28 +118,28 @@ export default function SiteFooter() {
                 {t("footer.privacy")}
               </Link>
               <span>|</span>
-<motion.div
-  className="flex items-center gap-2"
-  variants={createStaggerContainerVariants(direction)}
-  initial="hidden"
-  whileInView="show"
-  viewport={{ once: true, amount: 0.3 }}
->
-  {soicalLinks.map((item, index) => (
-    <MotionLink
-      key={index}
-      to={item.url}
-      target="_blank"
-      rel="noreferrer"
-      variants={createListItemVariants(direction)}
-      whileHover={{ y: -3, scale: 1.08 }}
-      whileTap={{ scale: 0.92 }}
-      className="grid size-7 place-items-center rounded-squircle bg-(--surface-3) hover:bg-(--gd-primary) text-[10px] font-bold text-(--text-h)"
-    >
-      {item.icon}
-    </MotionLink>
-  ))}
-</motion.div>
+              <motion.div
+                className="flex items-center gap-2"
+                variants={createStaggerContainerVariants(direction)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.3 }}
+              >
+                {soicalLinks.map((item, index) => (
+                  <MotionLink
+                    key={index}
+                    to={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    variants={createListItemVariants(direction)}
+                    whileHover={{ y: -3, scale: 1.08 }}
+                    whileTap={{ scale: 0.92 }}
+                    className="grid size-7 place-items-center rounded-squircle bg-(--surface-3) hover:bg-(--gd-primary) text-[10px] font-bold text-(--text-h)"
+                  >
+                    {item.icon}
+                  </MotionLink>
+                ))}
+              </motion.div>
             </div>
           </div>
 
