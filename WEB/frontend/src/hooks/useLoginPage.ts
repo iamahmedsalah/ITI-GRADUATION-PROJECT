@@ -11,7 +11,8 @@ import { apiPost } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import type { AuthUser } from '../utils/route-utils'
 import { loginSchema } from '../types/validationSchemas'
-import { useGoogleAuthRedirect } from './useGoogleAuthRedirect'
+import { useGoogleAuthPopup } from './useGoogleAuthPopup'
+import { decryptData } from '../utils/crypto'
 
 export type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -24,8 +25,33 @@ export function useLoginPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const handleSocialLogin = useGoogleAuthRedirect('login')
+  const [savedAccount, setSavedAccount] = useState<{ name: string; email: string; avatarUrl: string } | null>(null)
+  const handleSocialLogin = useGoogleAuthPopup('login')
   const toastLocale = language === 'ar' ? 'ar-EG' : 'en-US'
+
+  // Decrypt and load saved account details on mount
+  useEffect(() => {
+    async function loadSavedAccount() {
+      const cipherText = localStorage.getItem('last_google_account')
+      if (cipherText) {
+        try {
+          const plainText = await decryptData(cipherText)
+          if (plainText) {
+            setSavedAccount(JSON.parse(plainText))
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    void loadSavedAccount()
+  }, [])
+
+  const handleUseDifferentAccount = useCallback(async () => {
+    localStorage.removeItem('last_google_account')
+    setSavedAccount(null)
+    await handleSocialLogin()
+  }, [handleSocialLogin])
 
   const form = useForm<LoginFormValues>({
     mode: 'onTouched',
@@ -142,6 +168,8 @@ export function useLoginPage() {
     showPassword,
     setShowPassword,
     handleSocialLogin,
+    savedAccount,
+    handleUseDifferentAccount,
     onSubmit,
   }
 }

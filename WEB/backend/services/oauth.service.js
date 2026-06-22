@@ -106,11 +106,12 @@ const normalizeLanguage = (language) => (String(language).toLowerCase().startsWi
 const normalizeSocialIntent = (intent) => (String(intent).toLowerCase() === "login" ? "login" : DEFAULT_SOCIAL_INTENT);
 
 const parseSocialState = (state, fallbackLanguage = "en") => {
-  const [languagePart, intentPart] = String(state || "").split(":");
+  const [languagePart, intentPart, popupPart] = String(state || "").split(":");
 
   return {
     language: normalizeLanguage(languagePart || fallbackLanguage),
     intent: normalizeSocialIntent(intentPart),
+    popup: popupPart === "popup",
   };
 };
 
@@ -144,7 +145,7 @@ const buildSocialCallbackUrl = (req, provider) => {
   return new URL(`/api${SOCIAL_PROVIDER_CONFIG[provider].callbackPath}`, buildBackendOrigin(req)).toString();
 };
 
-const buildSocialStartUrl = (req, provider, language, intent = DEFAULT_SOCIAL_INTENT) => {
+const buildSocialStartUrl = (req, provider, language, intent = DEFAULT_SOCIAL_INTENT, popup = false, loginHint = "") => {
   const config = getSocialProviderConfig(provider);
   const callbackUrl = buildSocialCallbackUrl(req, provider);
   const authorizationUrl = new URL(config.authorizationUrl);
@@ -155,11 +156,19 @@ const buildSocialStartUrl = (req, provider, language, intent = DEFAULT_SOCIAL_IN
   authorizationUrl.searchParams.set("redirect_uri", callbackUrl);
   authorizationUrl.searchParams.set("response_type", "code");
   authorizationUrl.searchParams.set("scope", config.scope);
-  authorizationUrl.searchParams.set("state", `${normalizedLanguage}:${normalizedIntent}`);
+  authorizationUrl.searchParams.set(
+    "state",
+    popup
+      ? `${normalizedLanguage}:${normalizedIntent}:popup`
+      : `${normalizedLanguage}:${normalizedIntent}`,
+  );
 
   if (provider === "google") {
     authorizationUrl.searchParams.set("access_type", "offline");
     authorizationUrl.searchParams.set("prompt", "select_account");
+    if (loginHint) {
+      authorizationUrl.searchParams.set("login_hint", loginHint);
+    }
   }
 
   return authorizationUrl.toString();
@@ -286,6 +295,31 @@ const redirectWithSocialError = (res, language, message) => {
   return res.redirect(302, redirectUrl.toString());
 };
 
+const sendPopupPostMessage = (res, targetOrigin, payload) => {
+  const safePayload = JSON.stringify(payload).replace(/</g, "\\u003c");
+  const html = `<!DOCTYPE html>
+<html><head><title>OAuth</title></head>
+<body>
+<script>
+  (function() {
+    try {
+      if (window.opener) {
+        window.opener.postMessage(${safePayload}, "${targetOrigin}");
+      }
+    } catch (e) {
+      // ignore
+    }
+    setTimeout(function() { window.close(); }, 300);
+  })();
+</script>
+<p style="font-family:system-ui;text-align:center;margin-top:40px;color:#888">
+  Completing sign-in&hellip; This window will close automatically.
+</p>
+</body></html>`;
+
+  return res.type("text/html").send(html);
+};
+
 const createOrLinkSocialUser = async (provider, profile, intent) => {
   const email = String(profile.email || "").trim().toLowerCase();
   const providerVerifiedEmail = profile.emailVerified !== false;
@@ -312,6 +346,7 @@ const createOrLinkSocialUser = async (provider, profile, intent) => {
     const { firstName, lastName } = parseSocialName(profile);
     existingUser.Fname = existingUser.Fname || firstName;
     existingUser.Lname = existingUser.Lname || lastName;
+    existingUser.avatarUrl = existingUser.avatarUrl || profile.picture || "";
 
     return {
       user: existingUser,
@@ -335,6 +370,7 @@ const createOrLinkSocialUser = async (provider, profile, intent) => {
     email,
     password: crypto.randomBytes(32).toString("hex"),
     isVerified: providerVerifiedEmail,
+    avatarUrl: profile.picture || "",
   });
 
   return {
@@ -361,9 +397,10 @@ const issueVerificationEmail = async (user) => {
 
 export const startSocialAuth = (provider, intent = DEFAULT_SOCIAL_INTENT) => (req, res) => {
   try {
-    const { language = "en" } = req.query ?? {};
+    const { language = "en", popup, login_hint } = req.query ?? {};
+    const isPopup = popup === "true" || popup === "1";
     clearAuthCookies(res);
-    const redirectUrl = buildSocialStartUrl(req, provider, language, intent);
+    const redirectUrl = buildSocialStartUrl(req, provider, language, intent, isPopup, login_hint);
     return res.redirect(302, redirectUrl);
   } catch (error) {
     return res.status(500).json({
@@ -379,14 +416,28 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     const parsedState = parseSocialState(state || req.query.language || "en");
     const intent = parsedState.intent;
     const language = parsedState.language;
+    const isPopup = parsedState.popup;
+    const frontendOrigin = getFrontendOrigin(req);
 
     if (error) {
       clearAuthCookies(res);
+      if (isPopup) {
+        return sendPopupPostMessage(res, frontendOrigin, {
+          type: "OAUTH_ERROR",
+          error: String(error),
+        });
+      }
       return redirectWithSocialError(res, language, String(error));
     }
 
     if (!code) {
       clearAuthCookies(res);
+      if (isPopup) {
+        return sendPopupPostMessage(res, frontendOrigin, {
+          type: "OAUTH_ERROR",
+          error: "Missing OAuth code",
+        });
+      }
       return redirectWithSocialError(res, language, "Missing OAuth code");
     }
 
@@ -394,6 +445,12 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
 
     if (!profile.email) {
       clearAuthCookies(res);
+      if (isPopup) {
+        return sendPopupPostMessage(res, frontendOrigin, {
+          type: "OAUTH_ERROR",
+          error: `${provider} account did not provide an email address`,
+        });
+      }
       return redirectWithSocialError(res, language, `${provider} account did not provide an email address`);
     }
 
@@ -402,6 +459,14 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     if (requiresVerification) {
       clearAuthCookies(res);
       await issueVerificationEmail(user);
+      if (isPopup) {
+        return sendPopupPostMessage(res, frontendOrigin, {
+          type: "OAUTH_VERIFY",
+          email: profile.email,
+          provider,
+          language,
+        });
+      }
       const redirectPath = getSocialRedirectPath(language, SOCIAL_SUCCESS_REDIRECT);
       const redirectUrl = new URL(buildFrontendUrl(req, redirectPath));
       redirectUrl.searchParams.set("email", profile.email);
@@ -411,10 +476,43 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
     }
 
     await handleSocialAuthSuccess(res, user);
+
+    if (isPopup) {
+      return sendPopupPostMessage(res, frontendOrigin, {
+        type: "OAUTH_SUCCESS",
+        language,
+        user: {
+          name: `${user.Fname} ${user.Lname}`.trim(),
+          email: user.email,
+          avatarUrl: user.avatarUrl || "",
+        },
+      });
+    }
+
     return redirectToDashboard(res, language);
   } catch (error) {
-    const { language } = parseSocialState(req.query?.state || req.query?.language || "en");
+    const parsedState = parseSocialState(req.query?.state || req.query?.language || "en");
+    const language = parsedState.language;
+    const isPopup = parsedState.popup;
+    const frontendOrigin = getFrontendOrigin(req);
     clearAuthCookies(res);
+
+    if (isPopup) {
+      const errorMessage =
+        error?.statusCode === 403 || error?.statusCode === 404
+          ? error.message
+          : `${provider} login failed`;
+
+      if (!(error?.statusCode === 403 || error?.statusCode === 404)) {
+        console.error(`${provider} OAuth error:`, error);
+      }
+
+      return sendPopupPostMessage(res, frontendOrigin, {
+        type: "OAUTH_ERROR",
+        error: errorMessage,
+      });
+    }
+
     if (error?.statusCode === 403) {
       return redirectWithSocialError(res, language, error.message);
     }

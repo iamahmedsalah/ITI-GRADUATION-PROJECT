@@ -10,7 +10,8 @@ import { apiPost } from '../utils/api'
 import { getBackendResponseMessage, type BackendResponseError } from '../utils/backendResponseMessage'
 import { generateStrongPassword } from '../utils/passwordGenerator'
 import { signupSchema } from '../types/validationSchemas'
-import { useGoogleAuthRedirect } from './useGoogleAuthRedirect'
+import { useGoogleAuthPopup } from './useGoogleAuthPopup'
+import { decryptData } from '../utils/crypto'
 
 export type SignupFormValues = z.infer<typeof signupSchema>
 
@@ -21,8 +22,33 @@ export function useSignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isPasswordCopied, setIsPasswordCopied] = useState(false)
+  const [savedAccount, setSavedAccount] = useState<{ name: string; email: string; avatarUrl: string } | null>(null)
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const handleSocialSignup = useGoogleAuthRedirect('signup')
+  const handleSocialSignup = useGoogleAuthPopup('signup')
+
+  // Decrypt and load saved account details on mount
+  useEffect(() => {
+    async function loadSavedAccount() {
+      const cipherText = localStorage.getItem('last_google_account')
+      if (cipherText) {
+        try {
+          const plainText = await decryptData(cipherText)
+          if (plainText) {
+            setSavedAccount(JSON.parse(plainText))
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    void loadSavedAccount()
+  }, [])
+
+  const handleUseDifferentAccount = useCallback(async () => {
+    localStorage.removeItem('last_google_account')
+    setSavedAccount(null)
+    await handleSocialSignup()
+  }, [handleSocialSignup])
 
   const form = useForm<SignupFormValues>({
     mode: 'onTouched',
@@ -138,6 +164,8 @@ export function useSignupPage() {
     handleGeneratePassword,
     handleCopyPassword,
     handleSocialSignup,
+    savedAccount,
+    handleUseDifferentAccount,
     onSubmit,
   }
 }

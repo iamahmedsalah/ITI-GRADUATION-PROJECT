@@ -64,6 +64,7 @@
   --success: var(--gd-primary);
   --warning: #f59b23;
   --error: #e22134;
+  --google: #1a73e83a;
 
   --sans: "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: "Iceland", "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
@@ -118,6 +119,7 @@ html[data-theme="dark"] {
   --success: var(--gd-primary);
   --warning: #f59b23;
   --error: #e22134;
+  --google: #1a73e83a;
 }
 
 html[data-theme="light"] {
@@ -151,6 +153,7 @@ html[data-theme="light"] {
   --success: var(--gd-primary);
   --warning: #c17b14;
   --error: #c62839;
+  --google: #1a73e8;
 }
 
 html[lang="ar"] {

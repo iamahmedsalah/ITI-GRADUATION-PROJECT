@@ -796,7 +796,10 @@
     "logoutFailed": "Logout failed.",
     "logoutSuccess": "Logged out successfully.",
     "verifyFailed": "Verification failed.",
-    "verifySuccess": "Email verified successfully."
+    "verifySuccess": "Email verified successfully.",
+    "oauthPopupBlocked": "Popup was blocked. Please allow popups for this site and try again.",
+    "googleConfirmUseDifferent": "Use a different account",
+    "continueAs": "Continue as {{name}}"
   },
   "admin": {
     "loginFailed": "Admin login failed.",

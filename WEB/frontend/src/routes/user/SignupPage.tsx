@@ -20,7 +20,11 @@ function SignupPage() {
           organizeTitle={t('signup.organizeTitle')}
           helper={t('signup.helper')}
         >
-          <SignupAsideActions onSocialSignup={() => void signupPage.handleSocialSignup()} />
+          <SignupAsideActions
+            onSocialSignup={signupPage.handleSocialSignup}
+            onUseDifferentAccount={signupPage.handleUseDifferentAccount}
+            savedAccount={signupPage.savedAccount}
+          />
         </AuthIntroPanel>
       }
     >

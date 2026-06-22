@@ -795,7 +795,10 @@
     "logoutFailed": "فشل تسجيل الخروج.",
     "logoutSuccess": "تم تسجيل الخروج بنجاح.",
     "verifyFailed": "فشل التحقق.",
-    "verifySuccess": "تم تأكيد البريد الإلكتروني بنجاح."
+    "verifySuccess": "تم تأكيد البريد الإلكتروني بنجاح.",
+    "oauthPopupBlocked": "تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة لهذا الموقع والمحاولة مرة أخرى.",
+    "googleConfirmUseDifferent": "استخدام حساب آخر",
+    "continueAs": "متابعة باسم {{name}}"
   },
   "admin": {
     "loginFailed": "فشل تسجيل دخول المدير.",
