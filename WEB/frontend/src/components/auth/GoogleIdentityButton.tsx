@@ -278,14 +278,14 @@ export default function GoogleIdentityButton({
   }
 
   return (
-    <div className="grid gap-3 pt-2">
+    <div className="grid justify-center gap-3 pt-2">
       <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-(--text)">
         <span className="h-px flex-1" />
         <span>{dividerLabel}</span>
         <span className="h-px flex-1" />
       </div>
-      <div className="min-h-11 w-full overflow-hidden rounded-squircle">
-        <div ref={buttonRef} className={isReady ? 'w-full' : 'min-h-11 rounded-squircle border border-(--border)'} />
+      <div className="min-h-10 w-fit overflow-hidden rounded-full">
+        <div ref={buttonRef} className={isReady ? 'w-fit' : 'min-h-10 rounded-full border border-(--border)'} />
       </div>
       <button
         type="button"
