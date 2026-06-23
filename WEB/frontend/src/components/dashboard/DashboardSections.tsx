@@ -8,11 +8,11 @@ import {
   Activity01Icon,
   Alert02Icon,
   AiMagicIcon,
+  BookmarkRemove02Icon,
   CrownIcon,
   Delete02Icon,
   MoreVerticalIcon,
   Route03Icon,
-  StarIcon,
   UserSettings01Icon,
   ZapIcon,
 } from '@hugeicons/core-free-icons';
@@ -66,7 +66,7 @@ export function StreakCard({ current, longest }: { current: number; longest: num
   const days = Array.from({ length: 8 }, (_, index) => index + 1)
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-4 sm:p-5 shadow-(--shadow)">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5 shadow-(--shadow)">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-(--text)">
           {t('dashboard.streak.current')} <strong className="text-(--text-h)">{current}</strong>
@@ -128,7 +128,7 @@ export function ContinueRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) 
   })
 
   return (
-    <article className={['group relative rounded-lg border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
+    <article className={['group relative rounded-squircle border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
       <div className="flex items-center justify-between gap-4">
         <Link to={roadmapPath} className="min-w-0 flex-1">
           <h3 className="truncate text-lg font-semibold text-(--text-h)">{roadmap.template?.title ?? t('profile.unknownRoadmap')}</h3>
@@ -228,7 +228,7 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
   })
 
   return (
-    <article className={['relative flex items-center justify-between gap-3 rounded-lg border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
+    <article className={['relative flex items-center justify-between gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
       <Link to={roadmapPath} className="min-w-0 flex-1">
         <span className="block truncate text-base font-semibold text-(--text-h)">
           {roadmap.template?.title ?? t('profile.unknownRoadmap')}
@@ -239,7 +239,7 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
       </Link>
 
       <span data-starred="true" className="star-toggle-button grid size-9 shrink-0 place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent)">
-        <HugeiconsIcon icon={StarIcon} size={17} className="star-toggle-icon star-toggle-icon-active" />
+        <HugeiconsIcon icon={BookmarkRemove02Icon} size={17} className="star-toggle-icon star-toggle-icon-active" />
       </span>
 
       <button
@@ -259,7 +259,7 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
             className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
             onClick={() => setIsConfirmDeleteOpen(true)}
           >
-            <HugeiconsIcon icon={Delete02Icon} size={16} />
+            <HugeiconsIcon icon={BookmarkRemove02Icon} size={16} />
             {deleteMutation.isPending
               ? t('dashboard.roadmaps.deleting')
               : t('dashboard.roadmaps.unstar', 'Remove')}
@@ -300,7 +300,7 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
                 className="inline-flex items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.35)] px-4 py-2 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:opacity-60"
                 onClick={() => deleteMutation.mutate(roadmap._id)}
               >
-                <HugeiconsIcon icon={Delete02Icon} size={16} />
+                <HugeiconsIcon icon={BookmarkRemove02Icon} size={16} />
                 {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.unstar', 'Remove star')}
               </button>
             </div>
@@ -318,7 +318,7 @@ export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[
   if (!roadmaps.length) return null
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
@@ -332,7 +332,7 @@ export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[
           to={`/${language}/my-roadmaps?status=assigned`}
           className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)"
         >
-          <HugeiconsIcon icon={StarIcon} size={18} className="star-toggle-icon star-toggle-icon-active text-(--accent)" />
+          <HugeiconsIcon icon={BookmarkRemove02Icon} size={18} className="star-toggle-icon star-toggle-icon-active text-(--accent)" />
           {t('dashboard.savedRoadmaps.viewAll', 'View all')}
         </Link>
       </div>
@@ -431,7 +431,7 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
   const { language } = useLanguage()
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.continueTitle')}</h2>
@@ -449,9 +449,39 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
         {roadmaps.length ? (
           roadmaps.map((roadmap) => <ContinueRoadmapCard key={roadmap._id} roadmap={roadmap} />)
         ) : (
-          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2">
-            {t('dashboard.emptyRoadmaps')}
-          </p>
+          <div className="md:col-span-2 rounded-2xl border border-dashed border-(--border) bg-(--surface-soft) p-6 sm:p-8 text-center flex flex-col items-center justify-center">
+            {/* Onboarding Icon */}
+            <div className="relative mb-5 flex size-16 items-center justify-center rounded-2xl bg-(--accent-bg) text-(--accent) border border-(--accent-border) shadow-inner">
+              <HugeiconsIcon icon={AiMagicIcon} size={28} className="animate-pulse" />
+              <div className="absolute inset-0 rounded-2xl bg-(--accent) opacity-5 blur-xl pointer-events-none" />
+            </div>
+
+            {/* Welcoming content */}
+            <h3 className="text-base font-bold text-(--text-h)">
+              {t('dashboard.onboarding.title', { defaultValue: 'Kickstart Your Learning Journey!' })}
+            </h3>
+            <p className="mt-2 max-w-md text-xs leading-5 text-(--text)">
+              {t('dashboard.onboarding.subtitle', { defaultValue: 'You have not started tracking any roadmap yet. Generate a custom roadmap tailored by AI, or explore standard templates.' })}
+            </p>
+
+            {/* Call to actions */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
+              <Link
+                to={`/${language}/ai`}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) hover:bg-(--gd-primary-hover) text-white font-semibold text-xs px-5 py-3 shadow-lg shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <HugeiconsIcon icon={AiMagicIcon} size={15} />
+                {t('dashboard.onboarding.ctaAi', { defaultValue: 'Generate AI Roadmap' })}
+              </Link>
+              <Link
+                to={`/${language}`}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-squircle border border-(--border) bg-(--surface) hover:bg-(--surface-2) text-(--text-h) font-semibold text-xs px-5 py-3 transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <HugeiconsIcon icon={Route03Icon} size={15} />
+                {t('dashboard.onboarding.ctaBrowse', { defaultValue: 'Browse Templates' })}
+              </Link>
+            </div>
+          </div>
         )}
       </div>
     </section>
@@ -474,6 +504,7 @@ function RecommendationCard({
   score,
   action,
   to,
+  className = 'bg-(--surface-2)',
 }: {
   title: string
   eyebrow: string
@@ -481,9 +512,10 @@ function RecommendationCard({
   score: number
   action: string
   to?: string
+  className?: string
 }) {
   const content = (
-    <article className="flex h-full flex-col rounded-lg border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)">
+    <article className={`flex h-full flex-col rounded-3xl border border-(--border) p-4 transition hover:border-(--accent-border) ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-(--accent)">{eyebrow}</p>
@@ -559,6 +591,152 @@ function buildRecommendationCards({
   return [...nextSteps, ...courses, ...roadmaps].slice(0, 6)
 }
 
+export function CompletionCelebrationSection({
+  completedRoadmaps,
+  recommendations,
+  isLoadingRecommendations,
+}: {
+  completedRoadmaps: DashboardRoadmap[]
+  recommendations?: AiRecommendationsData
+  isLoadingRecommendations: boolean
+}) {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+  const latestCompleted = completedRoadmaps[0]
+
+  if (!completedRoadmaps.length) return null
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-(--accent-border) bg-(--surface) shadow-(--shadow)">
+      <div className="grid gap-5 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
+              {t('dashboard.completion.overline')}
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold leading-tight text-(--text-h)">
+              {t('dashboard.completion.title')}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-(--text)">
+              {t('dashboard.completion.subtitle', {
+                roadmap: latestCompleted.template?.title ?? t('profile.unknownRoadmap'),
+              })}
+            </p>
+          </div>
+          <Link
+            to={`/${language}/my-roadmaps?status=completed`}
+            className="inline-flex shrink-0 items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border)"
+          >
+            <HugeiconsIcon icon={Route03Icon} size={18} className="text-(--accent)" />
+            {t('dashboard.completion.viewAllCompleted')}
+          </Link>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {completedRoadmaps.slice(0, 4).map((roadmap) => (
+            <Link
+              key={roadmap._id}
+              to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
+              className="rounded-squircle border border-(--border) bg-(--surface-2) p-3 transition hover:border-(--accent-border)"
+            >
+              <span className="block truncate text-sm font-semibold text-(--text-h)">
+                {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+              </span>
+              <span className="mt-1 block text-xs uppercase tracking-[0.12em] text-(--accent)">
+                {t('dashboard.completion.completed')}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-(--border) bg-(--surface-2) p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
+              {t('dashboard.completion.nextTitle')}
+            </h3>
+            <p className="mt-1 text-sm text-(--text)">
+              {t('dashboard.completion.nextSubtitle')}
+            </p>
+          </div>
+          <HugeiconsIcon icon={AiMagicIcon} size={20} className="shrink-0 text-(--accent)" />
+        </div>
+        <AiRecommendationCardsGrid
+          data={recommendations}
+          isLoading={isLoadingRecommendations}
+          limit={3}
+          className="mt-4 grid gap-3 md:grid-cols-3"
+          itemClassName="bg-(--surface)"
+          emptyClassName="md:col-span-3 bg-(--surface)"
+        />
+      </div>
+    </section>
+  )
+}
+
+export function RoadmapCompletionSection(props: {
+  completedRoadmaps: DashboardRoadmap[]
+  recommendations?: AiRecommendationsData
+  isLoadingRecommendations: boolean
+}) {
+  return <CompletionCelebrationSection {...props} />
+}
+
+export function AiRecommendationCardsGrid({
+  data,
+  isLoading,
+  limit = 6,
+  className = 'mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3',
+  itemClassName,
+  emptyClassName = 'md:col-span-2 xl:col-span-3',
+}: {
+  data?: AiRecommendationsData
+  isLoading: boolean
+  limit?: number
+  className?: string
+  itemClassName?: string
+  emptyClassName?: string
+}) {
+  const { language } = useLanguage()
+  const { t } = useTranslation()
+  const cards = buildRecommendationCards({ data, language, t }).slice(0, limit)
+  const emptyStateClassName = `rounded-3xl border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) ${emptyClassName}`
+
+  return (
+    <div className={className}>
+      {isLoading ? (
+        <p className={emptyStateClassName}>{t('dashboard.ai.loading')}</p>
+      ) : cards.length ? (
+        cards.map((card) => (
+          <RecommendationCard
+            key={card.key}
+            title={card.title}
+            eyebrow={card.eyebrow}
+            reason={card.reason}
+            score={card.score}
+            action={card.action}
+            to={card.to}
+            className={itemClassName}
+          />
+        ))
+      ) : (
+        <div className={`rounded-xl border border-dashed border-(--border) bg-(--surface-soft) p-6 text-center flex flex-col items-center justify-center min-h-[160px] ${emptyClassName}`}>
+          <HugeiconsIcon icon={ZapIcon} size={24} className="text-(--text) opacity-60 mb-2.5 animate-pulse" />
+          <p className="max-w-md text-xs leading-5 text-(--text)">
+            {t('dashboard.ai.empty')}
+          </p>
+          <Link
+            to={`/${language}/preferences`}
+            className="mt-3 text-xs font-semibold text-(--accent) hover:underline transition"
+          >
+            {t('dashboard.ai.updatePrefsCta', { defaultValue: 'Set your preferences' })} &rarr;
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AiRecommendationsSection({
   data,
   isLoading,
@@ -566,12 +744,10 @@ export function AiRecommendationsSection({
   data?: AiRecommendationsData
   isLoading: boolean
 }) {
-  const { language } = useLanguage()
   const { t } = useTranslation()
-  const cards = buildRecommendationCards({ data, language, t })
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.ai.title')}</h2>
@@ -579,29 +755,7 @@ export function AiRecommendationsSection({
         </div>
         <HugeiconsIcon icon={AiMagicIcon} size={20} className="text-(--accent)" />
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {isLoading ? (
-          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2 xl:col-span-3">
-            {t('dashboard.ai.loading')}
-          </p>
-        ) : cards.length ? (
-          cards.map((card) => (
-            <RecommendationCard
-              key={card.key}
-              title={card.title}
-              eyebrow={card.eyebrow}
-              reason={card.reason}
-              score={card.score}
-              action={card.action}
-              to={card.to}
-            />
-          ))
-        ) : (
-          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text) md:col-span-2 xl:col-span-3">
-            {t('dashboard.ai.empty')}
-          </p>
-        )}
-      </div>
+      <AiRecommendationCardsGrid data={data} isLoading={isLoading} />
     </section>
   )
 }
@@ -666,7 +820,7 @@ export function LearningActivitySection({
   ]
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.activity.title')}</h2>
@@ -692,7 +846,7 @@ export function LearningActivitySection({
           { label: t('dashboard.activity.metrics.courses', 'Courses'), value: courseEvents },
           { label: t('dashboard.activity.metrics.ai', 'AI'), value: aiEvents },
         ].map((metric) => (
-          <div key={metric.label} className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2">
+          <div key={metric.label} className="rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-2">
             <p className="text-xs uppercase tracking-[0.12em] text-(--text)">{metric.label}</p>
             <p className="mt-1 text-lg font-semibold text-(--text-h)">{metric.value}</p>
           </div>
@@ -700,7 +854,7 @@ export function LearningActivitySection({
       </div>
       <div className="mt-4">
         {isLoading ? (
-          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.loading')}</p>
+          <p className="rounded-3xl border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.loading')}</p>
         ) : filteredActivities.length ? (
           <>
             {visibleActivities.map((activity) => (
@@ -727,7 +881,7 @@ export function LearningActivitySection({
             ) : null}
           </>
         ) : (
-          <p className="rounded-lg border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.activity.empty')}</p>
+          <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-5 text-sm text-(--text)">{t('dashboard.activity.empty')}</p>
         )}
       </div>
     </section>
@@ -755,12 +909,12 @@ export function SubscriptionSection({
   const isPro = plan === 'pro' && ['active', 'trialing'].includes(status)
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
         {t('dashboard.subscription.title', 'Subscription')}
       </h2>
 
-      <div className="mt-4 rounded-lg border border-(--border) bg-(--surface-2) p-5">
+      <div className="mt-4 rounded-squircle border border-(--border) bg-(--surface-2) p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-lg font-semibold text-(--text-h)">
@@ -921,7 +1075,7 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
       ]
 
   return (
-    <section className="rounded-lg border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
@@ -937,11 +1091,11 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
       </div>
       <div className="mt-4 grid gap-2">
         {preferencesQuery.isLoading ? (
-          <div className="rounded-lg border border-(--border) bg-(--surface-2) px-3 py-2 text-sm text-(--text)">
+          <div className="rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-2 text-sm text-(--text)">
             {t('dashboard.loading')}
           </div>
         ) : preferenceItems.map((item) => (
-          <div key={item.label} className="grid gap-3 rounded-lg border border-(--border) bg-(--surface-2) px-3 py-3 text-sm min-[520px]:grid-cols-[minmax(0,1fr)_minmax(9rem,0.9fr)]">
+          <div key={item.label} className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-3 text-sm min-[520px]:grid-cols-[minmax(0,1fr)_minmax(9rem,0.9fr)]">
             <span className="flex min-w-0 items-start gap-3">
               <span className="mt-2 size-1.5 shrink-0 rounded-full bg-(--accent)" />
               <span className="grid min-w-0 gap-1">
@@ -950,7 +1104,7 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
               </span>
             </span>
             {'insight' in item && item.insight ? (
-              <span className="rounded-lg border border-(--accent-border) bg-(--accent-bg) px-3 py-2 text-xs leading-5 text-(--text-h)">
+              <span className="rounded-squircle border border-(--accent-border) bg-(--accent-bg) px-3 py-2 text-xs leading-5 text-(--text-h)">
                 {item.insight}
               </span>
             ) : null}

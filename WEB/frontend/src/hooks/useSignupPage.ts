@@ -11,7 +11,12 @@ import { getBackendResponseMessage, type BackendResponseError } from '../utils/b
 import { generateStrongPassword } from '../utils/passwordGenerator'
 import { signupSchema } from '../types/validationSchemas'
 import { useGoogleAuthPopup } from './useGoogleAuthPopup'
-import { decryptData } from '../utils/crypto'
+import {
+  clearSavedGoogleAccount,
+  GOOGLE_ACCOUNT_CHANGED_EVENT,
+  loadSavedGoogleAccount,
+  type SavedGoogleAccount,
+} from '../utils/googleAccountStorage'
 
 export type SignupFormValues = z.infer<typeof signupSchema>
 
@@ -22,31 +27,31 @@ export function useSignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isPasswordCopied, setIsPasswordCopied] = useState(false)
-  const [savedAccount, setSavedAccount] = useState<{ name: string; email: string; avatarUrl: string } | null>(null)
+  const [savedAccount, setSavedAccount] = useState<SavedGoogleAccount | null>(null)
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleSocialSignup = useGoogleAuthPopup('signup')
 
   // Decrypt and load saved account details on mount
   useEffect(() => {
     async function loadSavedAccount() {
-      const cipherText = localStorage.getItem('last_google_account')
-      if (cipherText) {
-        try {
-          const plainText = await decryptData(cipherText)
-          if (plainText) {
-            setSavedAccount(JSON.parse(plainText))
-          }
-        } catch {
-          // ignore
-        }
+      try {
+        setSavedAccount(await loadSavedGoogleAccount())
+      } catch {
+        // ignore
       }
     }
     void loadSavedAccount()
+
+    const handleAccountChange = (event: Event) => {
+      setSavedAccount((event as CustomEvent<SavedGoogleAccount | null>).detail ?? null)
+    }
+
+    window.addEventListener(GOOGLE_ACCOUNT_CHANGED_EVENT, handleAccountChange)
+    return () => window.removeEventListener(GOOGLE_ACCOUNT_CHANGED_EVENT, handleAccountChange)
   }, [])
 
   const handleUseDifferentAccount = useCallback(async () => {
-    localStorage.removeItem('last_google_account')
-    setSavedAccount(null)
+    clearSavedGoogleAccount()
     await handleSocialSignup()
   }, [handleSocialSignup])
 

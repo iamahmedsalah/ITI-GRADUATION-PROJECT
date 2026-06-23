@@ -127,6 +127,7 @@ export type AdminRoadmapRow = {
     Fname?: string
     Lname?: string
   } | null
+  visibility?: 'public' | 'private'
   isActive: boolean
   assignedUsers?: number
   stepProgressRecords?: number
@@ -494,6 +495,7 @@ export async function updateAdminRoadmap(
     targetLevel: 'beginner' | 'intermediate' | 'advanced'
     templateType: 'roleBased' | 'skillBased'
     isActive: boolean
+    visibility?: 'public' | 'private'
   }>,
 ) {
   const { response, data } = await apiRequest<AdminMutationResponse<AdminRoadmapRow>>(

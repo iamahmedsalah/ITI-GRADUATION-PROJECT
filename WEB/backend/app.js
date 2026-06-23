@@ -20,6 +20,7 @@ import coursesRoutes from "./routes/courses.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import contactRoutes from "./routes/contact.route.js";
 import aiRoutes from "./routes/ai.route.js";
+import systemRoutes from "./routes/system.route.js";
 import {
   swaggerSpec,
   swaggerUiAssetPath,
@@ -236,6 +237,9 @@ app.use("/api/ai", aiRoutes);
 
 // Admin Routes
 app.use("/api/admin", adminRoutes);
+
+// System/Version Routes
+app.use("/api/system", systemRoutes);
 
 // Centralized error middleware
 app.use(errorHandler);

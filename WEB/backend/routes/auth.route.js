@@ -46,6 +46,7 @@ import {
   confirmAccountDeletion,
   requestAccountDeletionUndo,
   confirmAccountDeletionUndo,
+  handleGoogleCredentialAuth,
   startSocialAuth,
   handleSocialAuthCallback,
 } from "../controllers/auth.controller.js";
@@ -145,6 +146,7 @@ router.post(
  *         $ref: '#/components/responses/ValidationError'
  */
 router.post("/login", loginLimiter, validateRequest(loginSchema), login);
+router.post("/google/credential", loginLimiter, handleGoogleCredentialAuth);
 /**
  * @openapi
  * /auth/refresh:

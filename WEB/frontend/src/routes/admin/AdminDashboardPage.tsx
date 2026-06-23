@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { DashboardSquare03Icon, Mail01Icon, Route03Icon, UserEdit01Icon } from '@hugeicons/core-free-icons'
+import { DashboardSquare03Icon, Mail01Icon, Route03Icon, UserEdit01Icon, GiftIcon } from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   createHeroLineVariants,
@@ -11,6 +11,8 @@ import {
   createStaggerContainerVariants,
 } from '../../libs/motionVariants'
 import { fetchAdminOverview } from '../../libs/admin-api'
+import { useWhatsNew } from '../../hooks/useWhatsNew'
+import WhatsNewPanel from '../../components/ui/WhatsNewPanel'
 
 function MetricCard({
   label,
@@ -51,6 +53,8 @@ function AdminDashboardPage() {
     staleTime: 0,
   })
 
+  const { isOpen, latestData, dismiss, open } = useWhatsNew('admin')
+
   const roadmapsTotal = overview?.roadmaps.templatesTotal ?? 0
   const coursesTotal = overview?.courses.total ?? 0
   const unreadContactMessages = overview?.contactMessages?.unread ?? 0
@@ -75,6 +79,7 @@ function AdminDashboardPage() {
 
   return (
     <motion.main className="px-6 py-6 lg:px-8 lg:py-8" variants={pageVariants} initial="hidden" animate="show">
+      <WhatsNewPanel isOpen={isOpen} onClose={dismiss} latestData={latestData} />
       <motion.section
         className="grid gap-6 rounded-3xl border border-(--border) bg-(--surface-2) p-6 shadow-(--shadow)"
         variants={staggerContainerVariants}
@@ -87,8 +92,18 @@ function AdminDashboardPage() {
               {t('adminUi.dashboard.subtitle')}
             </p>
           </div>
-          <div className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-2 text-sm text-(--text-h)">
-            {isLoading ? t('adminUi.dashboard.loading') : liveDate}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={open}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-(--border) bg-(--surface) px-4 py-2 text-sm text-(--text-h) transition hover:bg-(--surface-2)"
+            >
+              <HugeiconsIcon icon={GiftIcon} size={16} className="text-(--gd-primary)" />
+              <span>{t('whatsNew.triggerBtn', { defaultValue: "What's New" })}</span>
+            </button>
+            <div className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-2 text-sm text-(--text-h)">
+              {isLoading ? t('adminUi.dashboard.loading') : liveDate}
+            </div>
           </div>
         </motion.div>
 

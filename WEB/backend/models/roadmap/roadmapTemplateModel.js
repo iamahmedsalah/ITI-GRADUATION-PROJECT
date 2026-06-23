@@ -155,7 +155,7 @@ const roadmapTemplateSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["admin", "ai", "manual"],
+      enum: ["admin", "admin-ai", "user-ai", "manual"],
       default: "manual",
     },
     isActive: {

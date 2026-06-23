@@ -152,7 +152,10 @@ export const createRoadmapTemplateSchema = z.object({
       .min(0, "Estimated total minutes cannot be negative")
       .optional(),
     source: z
-      .enum(["admin", "ai", "manual"], { error: "Invalid source." })
+      .enum(["admin", "admin-ai", "user-ai", "manual"], { error: "Invalid source." })
+      .optional(),
+    visibility: z
+      .enum(["public", "private"], { error: "Invalid visibility." })
       .optional(),
     contentFormat: z
       .enum(["json", "markdown"], { error: "contentFormat must be either json or markdown." })

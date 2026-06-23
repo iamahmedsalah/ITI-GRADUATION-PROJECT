@@ -57,6 +57,7 @@ export const createAiRoadmapDraft = async ({
   templateType = "skillBased",
   durationWeeks = 8,
   weeklyStudyHours = 6,
+  source = "admin-ai",
 }) => {
   const normalizedGoal = String(goal || "").trim();
 
@@ -112,7 +113,7 @@ export const createAiRoadmapDraft = async ({
       targetLevel: normalizedLevel,
       templateType: normalizedTemplateType,
       tags: normalizeList(aiDraft.tags).slice(0, 10),
-      source: "ai",
+      source,
       contentFormat: "markdown",
       contentMarkdown: stepsToMarkdown(steps),
       steps,
@@ -176,6 +177,7 @@ export const generateUserAiRoadmapDraftForUser = async ({
       templateType: "skillBased",
       durationWeeks,
       weeklyStudyHours,
+      source: "user-ai",
     });
   } catch (error) {
     await releaseAiRoadmapDraftUsage(userId, reservation.periodStart);
@@ -234,7 +236,7 @@ export const saveUserAiRoadmapForUser = async ({ user, draft = {} }) => {
     estimatedTotalMinutes:
       parseInt(draft.estimatedTotalMinutes, 10) ||
       steps.reduce((total, step) => total + step.estimatedMinutes, 0),
-    source: "ai",
+    source: "user-ai",
     contentFormat: "markdown",
     contentMarkdown: stepsToMarkdown(steps),
     createdBy: userId,
@@ -242,6 +244,10 @@ export const saveUserAiRoadmapForUser = async ({ user, draft = {} }) => {
     visibility: "private",
     isActive: true,
   });
+
+  const populatedTemplate = await RoadmapTemplate.findById(template._id)
+    .populate("createdBy", "username email Fname Lname avatarUrl")
+    .populate("owner", "username email Fname Lname avatarUrl");
 
   const roadmap = await UserRoadmap.create({
     user: userId,
@@ -262,11 +268,15 @@ export const saveUserAiRoadmapForUser = async ({ user, draft = {} }) => {
   });
 
   const populatedRoadmap = await UserRoadmap.findById(roadmap._id)
-    .populate("template", "title slug description targetLevel templateType source visibility")
+    .populate({
+      path: "template",
+      select: "title slug description targetLevel templateType source visibility owner",
+      populate: { path: "owner", select: "username Fname Lname avatarUrl" }
+    })
     .select("-__v");
 
   return {
-    template,
+    template: populatedTemplate,
     roadmap: populatedRoadmap,
   };
 };

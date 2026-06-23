@@ -30,33 +30,29 @@ export default function ContinueAsGoogleButton({
       type="button"
       onClick={onClick}
       dir={direction}
-      className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-squircle bg-(--google) p-2 pl-3.5 pr-2.5 text-start transition-all hover:bg-[#1557b0] shadow-md hover:shadow-lg"
+      className="flex min-h-13 w-full cursor-pointer items-center justify-between gap-3 rounded-squircle border border-[#2b4f7f] bg-[#14345f] px-3 py-2 text-start shadow-[0_12px_30px_rgba(10,32,64,0.24)] transition hover:border-[#4f7fbd] hover:bg-[#174070] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6ea8ff]"
     >
-      {/* Left side: Avatar and text */}
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Avatar profile picture */}
-        <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/10 bg-white/20 flex-shrink-0 flex items-center justify-center">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/15">
           {account.avatarUrl ? (
-            <img src={account.avatarUrl} alt={account.name} className="w-full h-full object-cover" />
+            <img src={account.avatarUrl} alt={account.name} className="size-full object-cover" />
           ) : (
             <span className="text-[11px] font-bold text-white">{initials}</span>
           )}
         </div>
 
-        {/* Text stack */}
-        <div className="flex flex-col min-w-0">
-          <span className="text-[13px] font-semibold text-white leading-tight">
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-semibold leading-tight text-white">
             {t('auth.continueAs', 'Continue as {{name}}', { name: firstName })}
           </span>
-          <span className="text-[11px] text-blue-100/90 truncate leading-normal mt-0.5">
+          <span className="mt-0.5 truncate text-xs leading-normal text-blue-100/90">
             {account.email}
           </span>
         </div>
       </div>
 
-      {/* Right side: White circle with Google icon */}
-      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-          <GoogleIcon />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+        <GoogleIcon />
       </div>
     </button>
   )

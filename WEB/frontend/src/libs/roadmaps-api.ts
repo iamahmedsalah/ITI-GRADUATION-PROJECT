@@ -4,6 +4,10 @@ export type RoadmapTemplate = {
   _id: string
   title: string
   slug: string
+  source?: 'admin' | 'ai' | 'admin-ai' | 'user-ai' | 'manual'
+  visibility?: 'public' | 'private'
+  owner?: string | { _id: string; username: string; Fname?: string; Lname?: string; avatarUrl?: string }
+  createdBy?: string | { _id: string; username: string; Fname?: string; Lname?: string; avatarUrl?: string }
   goal?: string
   description?: string
   targetRole?: string
@@ -118,13 +122,21 @@ const emptyProgressResponse: RoadmapProgressResponse = {
   },
 }
 
-export async function fetchRoadmapTemplates(limit = 18, templateType?: RoadmapTemplate['templateType']) {
+export async function fetchRoadmapTemplates(
+  limit = 18,
+  templateType?: RoadmapTemplate['templateType'],
+  source?: RoadmapTemplate['source'],
+) {
   const searchParams = new URLSearchParams({
     limit: String(limit),
   })
 
   if (templateType) {
     searchParams.set('templateType', templateType)
+  }
+
+  if (source) {
+    searchParams.set('source', source)
   }
 
   const { response, data } = await apiGet<RoadmapTemplatesResponse>(
@@ -280,6 +292,24 @@ export async function deleteUserRoadmap(roadmapId: string) {
 
   if (!response.ok) {
     throw new Error(data.message || 'Could not delete this roadmap.')
+  }
+
+  return true
+}
+
+export async function updateRoadmapVisibility(templateId: string, visibility: 'public' | 'private') {
+  const { response, data } = await apiRequest<{ success?: boolean; message?: string }>(
+    `/ai/roadmaps/${templateId}/visibility`,
+    {},
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visibility }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Could not update visibility.')
   }
 
   return true

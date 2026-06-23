@@ -82,7 +82,8 @@ export const createRoadmapTemplate = async (req, res) => {
     });
 
     const populatedTemplate = await RoadmapTemplate.findById(newTemplate._id)
-      .populate("createdBy", "username email")
+      .populate("createdBy", "username email Fname Lname avatarUrl")
+      .populate("owner", "username email Fname Lname avatarUrl")
       .select("-__v");
 
     return res.status(201).json({
@@ -125,7 +126,8 @@ export const getRoadmapTemplate = async (req, res) => {
       _id: templateId,
       ...publicTemplateFilter(),
     })
-      .populate("createdBy", "username email Fname Lname")
+      .populate("createdBy", "username email Fname Lname avatarUrl")
+      .populate("owner", "username email Fname Lname avatarUrl")
       .select("-__v");
 
     if (!template) {
@@ -157,7 +159,8 @@ export const getRoadmapTemplateBySlug = async (req, res) => {
       slug: String(slug).trim().toLowerCase(),
       ...publicTemplateFilter(),
     })
-      .populate("createdBy", "username email Fname Lname")
+      .populate("createdBy", "username email Fname Lname avatarUrl")
+      .populate("owner", "username email Fname Lname avatarUrl")
       .select("-__v");
 
     if (!template) {
@@ -195,7 +198,8 @@ export const getMyRoadmapTemplateBySlug = async (req, res) => {
         { owner: userId, visibility: "private" },
       ],
     })
-      .populate("createdBy", "username email Fname Lname")
+      .populate("createdBy", "username email Fname Lname avatarUrl")
+      .populate("owner", "username email Fname Lname avatarUrl")
       .select("-__v");
 
     if (!template) {
@@ -265,13 +269,14 @@ export const getRoadmapTopic = async (req, res) => {
 };
 
 export const getAllRoadmapTemplates = async (req, res) => {
-  const { targetLevel, targetRole, templateType, page = 1, limit = 10 } = req.query;
+  const { targetLevel, targetRole, templateType, page = 1, limit = 10, source } = req.query;
 
   try {
     const query = publicTemplateFilter();
 
     if (targetLevel) query.targetLevel = targetLevel;
     if (targetRole) query.targetRole = targetRole;
+    if (source) query.source = source;
     if (templateType === "roleBased") {
       query.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
     } else if (templateType) {
@@ -283,7 +288,8 @@ export const getAllRoadmapTemplates = async (req, res) => {
     const skip = (parsedPage - 1) * parsedLimit;
 
     const templates = await RoadmapTemplate.find(query)
-      .populate("createdBy", "username email Fname Lname")
+      .populate("createdBy", "username email Fname Lname avatarUrl")
+      .populate("owner", "username email Fname Lname avatarUrl")
       .select("-__v")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -550,6 +556,7 @@ export const updateRoadmapTemplateCore = async ({ templateId, payload }) => {
     isActive,
     contentFormat,
     contentMarkdown,
+    visibility,
   } = payload;
 
   const existingTemplate = await RoadmapTemplate.findById(templateId).select(
@@ -574,6 +581,7 @@ export const updateRoadmapTemplateCore = async ({ templateId, payload }) => {
   if (contentFormat !== undefined) updateData.contentFormat = contentFormat;
   if (contentMarkdown !== undefined)
     updateData.contentMarkdown = contentMarkdown;
+  if (visibility !== undefined) updateData.visibility = visibility;
 
   let nextSteps = Array.isArray(existingTemplate.steps)
     ? [...existingTemplate.steps]
@@ -611,7 +619,8 @@ export const updateRoadmapTemplateCore = async ({ templateId, payload }) => {
     updateData,
     { new: true, runValidators: true },
   )
-    .populate("createdBy", "username email Fname Lname")
+    .populate("createdBy", "username email Fname Lname avatarUrl")
+    .populate("owner", "username email Fname Lname avatarUrl")
     .select("-__v");
 
   return updatedTemplate;
@@ -655,7 +664,8 @@ export const publishRoadmapTemplateCore = async ({ templateId }) => {
     { isActive: true },
     { new: true },
   )
-    .populate("createdBy", "username email Fname Lname")
+    .populate("createdBy", "username email Fname Lname avatarUrl")
+    .populate("owner", "username email Fname Lname avatarUrl")
     .select("-__v");
 
   return publishedTemplate;
@@ -667,7 +677,8 @@ export const unpublishRoadmapTemplateCore = async ({ templateId }) => {
     { isActive: false },
     { new: true },
   )
-    .populate("createdBy", "username email Fname Lname")
+    .populate("createdBy", "username email Fname Lname avatarUrl")
+    .populate("owner", "username email Fname Lname avatarUrl")
     .select("-__v");
 
   if (!unpublishedTemplate) {

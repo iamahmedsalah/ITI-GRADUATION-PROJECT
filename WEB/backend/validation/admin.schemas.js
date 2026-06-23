@@ -107,7 +107,7 @@ export const roadmapsListSchema = z.object({
       .optional(),
     targetLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
     templateType: z.enum(["roleBased", "skillBased"]).optional(),
-    source: z.enum(["admin", "ai", "manual"]).optional(),
+    source: z.enum(["admin", "ai", "admin-ai", "user-ai", "manual"]).optional(),
     ownership: z.enum(["admin", "student"]).optional(),
     isActive: z.enum(["true", "false"]).optional(),
   }),
@@ -193,6 +193,7 @@ export const updateRoadmapSchema = z
         .trim()
         .max(ROADMAP_MARKDOWN_MAX_LENGTH)
         .optional(),
+      visibility: z.enum(["public", "private"]).optional(),
     }),
     params: z.object({
       templateId: objectIdSchema,

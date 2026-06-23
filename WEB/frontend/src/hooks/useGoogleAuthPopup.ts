@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useLanguage } from '../context/LanguageContext'
 import { authQueryKey, fetchCurrentUser, logoutCurrentUser, queryClient } from '../libs/react-query'
 import { buildApiUrl, clearAccessToken, getApiBaseUrl } from '../utils/api'
-import { encryptData } from '../utils/crypto'
+import { saveGoogleAccount } from '../utils/googleAccountStorage'
 
 type GoogleAuthMode = 'login' | 'signup'
 
@@ -135,8 +135,7 @@ export function useGoogleAuthPopup(mode: GoogleAuthMode) {
           // Securely save the user profile details in localStorage for "Continue as" feature
           if (data.user) {
             try {
-              const encryptedUser = await encryptData(JSON.stringify(data.user))
-              localStorage.setItem('last_google_account', encryptedUser)
+              await saveGoogleAccount(data.user)
             } catch (cryptoErr) {
               console.error('Failed to secure Google user data:', cryptoErr)
             }

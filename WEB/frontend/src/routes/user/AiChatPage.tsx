@@ -62,12 +62,12 @@ function ConversationList({
   const { t } = useTranslation()
 
   return (
-    <aside className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] rounded-xl border border-(--border) bg-(--surface) shadow-(--shadow)">
+    <aside className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] rounded-2xl border border-(--border) bg-(--surface) shadow-(--shadow)">
       <div className="border-b border-(--border) p-4">
         <button
           type="button"
           onClick={onNew}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
+          className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-(--gd-primary) px-4 py-3 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition hover:-translate-y-0.5 hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0"
         >
           <HugeiconsIcon icon={AiChat02Icon} size={18} />
           {t('aiChat.newChat')}
@@ -87,7 +87,7 @@ function ConversationList({
                 <li key={conversation._id}>
                   <div
                     className={[
-                      'group grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-squircle border px-3 py-3 transition',
+                      'group grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-2xl border px-3 py-3 transition',
                       isActive
                         ? 'border-(--accent-border) bg-(--accent-bg)'
                         : 'border-(--border) bg-(--surface-2) hover:border-(--accent-border)',
@@ -109,7 +109,7 @@ function ConversationList({
                       <button
                         type="button"
                         onClick={() => onRename(conversation)}
-                        className="grid size-8 place-items-center rounded-md text-(--text) transition hover:bg-(--surface-3) hover:text-(--text-h)"
+                        className="grid size-8 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface-3) hover:text-(--text-h)"
                         aria-label={t('aiChat.rename')}
                       >
                         <HugeiconsIcon icon={UserEdit01Icon} size={15} />
@@ -117,7 +117,7 @@ function ConversationList({
                       <button
                         type="button"
                         onClick={() => onDelete(conversation)}
-                        className="grid size-8 place-items-center rounded-md text-(--text) transition hover:bg-[rgba(226,33,52,0.12)] hover:text-(--error)"
+                        className="grid size-8 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-[rgba(226,33,52,0.12)] hover:text-(--error)"
                         aria-label={t('aiChat.delete')}
                       >
                         <HugeiconsIcon icon={Delete02Icon} size={15} />
@@ -176,6 +176,18 @@ function getChatHref(href: string, language: string) {
   }
 
   return { href: normalized || '#', external: normalized.startsWith('/') === false }
+}
+
+const roadmapIntentPattern = /\b(roadmap|road map|learning path|study path|plan|curriculum|syllabus|track|route|learn|study)\b|خريطة|مسار|تعلم|دراسة/i
+
+function shouldShowRoadmapLinks(messages: AiChatMessage[], index: number) {
+  const message = messages[index]
+  const previousUserMessage = messages
+    .slice(0, index)
+    .reverse()
+    .find((candidate) => candidate.role === 'user')
+
+  return roadmapIntentPattern.test(message?.content ?? '') || roadmapIntentPattern.test(previousUserMessage?.content ?? '')
 }
 
 function renderInlineMarkdown(text: string, language: string, keyPrefix: string) {
@@ -322,18 +334,28 @@ function MessageContent({ content, language }: { content: string; language: stri
   )
 }
 
-function MessageBubble({ message, language }: { message: AiChatMessage; language: string }) {
+function MessageBubble({
+  message,
+  language,
+  showRoadmapLinks,
+}: {
+  message: AiChatMessage
+  language: string
+  showRoadmapLinks: boolean
+}) {
   const isUser = message.role === 'user'
-  const links = !isUser ? message.links ?? [] : []
+  const links = !isUser
+    ? (message.links ?? []).filter((link) => link.type !== 'roadmap' || showRoadmapLinks)
+    : []
 
   return (
     <article className={['flex w-full', isUser ? 'justify-end' : 'justify-start'].join(' ')}>
       <div
         className={[
-          'max-w-[min(760px,92%)] text-sm leading-7',
+          'max-w-[min(780px,92%)] text-sm leading-7 shadow-sm',
           isUser
-            ? 'rounded-2xl bg-(--gd-primary) px-4 py-3 text-white shadow-sm'
-            : 'text-(--text-h)',
+            ? 'rounded-2xl bg-(--gd-primary) px-4 py-3 text-white'
+            : 'rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-(--text-h)',
         ].join(' ')}
       >
         <MessageContent content={message.content} language={language} />
@@ -644,10 +666,10 @@ export default function AiChatPage() {
 
   return (
     <main className="h-[calc(100vh-4rem)] min-h-170 overflow-hidden bg-(--bg) px-4 py-4 text-(--text-h) sm:px-6 lg:px-8">
-      <div className="mx-auto grid h-full max-w-7xl gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="mx-auto grid h-full max-w-7xl gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="hidden min-h-0 lg:block">{sidebar}</div>
 
-        <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-(--border) bg-(--surface-2) shadow-(--shadow)">
+        <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-(--border) bg-(--surface) shadow-(--shadow)">
           <header className="flex items-center justify-between gap-3 border-b border-(--border) bg-(--surface) px-4 py-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-(--accent)">
@@ -665,13 +687,13 @@ export default function AiChatPage() {
             </div>
             <div className="flex items-center gap-2">
               {isAuthenticated && !canUseChat ? (
-                <Link to={`/${language}/upgrade`} className="hidden text-sm font-semibold text-(--accent) sm:inline">
+                <Link to={`/${language}/upgrade`} className="hidden rounded-squircle border border-(--accent-border) px-3 py-2 text-sm font-semibold text-(--accent) transition hover:bg-(--accent-bg) sm:inline">
                   {t('aiChat.upgrade')}
                 </Link>
               ) : null}
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) lg:hidden"
+                className="inline-flex items-center gap-2 rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border) lg:hidden"
                 onClick={() => setIsMobileListOpen(true)}
               >
                 <HugeiconsIcon icon={AiChat02Icon} size={17} />
@@ -680,7 +702,7 @@ export default function AiChatPage() {
             </div>
           </header>
 
-          <div className="min-h-0 overflow-y-auto px-4 py-6">
+          <div className="min-h-0 overflow-y-auto bg-(--surface-2)/45 px-4 py-6">
             <div className="mx-auto grid w-full max-w-3xl gap-6">
               {!isAuthenticated ? (
                 <div className="mx-auto grid max-w-lg place-items-center gap-4 rounded-xl border border-(--border) bg-(--surface) p-6 text-center">
@@ -700,8 +722,13 @@ export default function AiChatPage() {
                 </p>
               ) : messages.length ? (
                 <>
-                  {messages.map((message) => (
-                    <MessageBubble key={message._id} message={message} language={language} />
+                  {messages.map((message, index) => (
+                    <MessageBubble
+                      key={message._id}
+                      message={message}
+                      language={language}
+                      showRoadmapLinks={shouldShowRoadmapLinks(messages, index)}
+                    />
                   ))}
                   {isSending ? (
                     <article className="flex justify-start">
@@ -731,12 +758,12 @@ export default function AiChatPage() {
                   rows={2}
                   disabled={!isAuthenticated || !canUseChat || isSending}
                   placeholder={t('aiChat.placeholder')}
-                  className="min-h-16 rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm leading-6 text-(--text-h) outline-none transition focus:border-(--accent-border) disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-16 resize-none rounded-2xl border border-(--border) bg-(--surface-2) px-4 py-3 text-sm leading-6 text-(--text-h) outline-none transition focus:border-(--accent-border) focus:ring-1 focus:ring-(--accent)/30 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   type="submit"
                   disabled={!draftMessage.trim() || !isAuthenticated || !canUseChat || isSending}
-                  className="relative inline-flex min-h-12 items-center justify-center gap-2 rounded-squircle bg-(--gd-primary) px-6 py-3 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:translate-y-0 disabled:scale-100 disabled:opacity-50"
+                  className="relative inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-(--gd-primary) px-6 py-3 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:translate-y-0 disabled:scale-100 disabled:opacity-50"
                 >
                   {isSending ? (
                     <>

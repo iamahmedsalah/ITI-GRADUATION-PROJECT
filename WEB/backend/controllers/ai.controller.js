@@ -1,3 +1,4 @@
+import RoadmapTemplate from "../models/roadmap/roadmapTemplateModel.js";
 import { generateRecommendations } from "../services/ai/recommendations.js";
 import {
   createAiRoadmapDraft,
@@ -317,6 +318,43 @@ export const deleteAiChatConversation = async (req, res, next) => {
       success: true,
       message: "AI chat conversation deleted successfully.",
       data: payload,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateUserAiRoadmapVisibility = async (req, res, next) => {
+  const { templateId } = req.params;
+  const { visibility } = req.body;
+
+  if (!["public", "private"].includes(visibility)) {
+    return res.status(400).json({
+      success: false,
+      message: "Visibility must be either public or private.",
+    });
+  }
+
+  try {
+    const template = await RoadmapTemplate.findOne({
+      _id: templateId,
+      owner: req.user._id,
+    });
+
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        message: "Roadmap template not found or unauthorized.",
+      });
+    }
+
+    template.visibility = visibility;
+    await template.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Roadmap visibility updated to ${visibility} successfully.`,
+      data: template,
     });
   } catch (error) {
     return next(error);

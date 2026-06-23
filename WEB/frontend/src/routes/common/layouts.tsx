@@ -12,6 +12,8 @@ import { Toaster } from 'sonner'
 import type { RouteLanguageData } from '../../utils/route-utils'
 import { fetchAdminOverview } from '../../libs/admin-api'
 import { adminAuthQueryKey, fetchAdminCurrentUser, logoutAdminUser } from '../../libs/react-query'
+import { useWhatsNew } from '../../hooks/useWhatsNew'
+import WhatsNewPanel from '../../components/ui/WhatsNewPanel'
 
 type RootLayoutProps = {
   children?: ReactNode
@@ -143,6 +145,8 @@ export function AdminLayout() {
     location.pathname.endsWith('/forgot-password') ||
     location.pathname.includes('/reset-password/')
 
+  const { isOpen, latestData, dismiss, open } = useWhatsNew('admin')
+
   const { data: overview } = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: fetchAdminOverview,
@@ -218,12 +222,14 @@ export function AdminLayout() {
     collapsed: isSidebarCollapsed,
     onClose: closeMobileSidebar,
     onToggleCollapse: () => setIsSidebarCollapsed((previous) => !previous),
+    onWhatsNew: open,
     onLogout: () => void handleAdminLogout(),
   }
 
   return (
     <div className="relative flex min-h-screen text-(--text-h)">
       <ShellGradient />
+      <WhatsNewPanel isOpen={isOpen} onClose={dismiss} latestData={latestData} />
 
       {!isAuthRoute ? (
         <div className="sticky top-0 hidden h-screen shrink-0 lg:block">

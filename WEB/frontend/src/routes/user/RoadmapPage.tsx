@@ -4,6 +4,7 @@ import { useLoaderData } from 'react-router-dom'
 import { RoadmapHeader } from '../../components/ui/RoadmapHeader'
 import { RoadmapGraph } from '../../components/ui/RoadmapGraph'
 import { StepDetailPanel } from '../../components/ui/StepDetailPanel'
+import { RoadmapCompletionPopup } from '../../components/roadmap/RoadmapCompletionPopup'
 import {
   useAuthQuery,
   useRoadmapProgress,
@@ -11,6 +12,7 @@ import {
   useUpdateStepStatus,
   useUserRoadmaps,
 } from '../../hooks/useRoadmapData'
+import { useAiRecommendations } from '../../hooks/queries/useAiRecommendations'
 import {
   buildProgressMap,
   calculateProgress,
@@ -24,6 +26,7 @@ export default function RoadmapPage() {
   const { slug } = useLoaderData() as RoadmapLoaderData
   const [selectedStepKey, setSelectedStepKey] = useState('')
   const [isPanelOpen, setIsPanelOpen] = useState(true)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
 
   // ─── Data fetching ────────────────────────────────────────────────────
   const authQuery = useAuthQuery()
@@ -39,6 +42,7 @@ export default function RoadmapPage() {
     enrolledRoadmap?._id,
     Boolean(authQuery.data && enrolledRoadmap?._id),
   )
+  const recommendationsQuery = useAiRecommendations(3, showCompletionPopup)
 
   // ─── Derived state ────────────────────────────────────────────────────
   const steps = useMemo(
@@ -86,7 +90,20 @@ export default function RoadmapPage() {
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handleStatusChange = (nextStatus: StepStatus) => {
     if (!selectedStep) return
-    updateMutation.mutate({ stepKey: selectedStep.stepKey, status: nextStatus })
+
+    const projectedMap = new Map(progressMap)
+    projectedMap.set(selectedStep.stepKey, nextStatus)
+    const projectedProgress = calculateProgress(steps, projectedMap)
+    const shouldCelebrate = nextStatus === 'completed' && progressPercent < 100 && projectedProgress >= 100
+
+    updateMutation.mutate(
+      { stepKey: selectedStep.stepKey, status: nextStatus },
+      {
+        onSuccess: () => {
+          if (shouldCelebrate) setShowCompletionPopup(true)
+        },
+      },
+    )
   }
 
   // ─── Render ───────────────────────────────────────────────────────────
@@ -128,6 +145,13 @@ export default function RoadmapPage() {
           )}
         </div>
       </div>
+      <RoadmapCompletionPopup
+        open={showCompletionPopup}
+        roadmapTitle={template?.title ?? ''}
+        recommendations={recommendationsQuery.data}
+        isLoadingRecommendations={recommendationsQuery.isLoading}
+        onClose={() => setShowCompletionPopup(false)}
+      />
     </main>
   )
 }

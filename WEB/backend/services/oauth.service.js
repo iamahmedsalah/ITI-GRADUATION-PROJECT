@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 import { customAlphabet } from "nanoid";
 import User from "../models/user/userAccountModel.js";
 import UserActivity from "../models/user/userActivityModel.js";
@@ -10,6 +11,7 @@ import generateTokenSetCookie, {
 import {
   REFRESH_TOKEN_MAX_AGE_MS,
   generateVerificationToken,
+  toPublicUser,
   updateLoginStreak,
 } from "../helpers/auth.helpers.js";
 
@@ -30,6 +32,7 @@ const SOCIAL_PROVIDER_CONFIG = {
 const SOCIAL_CALLBACK_ERROR = "oauth_error";
 const SOCIAL_SUCCESS_REDIRECT = "/verify-email";
 const DEFAULT_SOCIAL_INTENT = "signup";
+const googleIdTokenClient = new OAuth2Client();
 
 const recordLoginActivity = async (req, user) => {
   try {
@@ -207,7 +210,7 @@ const generateSocialUsername = (email) => {
     .toLowerCase()
     .replace(/[^a-z0-9._-]/g, "")
     .replace(/^[._-]+|[._-]+$/g, "")
-    .slice(0, 16) || "user";
+    .slice(0, 13) || "user";
 
   return `${base}-${generateSocialSuffix()}`;
 };
@@ -267,6 +270,43 @@ const exchangeCodeForSocialProfile = async (req, provider, code) => {
   };
 };
 
+const verifyGoogleCredential = async (credential) => {
+  const clientId = SOCIAL_PROVIDER_CONFIG.google.clientId;
+
+  if (!clientId) {
+    throw new Error("GOOGLE_CLIENT_ID must be configured");
+  }
+
+  if (!credential || typeof credential !== "string") {
+    const error = new Error("Google credential is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const ticket = await googleIdTokenClient.verifyIdToken({
+    idToken: credential,
+    audience: clientId,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload?.email) {
+    const error = new Error("Google account did not return an email address");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return {
+    email: payload.email,
+    emailVerified: payload.email_verified !== false,
+    name: payload.name,
+    first_name: payload.given_name,
+    last_name: payload.family_name,
+    picture: payload.picture,
+    providerId: payload.sub,
+  };
+};
+
 const handleSocialAuthSuccess = async (res, user) => {
   const now = new Date();
   user.lastLogin = now;
@@ -274,7 +314,8 @@ const handleSocialAuthSuccess = async (res, user) => {
   user.failedLoginAttempts = 0;
   user.lockUntil = undefined;
 
-  const { refreshToken } = generateTokenSetCookie(res, user._id);
+  const { accessToken, refreshToken } = generateTokenSetCookie(res, user._id);
+  res.locals.accessToken = accessToken;
   user.refreshTokenHash = hashRefreshToken(refreshToken);
   user.refreshTokenExpiresAt = Date.now() + REFRESH_TOKEN_MAX_AGE_MS;
   await user.save();
@@ -523,5 +564,61 @@ export const handleSocialAuthCallback = (provider) => async (req, res) => {
 
     console.error(`${provider} OAuth error:`, error);
     return redirectWithSocialError(res, language, `${provider} login failed`);
+  }
+};
+
+export const handleGoogleCredentialAuth = async (req, res) => {
+  const { credential, mode = DEFAULT_SOCIAL_INTENT } = req.body ?? {};
+  const intent = normalizeSocialIntent(mode);
+
+  try {
+    clearAuthCookies(res);
+    const profile = await verifyGoogleCredential(credential);
+    const { user, requiresVerification } = await createOrLinkSocialUser("google", profile, intent);
+
+    if (requiresVerification) {
+      await issueVerificationEmail(user);
+
+      return res.status(202).json({
+        success: true,
+        requiresVerification: true,
+        email: profile.email,
+        provider: "google",
+        message: "Email verification required.",
+      });
+    }
+
+    const signedInUser = await handleSocialAuthSuccess(res, user);
+    const accessToken = res.locals?.accessToken;
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login successful.",
+      accessToken,
+      user: toPublicUser(signedInUser),
+      googleUser: {
+        name: `${signedInUser.Fname} ${signedInUser.Lname}`.trim(),
+        email: signedInUser.email,
+        avatarUrl: signedInUser.avatarUrl || "",
+      },
+    });
+  } catch (error) {
+    clearAuthCookies(res);
+
+    const status =
+      error?.statusCode === 400 ||
+      error?.statusCode === 403 ||
+      error?.statusCode === 404
+        ? error.statusCode
+        : 401;
+
+    if (status === 401) {
+      console.error("Google credential auth error:", error);
+    }
+
+    return res.status(status).json({
+      success: false,
+      message: error.message || "Google login failed.",
+    });
   }
 };

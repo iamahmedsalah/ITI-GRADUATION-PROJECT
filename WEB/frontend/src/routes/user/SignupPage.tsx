@@ -22,7 +22,6 @@ function SignupPage() {
         >
           <SignupAsideActions
             onSocialSignup={signupPage.handleSocialSignup}
-            onUseDifferentAccount={signupPage.handleUseDifferentAccount}
             savedAccount={signupPage.savedAccount}
           />
         </AuthIntroPanel>

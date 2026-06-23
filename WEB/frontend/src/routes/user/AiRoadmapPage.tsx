@@ -5,14 +5,17 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  Alert02Icon,
   AiBrain03Icon,
   AiChat02Icon,
   AiMagicIcon,
+  BookmarkAdd02Icon,
   CrownIcon,
   FileLinkIcon,
-  FileStarIcon,
   Route03Icon,
+  SidebarLeftIcon,
 } from '@hugeicons/core-free-icons'
+import AiRoadmapManager from '../../components/ai/AiRoadmapManager'
 import { RoadmapGraph } from '../../components/ui/RoadmapGraph'
 import {
   explainAiRoadmapTopic,
@@ -21,6 +24,7 @@ import {
   saveUserAiRoadmap,
   type AiRoadmapDraft,
 } from '../../libs/ai-api'
+import { updateRoadmapVisibility, type RoadmapTemplate } from '../../libs/roadmaps-api'
 import { createGraph, normalizeSteps } from '../../utils/graphBuilder'
 import type { RoadmapStep, StepStatus } from '../../types/roadmap'
 import { authQueryKey, fetchCurrentUser } from '../../libs/react-query'
@@ -51,7 +55,7 @@ function StepPreviewPanel({
   explanation,
   onExplain,
 }: {
-  draft: AiRoadmapDraft
+  draft: AiRoadmapDraft | RoadmapTemplate
   step?: RoadmapStep
   canExplain: boolean
   isExplaining: boolean
@@ -180,10 +184,11 @@ export default function AiRoadmapPage() {
   const [targetLevel, setTargetLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner')
   const [durationWeeks, setDurationWeeks] = useState(8)
   const [weeklyStudyHours, setWeeklyStudyHours] = useState(6)
-  const [draft, setDraft] = useState<AiRoadmapDraft | null>(null)
+  const [draft, setDraft] = useState<AiRoadmapDraft | RoadmapTemplate | null>(null)
   const [selectedStepKey, setSelectedStepKey] = useState('')
   const [isPanelOpen, setIsPanelOpen] = useState(true)
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false)
+  const [isManagerOpen, setIsManagerOpen] = useState(true)
   const [explanations, setExplanations] = useState<Record<string, TopicExplanationContent>>({})
 
   useEffect(() => {
@@ -204,6 +209,13 @@ export default function AiRoadmapPage() {
     enabled: Boolean(authQuery.data),
   })
 
+  const ownerOrCreator = useMemo(() => {
+    if (!draft) return null
+    if (draft.owner && typeof draft.owner === 'object') return draft.owner
+    if (draft.createdBy && typeof draft.createdBy === 'object') return draft.createdBy
+    return null
+  }, [draft])
+
   const generateMutation = useMutation({
     mutationFn: generateUserAiRoadmapDraft,
     onSuccess: (payload) => {
@@ -222,9 +234,35 @@ export default function AiRoadmapPage() {
 
   const saveMutation = useMutation({
     mutationFn: saveUserAiRoadmap,
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       toast.success(t('aiRoadmap.saved'))
+      if (data?.template) {
+        setDraft(data.template)
+      }
       await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'public-ai'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('aiRoadmap.saveFailed'))
+    },
+  })
+
+  const updateVisibilityMutation = useMutation({
+    mutationFn: async ({ templateId, visibility }: { templateId: string; visibility: 'public' | 'private' }) => {
+      await updateRoadmapVisibility(templateId, visibility)
+      return { templateId, visibility }
+    },
+    onSuccess: async (data) => {
+      toast.success(t('aiRoadmap.visibilityUpdated'))
+      setDraft((current) => {
+        if (!current) return null
+        return {
+          ...current,
+          visibility: data.visibility,
+        }
+      })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'public-ai'] })
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t('aiRoadmap.saveFailed'))
@@ -264,6 +302,8 @@ export default function AiRoadmapPage() {
   const canSave = Boolean(access?.capabilities.canSaveRoadmap)
   const canExplain = Boolean(access?.capabilities.canExplainTopic)
 
+  const isSaved = Boolean(draft && '_id' in draft)
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!isAuthenticated) {
@@ -292,13 +332,30 @@ export default function AiRoadmapPage() {
   return (
     <main className="min-h-screen bg-(--bg) px-4 py-6 text-(--text-h) sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-7xl gap-5">
-        <section className="grid gap-5 rounded-2xl border border-(--border) bg-gradient-to-b from-(--surface) to-(--surface-2) p-6 shadow-lg shadow-black/10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <section
+          className={[
+            'grid gap-5 rounded-2xl border border-(--border) bg-gradient-to-b from-(--surface) to-(--surface-2) p-4 shadow-lg shadow-black/10 sm:p-6',
+            isManagerOpen ? 'lg:grid-cols-[minmax(0,1fr)_minmax(19rem,23rem)]' : '',
+          ].join(' ')}
+        >
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-(--accent-border)/20 bg-(--accent-bg)/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-(--accent)">
-              <HugeiconsIcon icon={AiMagicIcon} size={14} className="animate-pulse" />
-              {t('aiRoadmap.overline')}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-(--accent-border)/20 bg-(--accent-bg)/50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-(--accent)">
+                <HugeiconsIcon icon={AiMagicIcon} size={14} className="animate-pulse" />
+                {t('aiRoadmap.overline')}
+              </div>
+              {!isManagerOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setIsManagerOpen(true)}
+                  className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:border-(--accent-border) hover:text-(--accent)"
+                >
+                  <HugeiconsIcon icon={SidebarLeftIcon} size={17} />
+                  {t('aiRoadmap.showManager')}
+                </button>
+              ) : null}
             </div>
-            <h1 className="mt-4 text-3xl font-extrabold text-(--text-h) sm:text-4xl tracking-tight">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-(--text-h) sm:text-4xl">
               {t('aiRoadmap.title')}
             </h1>
             <form className="mt-6 grid gap-5" onSubmit={handleSubmit}>
@@ -312,7 +369,7 @@ export default function AiRoadmapPage() {
                   minLength={10}
                   maxLength={500}
                   rows={4}
-                  className="min-h-32 resize-y rounded-squircle border border-(--border) bg-(--surface-2)/50 px-4 py-3 text-sm leading-7 text-(--text-h) outline-none transition duration-200 focus:border-(--accent-border) focus:ring-1 focus:ring-(--accent)/30 focus:bg-(--surface-2)"
+                  className="min-h-32 resize-y rounded-squircle border border-(--border) bg-(--surface-2)/50 px-4 py-3 text-sm leading-7 text-(--text-h) outline-none transition duration-200 focus:border-(--accent-border) focus:bg-(--surface-2) focus:ring-1 focus:ring-(--accent)/30"
                   placeholder={t('aiRoadmap.promptPlaceholder')}
                 />
               </label>
@@ -360,8 +417,8 @@ export default function AiRoadmapPage() {
               </div>
 
               {/* Pre-build AI Disclaimer */}
-              <div className="flex items-start gap-3 rounded-xl border border-amber-500/15 bg-amber-500/5 p-4 text-xs leading-5 text-(--text) backdrop-blur-sm">
-                <span className="text-amber-500 text-sm mt-0.5">⚠️</span>
+              <div className="flex items-start gap-3 rounded-xl border border-(--accent-border) bg-(--accent-bg) p-4 text-xs leading-5 text-(--text) backdrop-blur-sm">
+                <HugeiconsIcon icon={Alert02Icon} size={18} className="text-(--accent) mt-0.5 flex-shrink-0" />
                 <p>
                   <strong className="font-semibold text-(--text-h)">{t('aiRoadmap.disclaimerTitle', { defaultValue: 'Note:' })}</strong>{' '}
                   {t('aiRoadmap.disclaimerText', {
@@ -373,7 +430,7 @@ export default function AiRoadmapPage() {
               <button
                 type="submit"
                 disabled={generateMutation.isPending || (isAuthenticated && !access?.capabilities.canGenerateDraft)}
-                className="relative inline-flex items-center gap-2 rounded-squircle bg-(--gd-primary) px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:translate-y-0 disabled:scale-100 disabled:opacity-50"
+                className="relative inline-flex items-center gap-2 rounded-squircle bg-(--gd-primary) px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-(--gd-primary)/10 transition-all duration-200 hover:-translate-y-0.5  hover:bg-(--gd-primary-hover) hover:shadow-lg hover:shadow-(--gd-primary)/20 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:translate-y-0 disabled:scale-100 disabled:opacity-50"
               >
                 {generateMutation.isPending ? (
                   <>
@@ -393,32 +450,14 @@ export default function AiRoadmapPage() {
             </form>
           </div>
 
-          <div className="grid content-start gap-4 rounded-2xl border border-(--border) bg-(--surface-2)/30 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-(--text-h)">
-              <HugeiconsIcon icon={CrownIcon} size={18} className="text-amber-500" />
-              {t('aiRoadmap.planTitle')}
-            </div>
-            <p className="text-sm leading-6 text-(--text)">
-              {!isAuthenticated
-                ? t('aiRoadmap.guestPlan')
-                : access?.subscription.isSubscriber
-                  ? t('aiRoadmap.proPlan')
-                  : t('aiRoadmap.freePlan')}
-            </p>
-            {isAuthenticated ? (
-              <div className="rounded-squircle bg-(--surface) px-3 py-2 text-sm font-medium text-(--text)">
-                {t('aiRoadmap.draftsLeft', {
-                  count: access?.usage.draftsRemaining ?? 0,
-                  limit: access?.usage.draftLimit ?? access?.usage.freeDraftLimit ?? 0,
-                })}
-              </div>
-            ) : null}
-            {isAuthenticated && access && !access.capabilities.canGenerateDraft ? (
-              <p className="rounded-md border border-(--border) px-3 py-2 text-sm text-(--text)">
-                {t('aiRoadmap.limitReached')}
-              </p>
-            ) : null}
-          </div>
+          {isManagerOpen ? (
+            <AiRoadmapManager
+              access={access}
+              currentUser={authQuery.data}
+              isAuthenticated={isAuthenticated}
+              onToggle={() => setIsManagerOpen(false)}
+            />
+          ) : null}
         </section>
 
         {draft ? (
@@ -432,21 +471,68 @@ export default function AiRoadmapPage() {
                 <h2 className="mt-1 truncate text-xl font-bold text-(--text-h)">
                   {draft.title}
                 </h2>
+                {ownerOrCreator && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="size-6 overflow-hidden rounded-full border border-white/10 bg-white/20">
+                      {ownerOrCreator.avatarUrl ? (
+                        <img src={ownerOrCreator.avatarUrl} alt={ownerOrCreator.Fname} className="size-full object-cover" />
+                      ) : (
+                        <span className="flex size-full items-center justify-center text-[10px] font-bold text-white bg-(--gd-primary)">
+                          {((ownerOrCreator.Fname?.[0] || '') + (ownerOrCreator.Lname?.[0] || '')).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-(--text)">
+                      {t('aiRoadmap.owner', 'Owner')}:{' '}
+                      <span className="font-semibold text-(--text-h)">
+                        {ownerOrCreator.Fname} {ownerOrCreator.Lname}
+                      </span>
+                    </span>
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => saveMutation.mutate(draft)}
-                disabled={!canSave || saveMutation.isPending}
-                className={[
-                  'inline-flex items-center cursor-pointer gap-2 rounded-squircle px-4 py-2.5 text-sm font-semibold transition',
-                  canSave
-                    ? 'bg-(--gd-primary) text-white hover:bg-(--gd-primary-hover)'
-                    : 'cursor-not-allowed border border-(--border) bg-(--surface-2) text-(--text)',
-                ].join(' ')}
-              >
-                <HugeiconsIcon icon={FileStarIcon} size={18} />
-                {saveMutation.isPending ? t('aiRoadmap.saving') : t('aiRoadmap.save')}
-              </button>
+              {isSaved ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-squircle border border-(--border) bg-(--surface-2) px-3 py-1.5 text-xs text-(--text)">
+                    <span className="font-semibold text-(--text-h)">{t('aiRoadmap.visibility')}:</span>
+                    <span className="capitalize">{t(`aiRoadmap.${draft.visibility || 'private'}`)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={updateVisibilityMutation.isPending}
+                    onClick={() => {
+                      if (draft && '_id' in draft) {
+                        updateVisibilityMutation.mutate({
+                          templateId: draft._id,
+                          visibility: draft.visibility === 'public' ? 'private' : 'public',
+                        })
+                      }
+                    }}
+                    className="inline-flex items-center cursor-pointer gap-2 rounded-squircle bg-(--gd-primary) px-4 py-2 text-xs font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:opacity-50"
+                  >
+                    {draft.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (draft && !('_id' in draft)) {
+                      saveMutation.mutate(draft)
+                    }
+                  }}
+                  disabled={!canSave || saveMutation.isPending}
+                  className={[
+                    'inline-flex items-center cursor-pointer gap-2 rounded-squircle px-4 py-2.5 text-sm font-semibold transition',
+                    canSave
+                      ? 'bg-(--gd-primary) text-white hover:bg-(--gd-primary-hover)'
+                      : 'cursor-not-allowed border border-(--border) bg-(--surface-2) text-(--text)',
+                  ].join(' ')}
+                >
+                  <HugeiconsIcon icon={BookmarkAdd02Icon} size={18} />
+                  {saveMutation.isPending ? t('aiRoadmap.saving') : t('aiRoadmap.save')}
+                </button>
+              )}
             </div>
 
             <div className={['grid gap-5', shouldShowPanel ? 'xl:grid-cols-[minmax(0,1fr)_380px]' : ''].join(' ')}>

@@ -186,7 +186,11 @@ export const getRoadmapProgressCore = async ({ userId, roadmapId }) => {
 
 export const getUserRoadmapsCore = async ({ userId }) => {
   return UserRoadmap.find({ user: userId })
-    .populate("template", "title slug description targetLevel templateType source visibility")
+    .populate({
+      path: "template",
+      select: "title slug description targetLevel templateType source visibility owner",
+      populate: { path: "owner", select: "username Fname Lname avatarUrl" }
+    })
     .select("-__v")
     .sort({ createdAt: -1 });
 };

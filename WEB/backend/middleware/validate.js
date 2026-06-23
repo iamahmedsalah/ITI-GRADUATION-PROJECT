@@ -30,7 +30,12 @@ export const validateRequest = (schema) => async (req, res, next) => {
 
   if ("body" in result.data) req.body = result.data.body;
   if ("params" in result.data) req.params = result.data.params;
-  if ("query" in result.data) req.query = result.data.query;
+  if ("query" in result.data) {
+    for (const key in req.query) {
+      delete req.query[key];
+    }
+    Object.assign(req.query, result.data.query);
+  }
   return next();
 };
 
@@ -41,6 +46,9 @@ export const validateQuery = (schema) => async (req, res, next) => {
     return validationFailed(res, formatZodErrors(result.error.issues));
   }
 
-  req.query = result.data;
+  for (const key in req.query) {
+    delete req.query[key];
+  }
+  Object.assign(req.query, result.data);
   return next();
 };

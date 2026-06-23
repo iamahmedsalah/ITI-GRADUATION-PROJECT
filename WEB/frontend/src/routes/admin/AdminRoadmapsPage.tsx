@@ -46,8 +46,12 @@ function getRoadmapSourceKind(roadmap: AdminRoadmapRow): RoadmapSourceKind {
   return roadmap.displaySource ?? roadmap.source ?? 'manual'
 }
 
-function RoadmapSourceBadge({ roadmap, label }: { roadmap: AdminRoadmapRow; label: string }) {
+function RoadmapSourceBadge({ roadmap }: { roadmap: AdminRoadmapRow }) {
+  const { t } = useTranslation()
   const sourceKind = getRoadmapSourceKind(roadmap)
+  const label = t(`adminUi.roadmaps.sources.${sourceKind}`, {
+    defaultValue: sourceKind === 'std-ai' ? 'Student AI' : sourceKind === 'admin' ? 'Admin' : sourceKind === 'ai' ? 'AI' : 'Manual'
+  })
 
   return (
     <span className="inline-flex w-fit items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-soft) px-2 py-1 text-xs font-semibold uppercase text-(--text-h)">
@@ -173,6 +177,7 @@ export default function AdminRoadmapsPage() {
         targetLevel: LevelOption
         templateType: TemplateTypeOption
         isActive: boolean
+        visibility: 'public' | 'private'
       }>
     }) => updateAdminRoadmap(templateId, payload),
     onSuccess: (result) => {
@@ -367,7 +372,13 @@ export default function AdminRoadmapsPage() {
                   </div>
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.source', 'Source')}</span>
-                    <RoadmapSourceBadge roadmap={roadmap} label={roadmap.displaySource ?? roadmap.source ?? 'manual'} />
+                    <RoadmapSourceBadge roadmap={roadmap} />
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase text-(--text)">{t('aiRoadmap.visibility')}</span>
+                    <span className="font-semibold text-(--text-h) capitalize">
+                      {roadmap.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
+                    </span>
                   </div>
                   <div className="grid gap-1">
                     <span className="text-xs font-medium uppercase text-(--text)">{t('adminUi.roadmaps.table.target')}</span>
@@ -387,6 +398,21 @@ export default function AdminRoadmapsPage() {
                     activeLabel={t('adminUi.roadmaps.actions.unpublish')}
                     inactiveLabel={t('adminUi.roadmaps.actions.publish')}
                   />
+                  <button
+                    type="button"
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+                    disabled={updateMutation.isPending}
+                    onClick={() => {
+                      updateMutation.mutate({
+                        templateId: roadmap._id,
+                        payload: {
+                          visibility: roadmap.visibility === 'public' ? 'private' : 'public',
+                        },
+                      })
+                    }}
+                  >
+                    {roadmap.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
+                  </button>
                   <button
                     type="button"
                     className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
@@ -477,11 +503,16 @@ export default function AdminRoadmapsPage() {
                     <Link to={roadmap._id} className="font-semibold text-(--text-h) hover:text-(--gd-primary)">
                       {roadmap.title}
                     </Link>
-                    <div className="text-xs text-(--text)">{roadmap.slug}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-(--text)">{roadmap.slug}</span>
+                      <span className="text-[10px] uppercase font-bold text-(--text) bg-(--surface-soft) px-1.5 py-0.5 rounded">
+                        {roadmap.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-(--text)">{t(`adminUi.roadmapTypes.${roadmap.templateType ?? 'roleBased'}`)}</td>
                   <td className="px-4 py-4 text-(--text)">
-                    <RoadmapSourceBadge roadmap={roadmap} label={roadmap.displaySource ?? roadmap.source ?? 'manual'} />
+                    <RoadmapSourceBadge roadmap={roadmap} />
                     {roadmap.owner ? (
                       <div className="mt-1 text-xs text-(--text)">
                         {roadmap.owner.username || roadmap.owner.email}
@@ -500,6 +531,21 @@ export default function AdminRoadmapsPage() {
                         activeLabel={t('adminUi.roadmaps.actions.unpublish')}
                         inactiveLabel={t('adminUi.roadmaps.actions.publish')}
                       />
+                      <button
+                        type="button"
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"
+                        disabled={updateMutation.isPending}
+                        onClick={() => {
+                          updateMutation.mutate({
+                            templateId: roadmap._id,
+                            payload: {
+                              visibility: roadmap.visibility === 'public' ? 'private' : 'public',
+                            },
+                          })
+                        }}
+                      >
+                        {roadmap.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
+                      </button>
                       <button
                         type="button"
                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) px-3 py-2 text-xs font-semibold text-(--text-h) transition-transform duration-200 hover:scale-[1.04] hover:bg-(--surface-soft)"

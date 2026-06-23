@@ -12,6 +12,7 @@ export {
 } from "../services/auth.service.js";
 
 export {
+  handleGoogleCredentialAuth,
   handleSocialAuthCallback,
   startSocialAuth,
 } from "../services/oauth.service.js";

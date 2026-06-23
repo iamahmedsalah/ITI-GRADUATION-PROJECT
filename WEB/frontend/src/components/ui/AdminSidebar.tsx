@@ -7,6 +7,7 @@ import {
   Mail01Icon,
   Route03Icon,
   UserEdit01Icon,
+  GiftIcon,
 } from '@hugeicons/core-free-icons';
 import LangToggleButton from '../common/lang-toggle'
 import ThemeToggleButton from '../common/theme-toggle'
@@ -40,6 +41,7 @@ type AdminSidebarProps = {
   onClose?: () => void
   onToggleCollapse?: () => void
   onLogout: () => void
+  onWhatsNew?: () => void
 }
 
 const iconByKind = {
@@ -89,6 +91,7 @@ export default function AdminSidebar({
   onClose,
   onToggleCollapse,
   onLogout,
+  onWhatsNew,
 }: AdminSidebarProps) {
   const isCollapsed = collapsed && !mobile
   const avatarLetter = (adminName || adminEmail || 'A').trim().charAt(0).toUpperCase()
@@ -228,6 +231,22 @@ export default function AdminSidebar({
             {avatar}
           </Link>
         )}
+        {onWhatsNew ? (
+          <button
+            type="button"
+            onClick={onWhatsNew}
+            title={isCollapsed ? t('whatsNew.triggerBtn', { defaultValue: "What's New" }) : undefined}
+            className={[
+              'group inline-flex cursor-pointer items-center justify-center gap-2 rounded-squircle border border-(--border) bg-transparent px-4 py-2.5 text-sm font-semibold text-(--text-h) transition-all duration-200 hover:border-(--accent-border) hover:bg-(--surface-soft-hover) hover:text-(--gd-primary)',
+              isCollapsed ? 'px-2 py-2.5' : 'justify-start',
+            ].join(' ')}
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-squircle text-(--text-h) transition-colors group-hover:bg-[linear-gradient(135deg,rgba(29,185,84,0.18),rgba(30,215,96,0.06))] group-hover:text-(--gd-primary)">
+              <HugeiconsIcon icon={GiftIcon} size={18} />
+            </span>
+            {!isCollapsed ? t('whatsNew.triggerBtn', { defaultValue: "What's New" }) : null}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onLogout}

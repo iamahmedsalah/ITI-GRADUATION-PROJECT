@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { AiMagicIcon, CourseIcon, Route03Icon, StarIcon } from '@hugeicons/core-free-icons'
+import { AiMagicIcon, BookmarkRemove02Icon, CourseIcon, Route03Icon } from '@hugeicons/core-free-icons'
 import * as THREE from 'three'
 import { useTheme } from '../../context/ThemeContext'
 import { addAnimatedGltfModel, addAnimatedLogoModel } from '../../utils/threeLogoModel'
@@ -652,7 +652,7 @@ export default function LearningConstellation({
     label: string
     icon: typeof Route03Icon
   }> = [
-    { kind: 'starred', label: t('dashboard.constellation.legend.starred'), icon: StarIcon },
+    { kind: 'starred', label: t('dashboard.constellation.legend.starred'), icon: BookmarkRemove02Icon },
     { kind: 'roadmap', label: t('dashboard.constellation.legend.roadmaps'), icon: Route03Icon },
     { kind: 'course', label: t('dashboard.constellation.legend.courses'), icon: CourseIcon },
     { kind: 'ai', label: t('dashboard.constellation.legend.ai'), icon: AiMagicIcon },

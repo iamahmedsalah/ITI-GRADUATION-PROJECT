@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { StarIcon } from '@hugeicons/core-free-icons'
+import { BookmarkAdd02Icon, BookmarkRemove02Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useLanguage } from '../../context/LanguageContext'
@@ -111,7 +111,11 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
           : t('landing.save', { defaultValue: 'Star roadmap' })}
         onClick={() => starMutation.mutate()}
       >
-        <HugeiconsIcon icon={StarIcon} size={17} className={isStarred ? 'star-toggle-icon star-toggle-icon-active' : 'star-toggle-icon'} />
+        <HugeiconsIcon
+          icon={isStarred ? BookmarkRemove02Icon : BookmarkAdd02Icon}
+          size={17}
+          className={isStarred ? 'star-toggle-icon star-toggle-icon-active' : 'star-toggle-icon'}
+        />
       </button>
     </article>
   )

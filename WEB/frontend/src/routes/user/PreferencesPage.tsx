@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -137,6 +137,159 @@ function ReviewRow({
   );
 }
 
+// Native HTML Canvas particle burst animation component
+type Particle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  radius: number;
+  alpha: number;
+  decay: number;
+  gravity: number;
+};
+
+type CanvasFxProps = {
+  trigger: number;
+  x: number;
+  y: number;
+};
+
+function CanvasFx({ trigger, x, y }: CanvasFxProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (trigger === 0) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = [
+      "rgba(16, 185, 129, ", // Emerald/Green
+      "rgba(99, 102, 241, ", // Indigo/Blue
+      "rgba(244, 63, 94, ",  // Rose/Red
+      "rgba(234, 179, 8, ",  // Yellow
+      "rgba(6, 182, 212, ",  // Cyan
+    ];
+
+    let spawnX = x;
+    let spawnY = y;
+
+    // Fall back to Next button coordinates if keyboard submit
+    const nextBtn = document.querySelector('button[type="submit"]');
+    if ((!spawnX || !spawnY) && nextBtn) {
+      const rect = nextBtn.getBoundingClientRect();
+      spawnX = rect.left + rect.width / 2;
+      spawnY = rect.top + rect.height / 2;
+    }
+    if (!spawnX || !spawnY) {
+      spawnX = window.innerWidth / 2;
+      spawnY = window.innerHeight / 2;
+    }
+
+    const currentParticles = particlesRef.current;
+    for (let i = 0; i < 45; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 7 + 3;
+      const colorBase = colors[Math.floor(Math.random() * colors.length)];
+
+      currentParticles.push({
+        x: spawnX,
+        y: spawnY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - Math.random() * 2,
+        color: colorBase,
+        radius: Math.random() * 3.5 + 1.5,
+        alpha: 1,
+        decay: Math.random() * 0.025 + 0.015,
+        gravity: 0.16,
+      });
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const particles = particlesRef.current;
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color}${p.alpha})`;
+        ctx.fill();
+      }
+
+      if (particles.length > 0) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    if (!animationFrameRef.current) {
+      animate();
+    }
+  }, [trigger, x, y]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth;
+        canvasRef.current.height = window.innerHeight;
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed inset-0 z-50"
+      style={{ mixBlendMode: "screen" }}
+    />
+  );
+}
+
+const toggleTagInCommaString = (currentValue: string, tag: string): string => {
+  const items = currentValue.split(",").map((x) => x.trim()).filter(Boolean);
+  const index = items.findIndex((x) => x.toLowerCase() === tag.toLowerCase());
+  if (index >= 0) {
+    items.splice(index, 1);
+  } else {
+    items.push(tag);
+  }
+  return items.join(", ");
+};
+
+const isTagSelected = (currentValue: string, tag: string): boolean => {
+  const items = currentValue.split(",").map((x) => x.trim()).filter(Boolean);
+  return items.some((x) => x.toLowerCase() === tag.toLowerCase());
+};
+
 function PreferencesForm({
   initialPreferences,
 }: {
@@ -149,6 +302,28 @@ function PreferencesForm({
   const [step, setStep] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const [fieldError, setFieldError] = useState("");
+  const [fxTrigger, setFxTrigger] = useState(0);
+  const [fxCoords, setFxCoords] = useState({ x: 0, y: 0 });
+
+  const predefinedInterests = useMemo(() => [
+    { value: "Frontend", label: t("preferences.predefined.frontend", "Frontend") },
+    { value: "Backend", label: t("preferences.predefined.backend", "Backend") },
+    { value: "AI & Machine Learning", label: t("preferences.predefined.ai", "AI & Machine Learning") },
+    { value: "Mobile Development", label: t("preferences.predefined.mobile", "Mobile Development") },
+    { value: "Cybersecurity", label: t("preferences.predefined.cybersecurity", "Cybersecurity") },
+    { value: "Cloud Computing", label: t("preferences.predefined.cloud", "Cloud Computing") },
+    { value: "DevOps", label: t("preferences.predefined.devops", "DevOps") },
+    { value: "UI/UX Design", label: t("preferences.predefined.uiux", "UI/UX Design") },
+  ], [t]);
+
+  const predefinedGoals = useMemo(() => [
+    { value: "Get a job", label: t("preferences.predefined.getJob", "Get a job") },
+    { value: "Build side projects", label: t("preferences.predefined.buildProjects", "Build side projects") },
+    { value: "Career change", label: t("preferences.predefined.careerChange", "Career change") },
+    { value: "Ace interviews", label: t("preferences.predefined.aceInterviews", "Ace interviews") },
+    { value: "Upskill", label: t("preferences.predefined.upskill", "Upskill") },
+    { value: "Learn for fun", label: t("preferences.predefined.learnFun", "Learn for fun") },
+  ], [t]);
   const [form, setForm] = useState<PreferenceFormState>({
     interests: joinList(initialPreferences?.interests),
     preferredLanguages:
@@ -358,6 +533,33 @@ function PreferencesForm({
               autoFocus
             />
           </label>
+          <div className="grid gap-2">
+            <span className="text-xs font-semibold text-(--text)">
+              {t("preferences.predefined.suggested", "Suggested topics:")}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {predefinedInterests.map((interest) => {
+                const selected = isTagSelected(form.interests, interest.value);
+                return (
+                  <button
+                    key={interest.value}
+                    type="button"
+                    onClick={() => {
+                      const newValue = toggleTagInCommaString(form.interests, interest.value);
+                      updateField("interests", newValue);
+                    }}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                      selected
+                        ? "bg-(--accent-bg) border-(--accent-border) text-(--accent)"
+                        : "bg-(--surface-3) border-(--border) text-(--text) hover:border-(--accent-border) hover:text-(--text-h)"
+                    }`}
+                  >
+                    {interest.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <TagPreview
             items={splitList(form.interests)}
             emptyLabel={t(
@@ -392,6 +594,33 @@ function PreferencesForm({
               autoFocus
             />
           </label>
+          <div className="grid gap-2">
+            <span className="text-xs font-semibold text-(--text)">
+              {t("preferences.predefined.suggested", "Suggested topics:")}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {predefinedGoals.map((goal) => {
+                const selected = isTagSelected(form.learningGoals, goal.value);
+                return (
+                  <button
+                    key={goal.value}
+                    type="button"
+                    onClick={() => {
+                      const newValue = toggleTagInCommaString(form.learningGoals, goal.value);
+                      updateField("learningGoals", newValue);
+                    }}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                      selected
+                        ? "bg-(--accent-bg) border-(--accent-border) text-(--accent)"
+                        : "bg-(--surface-3) border-(--border) text-(--text) hover:border-(--accent-border) hover:text-(--text-h)"
+                    }`}
+                  >
+                    {goal.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <TagPreview
             items={splitList(form.learningGoals)}
             emptyLabel={t(
@@ -583,22 +812,31 @@ function PreferencesForm({
   );
 
   return (
-    <form
-      className="grid gap-6"
-      onSubmit={(event) => {
-        event.preventDefault();
+    <>
+      <CanvasFx trigger={fxTrigger} x={fxCoords.x} y={fxCoords.y} />
+      <form
+        className="grid gap-6"
+        onSubmit={(event) => {
+          event.preventDefault();
 
-        if (isLastStep) {
-          submitPreferences();
-          return;
-        }
+          if (isLastStep) {
+            submitPreferences();
+            return;
+          }
 
-        if (validateStep(step)) {
-          setSlideDirection(1);
-          setStep((current) => Math.min(current + 1, steps.length - 1));
-        }
-      }}
-    >
+          // Reset coordinates if it was keyboard submit
+          const isKeyboard = document.activeElement?.tagName === "INPUT";
+          if (isKeyboard) {
+            setFxCoords({ x: 0, y: 0 });
+          }
+
+          if (validateStep(step)) {
+            setFxTrigger((prev) => prev + 1);
+            setSlideDirection(1);
+            setStep((current) => Math.min(current + 1, steps.length - 1));
+          }
+        }}
+      >
       <div className="grid gap-3">
         <div className="flex items-center justify-between gap-4 text-xs font-semibold text-(--text)">
           <span>
@@ -676,6 +914,9 @@ function PreferencesForm({
         <button
           type="submit"
           disabled={saveMutation.isPending}
+          onClick={(event) => {
+            setFxCoords({ x: event.clientX, y: event.clientY });
+          }}
           className="rounded-squircle bg-(--gd-primary) px-6 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saveMutation.isPending
@@ -693,6 +934,7 @@ function PreferencesForm({
         </button>
       </div>
     </form>
+    </>
   );
 }
 

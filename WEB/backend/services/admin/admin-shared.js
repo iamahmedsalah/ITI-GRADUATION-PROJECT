@@ -35,6 +35,7 @@ export const logAdminAction = async ({
 };
 
 export const getRoadmapDisplaySource = (template = {}) => {
-  if (template.owner && template.source === "ai") return "std-ai";
+  if (template.source === "user-ai" || (template.owner && template.source === "ai")) return "std-ai";
+  if (template.source === "admin-ai") return "ai";
   return template.source || "manual";
 };

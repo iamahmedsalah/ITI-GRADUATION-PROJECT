@@ -2,9 +2,10 @@ import { useTranslation } from 'react-i18next'
 import AuthIntroPanel from '../../components/auth/AuthIntroPanel'
 import AuthShell from '../../components/auth/AuthShell'
 import LoginForm from '../../components/auth/LoginForm'
-import SocialAuthButton from '../../components/auth/SocialAuthButton'
+import GoogleIdentityButton from '../../components/auth/GoogleIdentityButton'
 import ContinueAsGoogleButton from '../../components/auth/ContinueAsGoogleButton'
 import { useLoginPage } from '../../hooks/useLoginPage'
+import { isChromeBrowser } from '../../utils/browserCheck'
 
 function LoginPage() {
   const { t } = useTranslation()
@@ -25,30 +26,33 @@ function LoginPage() {
         >
           {loginPage.savedAccount ? (
             <div className="grid gap-3 pt-2">
-              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-(--text)">
-                <span className="h-px flex-1 bg-(--border)" />
-                <span>{t('login.socialDivider')}</span>
-                <span className="h-px flex-1 bg-(--border)" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <ContinueAsGoogleButton
-                  account={loginPage.savedAccount}
-                  onClick={() => void loginPage.handleSocialLogin(loginPage.savedAccount?.email)}
-                />
-                <button
-                  type="button"
-                  onClick={loginPage.handleUseDifferentAccount}
-                  className="font-semibold text-(--gd-primary) hover:underline"
-                >
-                  {t('auth.googleConfirmUseDifferent', 'Use a different account')}
-                </button>
-              </div>
+              {!isChromeBrowser() && (
+                <>
+                  <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-(--text)">
+                    <span className="h-px flex-1 bg-(--border)" />
+                    <span>{t('login.socialDivider')}</span>
+                    <span className="h-px flex-1 bg-(--border)" />
+                  </div>
+                  <ContinueAsGoogleButton
+                    account={loginPage.savedAccount}
+                    onClick={() => void loginPage.handleSocialLogin(loginPage.savedAccount?.email)}
+                  />
+                </>
+              )}
+              <GoogleIdentityButton
+                mode="login"
+                dividerLabel={isChromeBrowser() ? t('login.socialDivider') : t('auth.googleConfirmUseDifferent', 'Use a different account')}
+                fallbackLabel={t('login.social.google')}
+                loginHint={loginPage.savedAccount.email}
+                onFallback={loginPage.handleSocialLogin}
+              />
             </div>
           ) : (
-            <SocialAuthButton
+            <GoogleIdentityButton
+              mode="login"
               dividerLabel={t('login.socialDivider')}
-              buttonLabel={t('login.social.google')}
-              onClick={() => void loginPage.handleSocialLogin()}
+              fallbackLabel={t('login.social.google')}
+              onFallback={loginPage.handleSocialLogin}
             />
           )}
         </AuthIntroPanel>

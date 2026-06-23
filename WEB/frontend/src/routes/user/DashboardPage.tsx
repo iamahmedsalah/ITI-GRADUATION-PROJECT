@@ -7,16 +7,20 @@ import { createCardVariants, createHeroLineVariants, createPageVariants, createS
 import type { DashboardLoaderData } from '../../utils/route-utils'
 import { useDashboardSummary } from '../../hooks/queries/useDashboard'
 import { useAiRecommendations } from '../../hooks/queries/useAiRecommendations'
+import { useWhatsNew } from '../../hooks/useWhatsNew'
+import WhatsNewPanel from '../../components/ui/WhatsNewPanel'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { GiftIcon } from '@hugeicons/core-free-icons'
 
 const LearningConstellation = lazy(() => import('../../components/dashboard/LearningConstellation'))
 const loadDashboardRoadmaps = () => import('../../components/dashboard/DashboardRoadmaps')
-const loadDashboardRecommendations = () => import('../../components/dashboard/DashboardRecommendations')
 const loadDashboardStats = () => import('../../components/dashboard/DashboardStats')
 const loadDashboardPreferences = () => import('../../components/dashboard/DashboardPreferences')
 const loadDashboardActivity = () => import('../../components/dashboard/DashboardActivity')
 const SavedRoadmapsSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.SavedRoadmapsSection })))
 const ContinueFollowingSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.ContinueFollowingSection })))
-const AiRecommendationsSection = lazy(() => loadDashboardRecommendations().then((module) => ({ default: module.AiRecommendationsSection })))
+const RoadmapCompletionSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.RoadmapCompletionSection })))
+const AiRecommendationsSection = lazy(() => loadDashboardRoadmaps().then((module) => ({ default: module.AiRecommendationsSection })))
 const StreakCard = lazy(() => loadDashboardStats().then((module) => ({ default: module.StreakCard })))
 const SubscriptionSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.SubscriptionSection })))
 const PreferencesPreviewSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.PreferencesPreviewSection })))
@@ -57,10 +61,14 @@ function DashboardPage() {
   const streak = summary?.streak ?? user.loginStreak ?? { current: 0, longest: 0, lastLoginDate: null }
   const currentlyLearning = (summary?.totals.activeRoadmaps ?? 0) + (summary?.totals.activeCourses ?? 0)
   const savedRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status === 'assigned').slice(0, 4) ?? []
-  const continueRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status !== 'assigned').slice(0, 4) ?? []
+  const completedRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status === 'completed' || Math.round(roadmap.progressPercent ?? 0) >= 100) ?? []
+  const continueRoadmaps = summary?.roadmaps?.filter((roadmap) => roadmap.status !== 'assigned' && roadmap.status !== 'completed' && Math.round(roadmap.progressPercent ?? 0) < 100).slice(0, 4) ?? []
+
+  const { isOpen, latestData, dismiss, open } = useWhatsNew('user')
 
   return (
     <motion.main className="px-4 py-5 sm:px-8 sm:py-8" variants={pageVariants} initial="hidden" animate="show">
+      <WhatsNewPanel isOpen={isOpen} onClose={dismiss} latestData={latestData} />
       <motion.section className="mx-auto grid max-w-7xl gap-4 sm:gap-6" variants={staggerContainerVariants}>
         <motion.div variants={heroLineVariants} className="grid gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
           <div>
@@ -68,9 +76,19 @@ function DashboardPage() {
             <h1 className="mt-3 text-2xl font-semibold text-(--text-h) sm:text-3xl">{t('dashboard.title')}</h1>
             <p className="mt-2 max-w-2xl text-xs leading-5 text-(--text) sm:text-sm sm:leading-6">{t('dashboard.subtitle')}</p>
           </div>
-          <Link to={`/${language}/profile`} className="w-fit rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
-            {t('navbar.myProfile')}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={open}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-(--border) bg-(--surface) px-4 py-2 text-sm text-(--text-h) transition hover:bg-(--surface-2)"
+            >
+              <HugeiconsIcon icon={GiftIcon} size={16} className="text-(--gd-primary)" />
+              <span>{t('whatsNew.triggerBtn', { defaultValue: "What's New" })}</span>
+            </button>
+            <Link to={`/${language}/profile`} className="w-fit rounded-squircle border border-(--border) px-4 py-2 text-sm text-(--text-h)">
+              {t('navbar.myProfile')}
+            </Link>
+          </div>
         </motion.div>
 
         <motion.div variants={cardVariants} className="grid grid-cols-1 divide-y divide-(--border) overflow-hidden rounded-squircle border border-(--border) bg-(--surface) sm:grid-cols-3 sm:divide-y-0 sm:divide-x sm:rtl:divide-x-reverse">
@@ -103,11 +121,26 @@ function DashboardPage() {
                 <ContinueFollowingSection roadmaps={continueRoadmaps} />
               </Suspense>
             </motion.div>
-            <motion.div variants={cardVariants}>
-              <Suspense fallback={<SectionFallback className="min-h-56" />}>
-                <AiRecommendationsSection data={recommendationsQuery.data} isLoading={recommendationsQuery.isLoading} />
-              </Suspense>
-            </motion.div>
+            {completedRoadmaps.length > 0 ? (
+              <motion.div variants={cardVariants}>
+                <Suspense fallback={<SectionFallback className="min-h-56" />}>
+                  <RoadmapCompletionSection
+                    completedRoadmaps={completedRoadmaps.slice(0, 4)}
+                    recommendations={recommendationsQuery.data}
+                    isLoadingRecommendations={recommendationsQuery.isLoading}
+                  />
+                </Suspense>
+              </motion.div>
+            ) : (
+              <motion.div variants={cardVariants}>
+                <Suspense fallback={<SectionFallback />}>
+                  <AiRecommendationsSection
+                    data={recommendationsQuery.data}
+                    isLoading={recommendationsQuery.isLoading}
+                  />
+                </Suspense>
+              </motion.div>
+            )}
           </div>
 
           <div className="grid gap-6">

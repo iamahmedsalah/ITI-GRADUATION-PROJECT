@@ -12,7 +12,12 @@ import { getBackendResponseMessage, type BackendResponseError } from '../utils/b
 import type { AuthUser } from '../utils/route-utils'
 import { loginSchema } from '../types/validationSchemas'
 import { useGoogleAuthPopup } from './useGoogleAuthPopup'
-import { decryptData } from '../utils/crypto'
+import {
+  clearSavedGoogleAccount,
+  GOOGLE_ACCOUNT_CHANGED_EVENT,
+  loadSavedGoogleAccount,
+  type SavedGoogleAccount,
+} from '../utils/googleAccountStorage'
 
 export type LoginFormValues = z.infer<typeof loginSchema>
 
@@ -25,31 +30,31 @@ export function useLoginPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [savedAccount, setSavedAccount] = useState<{ name: string; email: string; avatarUrl: string } | null>(null)
+  const [savedAccount, setSavedAccount] = useState<SavedGoogleAccount | null>(null)
   const handleSocialLogin = useGoogleAuthPopup('login')
   const toastLocale = language === 'ar' ? 'ar-EG' : 'en-US'
 
   // Decrypt and load saved account details on mount
   useEffect(() => {
     async function loadSavedAccount() {
-      const cipherText = localStorage.getItem('last_google_account')
-      if (cipherText) {
-        try {
-          const plainText = await decryptData(cipherText)
-          if (plainText) {
-            setSavedAccount(JSON.parse(plainText))
-          }
-        } catch {
-          // ignore
-        }
+      try {
+        setSavedAccount(await loadSavedGoogleAccount())
+      } catch {
+        // ignore
       }
     }
     void loadSavedAccount()
+
+    const handleAccountChange = (event: Event) => {
+      setSavedAccount((event as CustomEvent<SavedGoogleAccount | null>).detail ?? null)
+    }
+
+    window.addEventListener(GOOGLE_ACCOUNT_CHANGED_EVENT, handleAccountChange)
+    return () => window.removeEventListener(GOOGLE_ACCOUNT_CHANGED_EVENT, handleAccountChange)
   }, [])
 
   const handleUseDifferentAccount = useCallback(async () => {
-    localStorage.removeItem('last_google_account')
-    setSavedAccount(null)
+    clearSavedGoogleAccount()
     await handleSocialLogin()
   }, [handleSocialLogin])
 

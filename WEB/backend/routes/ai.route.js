@@ -24,6 +24,7 @@ import {
   saveUserAiRoadmap,
   sendAiChatMessage,
   updateAiChatConversation,
+  updateUserAiRoadmapVisibility,
 } from "../controllers/ai.controller.js";
 
 const router = express.Router();
@@ -126,6 +127,13 @@ router.post(
   aiRecommendationLimiter,
   validateBody(saveAiRoadmapSchema),
   saveUserAiRoadmap,
+);
+
+router.put(
+  "/roadmaps/:templateId/visibility",
+  authorizeRoles("student"),
+  aiRecommendationLimiter,
+  updateUserAiRoadmapVisibility,
 );
 
 router.post(

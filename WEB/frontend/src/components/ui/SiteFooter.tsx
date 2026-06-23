@@ -13,6 +13,7 @@ import {
   createListItemVariants,
   createStaggerContainerVariants,
 } from "../../libs/motionVariants";
+import { useSystemWhatsNew } from "../../hooks/useWhatsNew";
 
 function localizedPath(language: string, pathname: string) {
   if (!pathname || pathname === "/") {
@@ -25,6 +26,8 @@ function localizedPath(language: string, pathname: string) {
 export default function SiteFooter() {
   const { t } = useTranslation();
   const { language, direction } = useLanguage();
+  const { data: systemData } = useSystemWhatsNew();
+  const version = systemData?.version || "1.0.0";
   const MotionLink = motion(Link);
 
   const navLinks = [
@@ -117,6 +120,10 @@ export default function SiteFooter() {
               >
                 {t("footer.privacy")}
               </Link>
+              <span>|</span>
+              <span className="font-mono text-[10px] bg-(--surface-soft) text-(--text-h) px-2 py-0.5 rounded-full border border-(--border)">
+                v{version}
+              </span>
               <span>|</span>
               <motion.div
                 className="flex items-center gap-2"
