@@ -37,7 +37,7 @@ function DashboardStat({ value, label }: { value: string | number; label: string
 
 function SectionFallback({ className = 'min-h-40' }: { className?: string }) {
   return (
-    <div className={`rounded-lg border border-(--border) bg-(--surface) p-5 ${className}`}>
+    <div className={`rounded-3xl border border-(--border) bg-(--surface) p-5 ${className}`}>
       <div className="h-4 w-36 rounded-full bg-(--surface-2)" />
       <div className="mt-4 grid gap-3">
         <div className="h-12 rounded-lg bg-(--surface-2)" />
@@ -73,7 +73,7 @@ function DashboardPage() {
         <motion.div variants={heroLineVariants} className="grid gap-4 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-(--accent) sm:text-xs sm:tracking-[0.22em]">{t('dashboard.overline')}</p>
-            <h1 className="mt-3 text-2xl font-semibold text-(--text-h) sm:text-3xl">{t('dashboard.title')}</h1>
+            <h1 className="!mt-3 !mb-0 text-2xl font-semibold text-(--text-h) sm:text-3xl">{t('dashboard.title')}</h1>
             <p className="mt-2 max-w-2xl text-xs leading-5 text-(--text) sm:text-sm sm:leading-6">{t('dashboard.subtitle')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ function DashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div variants={cardVariants} className="grid grid-cols-1 divide-y divide-(--border) overflow-hidden rounded-squircle border border-(--border) bg-(--surface) sm:grid-cols-3 sm:divide-y-0 sm:divide-x sm:rtl:divide-x-reverse">
+        <motion.div variants={cardVariants} className="grid grid-cols-1 divide-y divide-(--border) overflow-hidden rounded-3xl border border-(--border) bg-(--surface) sm:grid-cols-3 sm:divide-y-0 sm:divide-x sm:rtl:divide-x-reverse">
           <DashboardStat value={summary?.totals.totalCompletedSteps ?? 0} label={t('dashboard.stats.topicsCompleted')} />
           <DashboardStat value={currentlyLearning} label={t('dashboard.stats.currentlyLearning')} />
           <DashboardStat value={`${streak.current}d`} label={t('dashboard.stats.visitStreak')} />

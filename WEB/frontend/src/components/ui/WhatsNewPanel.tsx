@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -14,7 +14,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import type { WhatsNewVersionData } from '../../hooks/useWhatsNew';
 
-const iconMap = {
+const iconMap: Record<string, typeof Route03Icon> = {
   Route03Icon,
   ChatBotIcon: AiChat02Icon,
   DashboardSquare03Icon,
@@ -22,6 +22,13 @@ const iconMap = {
   Mail01Icon,
   CourseIcon,
 };
+
+interface ScrollLockSnapshot {
+  bodyOverflow: string;
+  bodyOverflowX: string;
+  htmlOverflow: string;
+  htmlOverflowX: string;
+}
 
 interface WhatsNewPanelProps {
   isOpen: boolean;
@@ -33,21 +40,48 @@ export default function WhatsNewPanel({ isOpen, onClose, latestData }: WhatsNewP
   const { language, direction } = useLanguage();
   const { t } = useTranslation();
   const isRtl = direction === 'rtl';
+  const scrollLockRef = useRef<ScrollLockSnapshot | null>(null);
+
+  const unlockPageScroll = useCallback(() => {
+    const originalStyles = scrollLockRef.current;
+    if (!originalStyles) return;
+
+    document.body.style.overflow = originalStyles.bodyOverflow;
+    document.body.style.overflowX = originalStyles.bodyOverflowX;
+    document.documentElement.style.overflow = originalStyles.htmlOverflow;
+    document.documentElement.style.overflowX = originalStyles.htmlOverflowX;
+    scrollLockRef.current = null;
+  }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      const originalBodyOverflow = document.body.style.overflow;
-      const originalHtmlOverflow = document.documentElement.style.overflow;
+    if (!isOpen || !latestData || scrollLockRef.current) return;
 
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
+    scrollLockRef.current = {
+      bodyOverflow: document.body.style.overflow,
+      bodyOverflowX: document.body.style.overflowX,
+      htmlOverflow: document.documentElement.style.overflow,
+      htmlOverflowX: document.documentElement.style.overflowX,
+    };
 
-      return () => {
-        document.body.style.overflow = originalBodyOverflow;
-        document.documentElement.style.overflow = originalHtmlOverflow;
-      };
+    document.body.style.overflow = 'hidden';
+    document.body.style.overflowX = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overflowX = 'hidden';
+  }, [isOpen, latestData]);
+
+  useEffect(() => {
+    if (!latestData) {
+      unlockPageScroll();
     }
-  }, [isOpen]);
+  }, [latestData, unlockPageScroll]);
+
+  useEffect(() => unlockPageScroll, [unlockPageScroll]);
+
+  const handleExitComplete = useCallback(() => {
+    if (!isOpen) {
+      unlockPageScroll();
+    }
+  }, [isOpen, unlockPageScroll]);
 
   if (!latestData) return null;
 
@@ -89,7 +123,7 @@ export default function WhatsNewPanel({ isOpen, onClose, latestData }: WhatsNewP
   };
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={handleExitComplete}>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end overflow-hidden" dir={direction}>
           {/* Dark Backdrop Overlay */}

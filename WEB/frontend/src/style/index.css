@@ -94,6 +94,7 @@
 /* explicit theme override: set data-theme="dark" or data-theme="light" on html to force theme
    'system' is represented by removing the attribute and using prefers-color-scheme */
 html[data-theme="dark"] {
+  color-scheme: dark;
   --gd-primary: #1db954;
   --gd-primary-hover: #1ed760;
   --gd-secondary: #535353;
@@ -129,6 +130,7 @@ html[data-theme="dark"] {
 }
 
 html[data-theme="light"] {
+  color-scheme: light;
   --gd-primary: #1db954;
   --gd-primary-hover: #1ed760;
   --gd-secondary: #535353;
@@ -167,8 +169,46 @@ html[lang="ar"] {
   --heading: "Cairo", system-ui, "Segoe UI", Roboto, sans-serif;
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --gd-primary: #1db954;
+    --gd-primary-hover: #1ed760;
+    --gd-secondary: #535353;
+    --gd-neutral: #b3b3b3;
+
+    --text: #6b6375;
+    --text-h: #08060d;
+    --bg: #ffffff;
+    --border: #e5e4e7;
+    --code-bg: #f4f3ec;
+    --accent: var(--gd-primary);
+    --accent-bg: rgba(29, 185, 84, 0.08);
+    --accent-border: rgba(29, 185, 84, 0.35);
+    --social-bg: rgba(244, 243, 236, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.06) 0 10px 15px -3px, rgba(0, 0, 0, 0.03) 0 4px 6px -2px;
+    --surface: #ffffff;
+    --surface-2: #f6f4f8;
+    --surface-3: #ece8f2;
+    --surface-muted: rgba(8, 6, 13, 0.02);
+    --surface-soft: rgba(8, 6, 13, 0.03);
+    --surface-soft-hover: rgba(8, 6, 13, 0.06);
+    --surface-header: rgba(255, 255, 255, 0.9);
+    --surface-header-line: rgba(8, 6, 13, 0.06);
+    --glow-neutral-rgb: 8, 6, 13;
+    --text-primary: #08060d;
+    --text-secondary: #6b6375;
+    --success: var(--gd-primary);
+    --warning: #c17b14;
+    --error: #c62839;
+    --google: #1a73e8;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --gd-primary: #1db954;
     --gd-primary-hover: #1ed760;
     --gd-secondary: #535353;
@@ -443,6 +483,27 @@ textarea {
   }
 }
 
+@keyframes roadmapScrollNudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+.roadmap-zoom-hint svg:first-child {
+  animation: roadmapScrollNudge 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-zoom-hint svg:first-child {
+    animation: none;
+  }
+}
+
 @keyframes adminSparkFloat {
   0%,
   100% {
@@ -584,6 +645,20 @@ textarea {
   .rounded-squircle {
     corner-shape: squircle;
     border-radius: 9999px;
+  }
+}
+
+@media (min-width: 640px) {
+  .sm\:rounded-squircle {
+    border-radius: var(--sq-radius);
+    overflow: hidden;
+  }
+
+  @supports (corner-shape: squircle) {
+    .sm\:rounded-squircle {
+      corner-shape: squircle;
+      border-radius: var(--sq-radius);
+    }
   }
 }
 

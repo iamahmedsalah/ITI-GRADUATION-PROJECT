@@ -2,7 +2,6 @@ import { useRef, useCallback } from 'react'
 import {
   Background,
   Controls,
-  MiniMap,
   ReactFlow,
   type Edge,
   type Node,
@@ -10,9 +9,13 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Alert02Icon, AiMagicIcon } from '@hugeicons/core-free-icons'
+import {
+  Alert02Icon,
+  AiMagicIcon,
+  MouseScroll02Icon,
+  TouchInteraction02Icon,
+} from '@hugeicons/core-free-icons'
 import { StepNode } from './StepNode'
-import type { StepNodeData } from '../../types/roadmap'
 
 const nodeTypes = { roadmapStep: StepNode }
 
@@ -153,14 +156,6 @@ function EmptyRoadmapGraph() {
   )
 }
 
-// MiniMap node colour based on status (accessed via node.data.status)
-function miniMapNodeColor(node: Node<StepNodeData>) {
-  const status = (node.data as StepNodeData)?.status
-  if (status === 'completed') return 'var(--gd-primary)'
-  if (status === 'inProgress') return 'var(--accent-border)'
-  return 'var(--border)'
-}
-
 type Props = {
   nodes: Node[]
   edges: Edge[]
@@ -270,6 +265,7 @@ export function RoadmapGraph({
             fitViewOptions={{ padding: 0.4 }}
             minZoom={0.2}
             maxZoom={1.6}
+            zoomActivationKeyCode="Control"
             proOptions={{ hideAttribution: true }}
             onInit={onInit}
             className="h-full bg-(--surface)"
@@ -286,14 +282,7 @@ export function RoadmapGraph({
             />
             <Controls
               showInteractive={false}
-              className="[&>button]:border! [&>button]:m-0.5 [&>button]:rounded-lg! [&>button]:border-(--border)! [&>button]:bg-(--surface-2)! [&>button]:shadow-(--shadow)!"
-            />
-            <MiniMap
-              nodeColor={miniMapNodeColor}
-              className="rounded-squircle border! border-(--accent-border)! bg-(--text)/20!"
-              nodeStrokeWidth={0}
-              pannable
-              zoomable
+              className="[&>button]:m-0.5 [&>button]:size-9! [&>button]:border! [&>button]:rounded-lg! [&>button]:border-(--border)! [&>button]:bg-(--surface-2)! [&>button]:shadow-(--shadow)! sm:[&>button]:size-10!"
             />
 
             {/* Floating AI Disclaimer Overlay */}
@@ -307,27 +296,37 @@ export function RoadmapGraph({
               </div>
             )}
 
-            {/* Floating Zoom Hint Overlay */}
-            <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 rounded-squircle border border-(--border)/80 bg-(--surface-2)/80 px-3.5 py-1.5 text-xs text-(--text-h) shadow-md backdrop-blur-sm transition-all duration-300 hover:bg-(--surface-2)">
-              <kbd className="inline-flex items-center rounded border border-(--border) bg-(--surface) px-1.5 py-0.5 text-[10px] font-bold text-(--text) shadow-sm">
-                Ctrl
-              </kbd>
-              <span className="text-(--text)">+</span>
-              <svg
-                className="size-4 text-(--gd-primary)"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="5" y="2" width="14" height="20" rx="7" />
-                <line x1="12" y1="6" x2="12" y2="10" className="animate-bounce" />
-              </svg>
-              <span className="font-semibold select-none">
-                {t('roadmapDetail.zoomHint', 'Hold Ctrl + Scroll to zoom')}
-              </span>
+            {/* Floating Zoom Hint Overlays */}
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 sm:bottom-4">
+              <div className="roadmap-zoom-hint hidden items-center gap-2 rounded-squircle border border-(--border)/80 bg-(--surface-2)/85 px-3.5 py-1.5 text-xs text-(--text-h) shadow-md backdrop-blur-sm sm:flex">
+                <kbd className="inline-flex items-center rounded border border-(--border) bg-(--surface) px-1.5 py-0.5 text-[10px] font-bold text-(--text) shadow-sm">
+                  Ctrl
+                </kbd>
+                <span className="text-(--text)">+</span>
+                <span className="relative inline-grid size-5 place-items-center text-(--gd-primary)">
+                  <HugeiconsIcon icon={MouseScroll02Icon} size={18} />
+                </span>
+                <span className="select-none whitespace-nowrap font-semibold">
+                  {t('roadmapDetail.zoomHint', 'Hold Ctrl + Scroll to zoom')}
+                </span>
+                {/* <span className="inline-flex items-center gap-0.5 text-(--gd-primary)" aria-hidden="true">
+                  <HugeiconsIcon icon={ZoomInAreaIcon} size={14} />
+                  <HugeiconsIcon icon={ZoomOutAreaIcon} size={14} />
+                </span> */}
+              </div>
+
+              <div className="roadmap-zoom-hint flex items-center gap-2 rounded-squircle border border-(--border)/80 bg-(--surface-2)/85 px-3 py-1.5 text-[11px] text-(--text-h) shadow-md backdrop-blur-sm sm:hidden">
+                <span className="relative inline-grid size-5 place-items-center text-(--gd-primary)">
+                  <HugeiconsIcon icon={TouchInteraction02Icon} size={18} />
+                </span>
+                <span className="select-none whitespace-nowrap font-semibold">
+                  {t('roadmapDetail.zoomTouchHint', 'Pinch to zoom')}
+                </span>
+                {/* <span className="inline-flex items-center gap-0.5 text-(--gd-primary)" aria-hidden="true">
+                  <HugeiconsIcon icon={ZoomInAreaIcon} size={13} />
+                  <HugeiconsIcon icon={ZoomOutAreaIcon} size={13} />
+                </span> */}
+              </div>
             </div>
           </ReactFlow>
         </div>

@@ -117,14 +117,14 @@ export default function MyRoadmapsPage() {
   }))
 
   return (
-    <main className="min-h-screen bg-(--bg) px-4 py-6 text-(--text-h) sm:px-6 lg:px-8">
-      <section className="mx-auto grid max-w-7xl gap-5 rounded-xl border border-(--border) bg-(--surface) p-5 shadow-(--shadow)">
+    <main className="min-h-screen bg-(--bg) px-3 py-4 text-(--text-h) sm:px-6 sm:py-6 lg:px-8">
+      <section className="mx-auto grid max-w-7xl gap-4 rounded-lg border border-(--border) bg-(--surface) p-3 shadow-(--shadow) sm:gap-5 sm:rounded-squircle sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">
               {t('dashboard.roadmaps.overline')}
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-(--text-h)">
+            <h1 className="!mt-2 !mb-0 text-3xl font-bold text-(--text-h)">
               {t('dashboard.roadmaps.title')}
             </h1>
           </div>
@@ -163,12 +163,12 @@ export default function MyRoadmapsPage() {
           ) : null}
         </div>
 
-        <div className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 md:grid-cols-[minmax(0,1fr)_14rem_14rem]">
+        <div className="grid gap-2 rounded-lg border border-(--border) bg-(--surface-2) p-3 sm:gap-3 sm:rounded-squircle sm:p-4 md:grid-cols-[minmax(0,1fr)_14rem_14rem]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t('dashboard.roadmaps.search')}
-            className="rounded-squircle border border-(--border) bg-(--surface) px-4 py-3 text-sm text-(--text-h) outline-none focus:border-(--accent-border)"
+            className="min-h-11 rounded-lg border border-(--border) bg-(--surface) px-3 py-2.5 text-sm text-(--text-h) outline-none focus:border-(--accent-border) sm:min-h-12 sm:rounded-squircle sm:px-4 sm:py-3"
           />
           <CustomDropdown
             value={status}
@@ -183,18 +183,18 @@ export default function MyRoadmapsPage() {
               setSearchParams(nextParams, { replace: true })
             }}
             options={statusOptions}
-            buttonClassName="min-h-12 bg-(--surface) px-4 py-3 text-base"
+            buttonClassName="min-h-11 rounded-lg bg-(--surface) px-3 py-2.5 text-sm sm:min-h-12 sm:rounded-squircle sm:px-4 sm:py-3 sm:text-base"
           />
           <CustomDropdown
             value={type}
             onChange={(value) => setType(value as RoadmapTypeFilter)}
             options={typeOptions}
-            buttonClassName="min-h-12 bg-(--surface) px-4 py-3 text-base"
+            buttonClassName="min-h-11 rounded-lg bg-(--surface) px-3 py-2.5 text-sm sm:min-h-12 sm:rounded-squircle sm:px-4 sm:py-3 sm:text-base"
           />
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-(--border)">
-          <div className="grid gap-3 p-3 lg:hidden">
+        <div className="overflow-hidden rounded-lg border border-(--border) sm:rounded-squircle">
+          <div className="grid gap-3 p-2 sm:p-3 lg:hidden">
             {roadmapsQuery.isLoading ? (
               <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
                 {t('dashboard.loading')}
@@ -204,11 +204,10 @@ export default function MyRoadmapsPage() {
                 const progress = Math.round(roadmap.progressPercent ?? 0)
 
                 return (
-                  <article key={roadmap._id} className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
-                    <div className="flex flex-col gap-3">
+                  <article key={roadmap._id} className="rounded-lg border border-(--border) bg-(--surface-2) p-3 sm:rounded-squircle sm:p-4">
+                    <div className="grid gap-3">
                       {/* Top Header Row with Icon, Title, and Actions */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-start gap-2.5 sm:gap-3">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(roadmap._id)}
@@ -225,7 +224,7 @@ export default function MyRoadmapsPage() {
 
                           {/* Squircle icon container with absolute AI badge */}
                           <div className="relative shrink-0">
-                            <span className="grid size-10 place-items-center rounded-squircle bg-(--surface) text-(--accent)">
+                            <span className="grid size-9 place-items-center rounded-lg bg-(--surface) text-(--accent) sm:size-10 sm:rounded-squircle">
                               <HugeiconsIcon
                                 icon={Route03Icon}
                                 size={19}
@@ -238,10 +237,10 @@ export default function MyRoadmapsPage() {
                             )}
                           </div>
 
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
                             <Link
                               to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
-                              className="block text-base font-semibold leading-tight text-(--text-h) transition hover:text-(--accent) wrap-break-word"
+                              className="block text-sm font-semibold leading-5 text-(--text-h) transition hover:text-(--accent) sm:text-base sm:leading-tight"
                             >
                               {roadmap.template?.title ?? t('profile.unknownRoadmap')}
                             </Link>
@@ -251,10 +250,9 @@ export default function MyRoadmapsPage() {
                                 : t('landing.levels.roadmap')}
                             </p>
                           </div>
-                        </div>
 
                         {/* Top Right Action Button: Bookmark/Unstar */}
-                        {roadmap.status === 'assigned' && (
+                        {roadmap.status === 'assigned' ? (
                           <button
                             type="button"
                             onClick={() => setBookmarkRemoveTarget(roadmap)}
@@ -264,6 +262,8 @@ export default function MyRoadmapsPage() {
                           >
                             <HugeiconsIcon icon={BookmarkRemove02Icon} size={15} />
                           </button>
+                        ) : (
+                          <span aria-hidden="true" />
                         )}
                       </div>
 
@@ -294,20 +294,20 @@ export default function MyRoadmapsPage() {
                       )}
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                    <div className="mt-3 grid grid-cols-2 items-center gap-2 text-xs min-[420px]:flex min-[420px]:flex-wrap">
                       {/* Type Badge */}
-                      <span className="rounded-full bg-(--surface-3) px-2.5 py-1 font-semibold text-(--text-secondary)">
+                      <span className="min-w-0 rounded-full bg-(--surface-3) px-2.5 py-1 text-center font-semibold text-(--text-secondary)">
                         {roadmap.template?.templateType === 'skillBased'
                           ? t('landing.skillRoadmaps')
                           : t('landing.roleRoadmaps')}
                       </span>
                       {/* Status Badge */}
-                      <span className="rounded-full bg-(--surface-3) px-2.5 py-1 font-semibold text-(--text-secondary)">
+                      <span className="min-w-0 rounded-full bg-(--surface-3) px-2.5 py-1 text-center font-semibold text-(--text-secondary)">
                         {statusLabel(roadmap.status)}
                       </span>
                       {/* Progress Bar Badge */}
-                      <div className="ms-auto flex items-center gap-2 rounded-full bg-(--surface-3) px-2.5 py-1">
-                        <div className="h-1.5 w-12 overflow-hidden rounded-full bg-zinc-800">
+                      <div className="col-span-2 flex min-w-0 items-center gap-2 rounded-full bg-(--surface-3) px-2.5 py-1 min-[420px]:col-span-1 min-[420px]:ms-auto">
+                        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-800 min-[420px]:w-12 min-[420px]:flex-none">
                           <div
                             className="h-full rounded-full bg-(--gd-primary)"
                             style={{ width: `${progress}%` }}

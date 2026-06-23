@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Alert02Icon, Delete02Icon } from '@hugeicons/core-free-icons'
 
@@ -24,7 +25,7 @@ export default function ConfirmActionModal({
 }: ConfirmActionModalProps) {
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[120] grid place-items-center bg-black/70 px-4 py-8">
       <section className="w-full max-w-md rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
         <div className="flex items-start gap-3">
@@ -55,6 +56,7 @@ export default function ConfirmActionModal({
           </button>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -23,7 +23,7 @@ export function ThemeToggleButton() {
         type="button"
         onClick={toggleTheme}
         aria-label={`Theme: ${theme}`}
-        aria-pressed={theme !== 'system' ? resolvedTheme === 'dark' : false}
+        aria-pressed={theme === 'system'}
         className="grid size-11 place-items-center rounded-squircle border border-(--border) bg-transparent text-(--text-h) cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -39,9 +39,7 @@ export function ThemeToggleButton() {
               <HugeiconsIcon icon={DeviceAccessIcon} size={18} className="size-4.5" />
               <motion.span
                 aria-hidden="true"
-                className={`absolute -top-1.5 -right-1.5 size-2 rounded-squircle border-2 border-(--bg) ${
-                  resolvedTheme === 'dark' ? 'bg-(--gd-primary)' : 'bg-(--gd-secondary)'
-                }`}
+                className="absolute -top-1.5 -right-1.5 size-2 rounded-squircle border-2 border-(--bg) bg-(--gd-primary)"
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.5, opacity: 0 }}

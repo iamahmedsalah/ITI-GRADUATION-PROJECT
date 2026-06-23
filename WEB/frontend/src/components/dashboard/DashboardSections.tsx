@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Activity01Icon,
-  Alert02Icon,
   AiMagicIcon,
   ArrowDown01Icon,
   ArrowUp01Icon,
@@ -22,6 +21,7 @@ import { useLanguage } from '../../context/LanguageContext'
 import { deleteUserRoadmap } from '../../libs/roadmaps-api'
 import { deleteDashboardActivity, fetchCurrentUserPreferences } from '../../libs/user-api'
 import CustomDropdown from '../ui/CustomDropdown'
+import ConfirmActionModal from '../models/ConfirmActionModal'
 import type {
   AiRecommendationCourse,
   AiRecommendationNextStep,
@@ -68,7 +68,7 @@ export function StreakCard({ current, longest }: { current: number; longest: num
   const days = Array.from({ length: 8 }, (_, index) => index + 1)
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5 shadow-(--shadow)">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 shadow-(--shadow) sm:p-5">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-(--text)">
           {t('dashboard.streak.current')} <strong className="text-(--text-h)">{current}</strong>
@@ -121,105 +121,6 @@ export function ContinueRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) 
     onSuccess: async () => {
       toast.success(t('dashboard.roadmaps.deleted'))
       setIsMenuOpen(false)
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : t('dashboard.roadmaps.deleteFailed'))
-    },
-  })
-
-  return (
-    <article className={['group relative rounded-squircle border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
-      <div className="flex items-center justify-between gap-4">
-        <Link to={roadmapPath} className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-semibold text-(--text-h)">{roadmap.template?.title ?? t('profile.unknownRoadmap')}</h3>
-          <p className="mt-1 text-xs uppercase tracking-[0.14em] text-(--text)">{roadmap.status ?? 'assigned'}</p>
-        </Link>
-        <div className="flex items-center gap-3 text-sm text-(--text)">
-          <span>{progress}%</span>
-          <button
-            type="button"
-            className="grid size-8 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface-2) hover:text-(--text-h)"
-            aria-label={t('dashboard.roadmaps.openActions')}
-            onClick={() => setIsMenuOpen((value) => !value)}
-          >
-            <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
-          </button>
-        </div>
-      </div>
-      <div className="mt-4 h-1.5 rounded-full bg-(--surface-3)">
-        <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: progressWidth(progress) }} />
-      </div>
-      {isMenuOpen ? (
-        <div className="absolute right-3 top-12 z-90 grid min-w-40 gap-1 rounded-squircle border border-(--border) bg-(--surface-2) p-2 shadow-(--shadow)">
-          <button
-            type="button"
-            disabled={deleteMutation.isPending}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => setIsConfirmDeleteOpen(true)}
-          >
-            <HugeiconsIcon icon={Delete02Icon} size={16} />
-            {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
-          </button>
-        </div>
-      ) : null}
-      {isConfirmDeleteOpen ? (
-        <div className="fixed inset-0 z-120 grid place-items-center bg-black/70 px-4 py-8">
-          <section className="w-full max-w-md rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-            <div className="flex items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
-                <HugeiconsIcon icon={Alert02Icon} size={22} />
-              </span>
-              <div>
-                <h2 className="text-xl font-semibold text-(--text-h)">
-                  {t('dashboard.roadmaps.confirmDeleteTitle', 'Delete roadmap?')}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-(--text)">
-                  {t('dashboard.roadmaps.confirmDeleteSingleText', {
-                    roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
-                    defaultValue: 'This roadmap will be removed from your learning list.',
-                  })}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2)"
-                onClick={() => setIsConfirmDeleteOpen(false)}
-              >
-                {t('adminUi.common.cancel', 'Cancel')}
-              </button>
-              <button
-                type="button"
-                disabled={deleteMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.35)] px-4 py-2 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:opacity-60"
-                onClick={() => deleteMutation.mutate(roadmap._id)}
-              >
-                <HugeiconsIcon icon={Delete02Icon} size={16} />
-                {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
-    </article>
-  )
-}
-
-function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
-  const { t } = useTranslation()
-  const { language } = useLanguage()
-  const queryClient = useQueryClient()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
-  const roadmapPath = `/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`
-  const deleteMutation = useMutation({
-    mutationFn: deleteUserRoadmap,
-    onSuccess: async () => {
-      toast.success(t('dashboard.roadmaps.deleted'))
-      setIsMenuOpen(false)
       setIsConfirmDeleteOpen(false)
       await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
@@ -230,86 +131,123 @@ function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
   })
 
   return (
-    <article className={['relative flex items-center justify-between gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
-      <Link to={roadmapPath} className="min-w-0 flex-1">
-        <span className="block truncate text-base font-semibold text-(--text-h)">
-          {roadmap.template?.title ?? t('profile.unknownRoadmap')}
-        </span>
-        <span className="mt-1 block text-xs uppercase tracking-[0.14em] text-(--text)">
-          {roadmap.template?.targetLevel ?? t('dashboard.roadmaps.starred', 'Starred')}
-        </span>
-      </Link>
-
-      <span data-starred="true" className="star-toggle-button grid size-9 shrink-0 place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent)">
-        <HugeiconsIcon icon={BookmarkRemove02Icon} size={17} className="star-toggle-icon star-toggle-icon-active" />
-      </span>
-
-      <button
-        type="button"
-        className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface) hover:text-(--text-h)"
-        aria-label={t('dashboard.roadmaps.openActions')}
-        onClick={() => setIsMenuOpen((value) => !value)}
-      >
-        <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
-      </button>
-
-      {isMenuOpen ? (
-        <div className="absolute right-3 top-12 z-90 grid min-w-44 gap-1 rounded-squircle border border-(--border) bg-(--surface) p-2 shadow-(--shadow)">
-          <button
-            type="button"
-            disabled={deleteMutation.isPending}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => setIsConfirmDeleteOpen(true)}
-          >
-            <HugeiconsIcon icon={BookmarkRemove02Icon} size={16} />
-            {deleteMutation.isPending
-              ? t('dashboard.roadmaps.deleting')
-              : t('dashboard.roadmaps.unstar', 'Remove')}
-          </button>
+    <>
+      <article className={['group relative overflow-visible rounded-squircle border border-(--border) bg-(--surface) p-4 transition hover:-translate-y-0.5 hover:border-(--accent-border)', isMenuOpen ? 'z-30' : ''].join(' ')}>
+        <div className="flex items-center justify-between gap-4">
+          <Link to={roadmapPath} className="min-w-0 flex-1">
+            <h3 className="truncate text-lg font-semibold text-(--text-h)">{roadmap.template?.title ?? t('profile.unknownRoadmap')}</h3>
+            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-(--text)">{roadmap.status ?? 'assigned'}</p>
+          </Link>
+          <div className="flex items-center gap-3 text-sm text-(--text)">
+            <span>{progress}%</span>
+            <button
+              type="button"
+              className="grid size-8 cursor-pointer place-items-center rounded-squircle text-(--text) transition hover:bg-(--surface-2) hover:text-(--text-h)"
+              aria-label={t('dashboard.roadmaps.openActions')}
+              onClick={() => setIsMenuOpen((value) => !value)}
+            >
+              <HugeiconsIcon icon={MoreVerticalIcon} size={18} />
+            </button>
+          </div>
         </div>
-      ) : null}
-
-      {isConfirmDeleteOpen ? (
-        <div className="fixed inset-0 z-120 grid place-items-center bg-black/70 px-4 py-8">
-          <section className="w-full max-w-md rounded-3xl border border-(--border) bg-(--surface) p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-            <div className="flex items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-squircle border border-[rgba(226,33,52,0.35)] bg-[rgba(226,33,52,0.08)] text-(--error)">
-                <HugeiconsIcon icon={Alert02Icon} size={22} />
-              </span>
-              <div>
-                <h2 className="text-xl font-semibold text-(--text-h)">
-                  {t('dashboard.roadmaps.confirmUnstarTitle', 'Remove starred roadmap?')}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-(--text)">
-                  {t('dashboard.roadmaps.confirmUnstarText', {
-                    roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
-                    defaultValue: 'This roadmap will be removed from your starred roadmaps.',
-                  })}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-2)"
-                onClick={() => setIsConfirmDeleteOpen(false)}
-              >
-                {t('adminUi.common.cancel', 'Cancel')}
-              </button>
-              <button
-                type="button"
-                disabled={deleteMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-squircle border border-[rgba(226,33,52,0.35)] px-4 py-2 text-sm font-semibold text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:opacity-60"
-                onClick={() => deleteMutation.mutate(roadmap._id)}
-              >
-                <HugeiconsIcon icon={BookmarkRemove02Icon} size={16} />
-                {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.unstar', 'Remove star')}
-              </button>
-            </div>
-          </section>
+        <div className="mt-4 h-1.5 rounded-full bg-(--surface-3)">
+          <div className="h-full rounded-full bg-(--gd-primary)" style={{ width: progressWidth(progress) }} />
         </div>
-      ) : null}
-    </article>
+        {isMenuOpen ? (
+          <div className="absolute right-3 top-12 z-90 grid min-w-40 gap-1 rounded-squircle border border-(--border) bg-(--surface-2) p-2 shadow-(--shadow)">
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-squircle px-3 py-2 text-left text-sm font-medium text-(--error) transition hover:bg-[rgba(226,33,52,0.08)] disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => {
+                setIsMenuOpen(false)
+                setIsConfirmDeleteOpen(true)
+              }}
+            >
+              <HugeiconsIcon icon={Delete02Icon} size={16} />
+              {deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
+            </button>
+          </div>
+        ) : null}
+      </article>
+      <ConfirmActionModal
+        open={isConfirmDeleteOpen}
+        title={t('dashboard.roadmaps.confirmDeleteTitle', 'Delete roadmap?')}
+        message={t('dashboard.roadmaps.confirmDeleteSingleText', {
+          roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
+          defaultValue: 'This roadmap will be removed from your learning list.',
+        })}
+        confirmLabel={deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.delete')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          deleteMutation.mutate(roadmap._id)
+        }}
+      />
+    </>
+  )
+}
+
+function StarredRoadmapCard({ roadmap }: { roadmap: DashboardRoadmap }) {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+  const queryClient = useQueryClient()
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
+  const roadmapPath = `/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`
+  const deleteMutation = useMutation({
+    mutationFn: deleteUserRoadmap,
+    onSuccess: async () => {
+      toast.success(t('dashboard.roadmaps.deleted'))
+      setIsConfirmDeleteOpen(false)
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('dashboard.roadmaps.deleteFailed'))
+    },
+  })
+
+  return (
+    <>
+      <article className="relative flex w-full max-w-md items-center justify-between gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 transition hover:border-(--accent-border)">
+        <Link to={roadmapPath} className="min-w-0 flex-1">
+          <span className="block truncate text-base font-semibold text-(--text-h)">
+            {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+          </span>
+          <span className="mt-1 block text-xs uppercase tracking-[0.14em] text-(--text)">
+            {roadmap.template?.targetLevel ?? t('dashboard.roadmaps.starred', 'Starred')}
+          </span>
+        </Link>
+
+        <button
+          type="button"
+          disabled={deleteMutation.isPending}
+          data-starred="true"
+          className="star-toggle-button grid size-9 shrink-0 cursor-pointer place-items-center rounded-squircle border border-(--accent-border) bg-(--accent-bg) text-(--accent) transition disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={t('dashboard.roadmaps.unstar', 'Remove')}
+          title={t('dashboard.roadmaps.unstar', 'Remove')}
+          onClick={() => setIsConfirmDeleteOpen(true)}
+        >
+          <HugeiconsIcon icon={BookmarkRemove02Icon} size={17} className="star-toggle-icon star-toggle-icon-active" />
+        </button>
+      </article>
+      <ConfirmActionModal
+        open={isConfirmDeleteOpen}
+        title={t('dashboard.roadmaps.confirmUnstarTitle', 'Remove starred roadmap?')}
+        message={t('dashboard.roadmaps.confirmUnstarText', {
+          roadmap: roadmap.template?.title ?? t('profile.unknownRoadmap'),
+          defaultValue: 'This roadmap will be removed from your starred roadmaps.',
+        })}
+        confirmLabel={deleteMutation.isPending ? t('dashboard.roadmaps.deleting') : t('dashboard.roadmaps.unstar', 'Remove star')}
+        cancelLabel={t('adminUi.common.cancel', 'Cancel')}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          deleteMutation.mutate(roadmap._id)
+        }}
+      />
+    </>
   )
 }
 
@@ -320,8 +258,8 @@ export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[
   if (!roadmaps.length) return null
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
             {t('dashboard.savedRoadmaps.title', { defaultValue: 'Starred roadmaps' })}
@@ -339,7 +277,7 @@ export function SavedRoadmapsSection({ roadmaps }: { roadmaps: DashboardRoadmap[
         </Link>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:mt-5 md:grid-cols-2">
         {roadmaps.map((roadmap) => (
           <StarredRoadmapCard key={roadmap._id} roadmap={roadmap} />
         ))}
@@ -433,8 +371,8 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
   const { language } = useLanguage()
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.continueTitle')}</h2>
           <p className="mt-2 text-sm text-(--text)">{t('dashboard.continueSubtitle')}</p>
@@ -447,11 +385,11 @@ export function ContinueFollowingSection({ roadmaps }: { roadmaps: DashboardRoad
           {t('dashboard.roadmaps.viewAll')}
         </Link>
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:mt-5 md:grid-cols-2">
         {roadmaps.length ? (
           roadmaps.map((roadmap) => <ContinueRoadmapCard key={roadmap._id} roadmap={roadmap} />)
         ) : (
-          <div className="md:col-span-2 rounded-2xl border border-dashed border-(--border) bg-(--surface-soft) p-6 sm:p-8 text-center flex flex-col items-center justify-center">
+          <div className="md:col-span-2  border border-dashed border-(--border) bg-(--surface-soft) p-6 sm:p-8 text-center flex flex-col items-center justify-center">
             {/* Onboarding Icon */}
             <div className="relative mb-5 flex size-16 items-center justify-center rounded-2xl bg-(--accent-bg) text-(--accent) border border-(--accent-border) shadow-inner">
               <HugeiconsIcon icon={AiMagicIcon} size={28} className="animate-pulse" />
@@ -722,7 +660,7 @@ export function AiRecommendationCardsGrid({
           />
         ))
       ) : (
-        <div className={`rounded-xl border border-dashed border-(--border) bg-(--surface-soft) p-6 text-center flex flex-col items-center justify-center min-h-[160px] ${emptyClassName}`}>
+        <div className={`rounded-xl border border-dashed border-(--border) bg-(--surface-soft) p-6 text-center flex flex-col items-center justify-center min-h-40 ${emptyClassName}`}>
           <HugeiconsIcon icon={ZapIcon} size={24} className="text-(--text) opacity-60 mb-2.5 animate-pulse" />
           <p className="max-w-md text-xs leading-5 text-(--text)">
             {t('dashboard.ai.empty')}
@@ -749,8 +687,8 @@ export function AiRecommendationsSection({
   const { t } = useTranslation()
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.ai.title')}</h2>
           <p className="mt-2 text-sm text-(--text)">{t('dashboard.ai.subtitle')}</p>
@@ -822,8 +760,8 @@ export function LearningActivitySection({
   ]
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">{t('dashboard.activity.title')}</h2>
           <p className="mt-2 text-sm text-(--text)">
@@ -911,7 +849,7 @@ export function SubscriptionSection({
   const isPro = plan === 'pro' && ['active', 'trialing'].includes(status)
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
         {t('dashboard.subscription.title', 'Subscription')}
       </h2>
@@ -954,6 +892,7 @@ export function SubscriptionSection({
 }
 
 type DashboardTranslator = (key: string, options?: Record<string, unknown>) => string
+type InsightTrend = 'up' | 'down' | 'neutral'
 
 function countRecentActiveDays(activities: DashboardSummary['activities'] = []) {
   const cutoff = Date.now() - 7 * 86400000
@@ -991,56 +930,35 @@ function buildPreferenceInsights({
   const latestRoadmapProgress = Math.max(0, ...(summary?.roadmaps ?? []).map((roadmap) => Math.round(roadmap.progressPercent ?? 0)))
   const upgradeLevel = nextSkillLevel(preferences?.skillLevel)
 
-  let scheduleText = ''
-  let scheduleTrend: 'up' | 'down' | 'neutral' = 'neutral'
-  if (!summary) {
-    scheduleText = t('dashboard.preferences.insights.waiting', { defaultValue: 'Activity notes appear after your dashboard loads.' })
-    scheduleTrend = 'neutral'
-  } else if (weeklyHours >= 6 && activeDays <= 1) {
-    scheduleText = t('dashboard.preferences.insights.decreaseTime', { defaultValue: 'Recent activity is lighter than this target; decrease hours or split sessions.' })
-    scheduleTrend = 'down'
-  } else if (weeklyHours <= 3 && activeDays >= 4) {
-    scheduleText = t('dashboard.preferences.insights.increaseTime', { defaultValue: 'Your activity is steady; you can increase weekly time if it feels good.' })
-    scheduleTrend = 'up'
-  } else if (activeLearning > 0) {
-    scheduleText = t('dashboard.preferences.insights.keepTime', { defaultValue: 'Your current pace matches recent learning activity.' })
-    scheduleTrend = 'up'
-  } else {
-    scheduleText = t('dashboard.preferences.insights.startTime', { defaultValue: 'Start a roadmap so ILMA can compare your target with real activity.' })
-    scheduleTrend = 'neutral'
-  }
+  const [scheduleText, scheduleTrend]: [string, InsightTrend] = !summary
+    ? [t('dashboard.preferences.insights.waiting', { defaultValue: 'Activity notes appear after your dashboard loads.' }), 'neutral']
+    : weeklyHours >= 6 && activeDays <= 1
+      ? [t('dashboard.preferences.insights.decreaseTime', { defaultValue: 'Recent activity is lighter than this target; decrease hours or split sessions.' }), 'down']
+      : weeklyHours <= 3 && activeDays >= 4
+        ? [t('dashboard.preferences.insights.increaseTime', { defaultValue: 'Your activity is steady; you can increase weekly time if it feels good.' }), 'up']
+        : activeLearning > 0
+          ? [t('dashboard.preferences.insights.keepTime', { defaultValue: 'Your current pace matches recent learning activity.' }), 'up']
+          : [t('dashboard.preferences.insights.startTime', { defaultValue: 'Start a roadmap so ILMA can compare your target with real activity.' }), 'neutral']
 
-  let levelText = ''
-  let levelTrend: 'up' | 'down' | 'neutral' = 'neutral'
-  if (upgradeLevel && (completedLearning > 0 || averageProgress >= 75)) {
-    levelText = t('dashboard.preferences.insights.levelUp', {
-      level: t(`landing.levels.${upgradeLevel}`, { defaultValue: upgradeLevel }),
-      defaultValue: `Progress suggests you may be ready for ${upgradeLevel}.`,
-    })
-    levelTrend = 'up'
-  } else if (averageProgress >= 35 || activeDays >= 3) {
-    levelText = t('dashboard.preferences.insights.levelBuilding', { defaultValue: 'You are building evidence for the next skill level.' })
-    levelTrend = 'up'
-  } else {
-    levelText = t('dashboard.preferences.insights.levelHold', { defaultValue: 'Stay at this level until more roadmap work is completed.' })
-    levelTrend = 'down'
-  }
+  const [levelText, levelTrend]: [string, InsightTrend] = upgradeLevel && (completedLearning > 0 || averageProgress >= 75)
+    ? [
+      t('dashboard.preferences.insights.levelUp', {
+        level: t(`landing.levels.${upgradeLevel}`, { defaultValue: upgradeLevel }),
+        defaultValue: `Progress suggests you may be ready for ${upgradeLevel}.`,
+      }),
+      'up',
+    ]
+    : averageProgress >= 35 || activeDays >= 3
+      ? [t('dashboard.preferences.insights.levelBuilding', { defaultValue: 'You are building evidence for the next skill level.' }), 'up']
+      : [t('dashboard.preferences.insights.levelHold', { defaultValue: 'Stay at this level until more roadmap work is completed.' }), 'down']
 
-  let goalsText = ''
-  let goalsTrend: 'up' | 'down' | 'neutral' = 'neutral'
-  if (completedLearning > 0) {
-    goalsText = t('dashboard.preferences.insights.goalReview', { defaultValue: 'A learning path ended; check whether your goals were reached.' })
-    goalsTrend = 'up'
-  } else if (latestRoadmapProgress >= 85) {
-    goalsText = t('dashboard.preferences.insights.goalNear', { defaultValue: 'A roadmap is near the end; prepare to review your goals.' })
-    goalsTrend = 'up'
-  } else if (activeLearning > 0) {
-    goalsText = t('dashboard.preferences.insights.goalTracking', { defaultValue: 'ILMA is tracking progress toward these goals.' })
-    goalsTrend = 'up'
-  } else {
-    goalsText = t('dashboard.preferences.insights.goalStart', { defaultValue: 'When a roadmap ends, ILMA will ask if these goals were reached.' })
-    goalsTrend = 'neutral'
-  }
+  const [goalsText, goalsTrend]: [string, InsightTrend] = completedLearning > 0
+    ? [t('dashboard.preferences.insights.goalReview', { defaultValue: 'A learning path ended; check whether your goals were reached.' }), 'up']
+    : latestRoadmapProgress >= 85
+      ? [t('dashboard.preferences.insights.goalNear', { defaultValue: 'A roadmap is near the end; prepare to review your goals.' }), 'up']
+      : activeLearning > 0
+        ? [t('dashboard.preferences.insights.goalTracking', { defaultValue: 'ILMA is tracking progress toward these goals.' }), 'up']
+        : [t('dashboard.preferences.insights.goalStart', { defaultValue: 'When a roadmap ends, ILMA will ask if these goals were reached.' }), 'neutral']
 
   return {
     schedule: { text: scheduleText, trend: scheduleTrend },
@@ -1111,8 +1029,8 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
     ]
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
-      <div className="flex items-center justify-between gap-4">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
             {t('dashboard.preferences.title', 'Preferences')}

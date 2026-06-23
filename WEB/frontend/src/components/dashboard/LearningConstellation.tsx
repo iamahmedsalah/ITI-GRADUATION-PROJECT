@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { AiMagicIcon, BookmarkRemove02Icon, CourseIcon, Route03Icon } from '@hugeicons/core-free-icons'
+import {
+  AiMagicIcon,
+  BookmarkRemove02Icon,
+  CourseIcon,
+  Route03Icon,
+  Saturn01Icon,
+} from '@hugeicons/core-free-icons';
 import * as THREE from 'three'
 import { useTheme } from '../../context/ThemeContext'
 import { addAnimatedGltfModel, addAnimatedLogoModel } from '../../utils/threeLogoModel'
@@ -203,8 +209,10 @@ export default function LearningConstellation({
   const mountRef = useRef<HTMLDivElement | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [isSceneActive, setIsSceneActive] = useState(false)
   const selectedIdRef = useRef<string | null>(null)
   const hoveredIdRef = useRef<string | null>(null)
+  const sceneActiveRef = useRef(false)
   const labels = useMemo<ConstellationLabels>(() => ({
     starredRoadmap: t('dashboard.constellation.fallbacks.starredRoadmap'),
     readyToStart: t('dashboard.constellation.fallbacks.readyToStart'),
@@ -238,6 +246,10 @@ export default function LearningConstellation({
   useEffect(() => {
     hoveredIdRef.current = hoveredId
   }, [hoveredId])
+
+  useEffect(() => {
+    sceneActiveRef.current = isSceneActive
+  }, [isSceneActive])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -468,7 +480,19 @@ export default function LearningConstellation({
       return typeof hit?.object.userData.nodeId === 'string' ? hit.object.userData.nodeId : null
     }
 
+    const deactivateScene = () => {
+      sceneActiveRef.current = false
+      pointerState.dragging = false
+      pointerState.moved = false
+      lastHoveredNodeId = null
+      renderer.domElement.style.cursor = 'default'
+      setHoveredId(null)
+      setIsSceneActive(false)
+    }
+
     const onPointerDown = (event: PointerEvent) => {
+      if (!sceneActiveRef.current) return
+
       pointerState.dragging = true
       pointerState.moved = false
       pointerState.x = event.clientX
@@ -477,6 +501,11 @@ export default function LearningConstellation({
     }
 
     const onPointerMove = (event: PointerEvent) => {
+      if (!sceneActiveRef.current) {
+        renderer.domElement.style.cursor = 'default'
+        return
+      }
+
       updatePointer(event)
       raycaster.setFromCamera(pointer, camera)
       const hit = raycaster.intersectObjects(pickableObjects, true)[0]
@@ -500,6 +529,8 @@ export default function LearningConstellation({
     }
 
     const onPointerUp = (event: PointerEvent) => {
+      if (!sceneActiveRef.current) return
+
       if (!pointerState.moved) {
         const nodeId = pickNodeId(event)
         if (nodeId) setSelectedId(nodeId)
@@ -508,7 +539,17 @@ export default function LearningConstellation({
       renderer.domElement.releasePointerCapture(event.pointerId)
     }
 
+    const onPointerLeave = (event: PointerEvent) => {
+      if (!sceneActiveRef.current) return
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId)
+      }
+      deactivateScene()
+    }
+
     const onWheel = (event: WheelEvent) => {
+      if (!sceneActiveRef.current) return
+
       event.preventDefault()
       pointerState.zoom = Math.max(sceneMetrics.minZoom, Math.min(sceneMetrics.maxZoom, pointerState.zoom + event.deltaY * 0.005))
     }
@@ -516,6 +557,8 @@ export default function LearningConstellation({
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
     renderer.domElement.addEventListener('pointermove', onPointerMove)
     renderer.domElement.addEventListener('pointerup', onPointerUp)
+    renderer.domElement.addEventListener('pointerleave', onPointerLeave)
+    renderer.domElement.addEventListener('pointercancel', onPointerLeave)
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('resize', setSize)
     const resizeObserver = new ResizeObserver(setSize)
@@ -606,6 +649,8 @@ export default function LearningConstellation({
       renderer.domElement.removeEventListener('pointerdown', onPointerDown)
       renderer.domElement.removeEventListener('pointermove', onPointerMove)
       renderer.domElement.removeEventListener('pointerup', onPointerUp)
+      renderer.domElement.removeEventListener('pointerleave', onPointerLeave)
+      renderer.domElement.removeEventListener('pointercancel', onPointerLeave)
       renderer.domElement.removeEventListener('wheel', onWheel)
       logoModel.dispose()
       nodeModels.forEach((nodeModel) => nodeModel.dispose())
@@ -668,9 +713,21 @@ export default function LearningConstellation({
         boxShadow: sceneTheme.shadow,
       }}
     >
-      <div ref={mountRef} className="absolute inset-0" aria-hidden="true" />
+      <div ref={mountRef} className={`absolute inset-0 ${isSceneActive ? '' : 'pointer-events-none'}`} aria-hidden="true" />
+      {!isSceneActive ? (
+        <button
+          type="button"
+          className="absolute inset-0 z-20 grid cursor-pointer place-items-center bg-transparent"
+          aria-label={t('dashboard.constellation.activate', { defaultValue: 'Activate constellation' })}
+          onClick={() => setIsSceneActive(true)}
+        >
+          <span className="grid size-11 place-items-center rounded-squircle border border-(--accent-border) bg-(--surface)/80 text-(--accent) shadow-(--shadow) backdrop-blur-md transition hover:bg-(--accent-bg)">
+            <HugeiconsIcon icon={Saturn01Icon} size={20} className="animate-pulse" />
+          </span>
+        </button>
+      ) : null}
       <div
-        className={`pointer-events-none absolute inset-x-4 top-24 z-10 grid max-w-[calc(100%-2rem)] gap-2 rounded-squircle border p-3 shadow-lg backdrop-blur-md sm:inset-x-auto sm:top-16 sm:max-w-sm sm:p-6 ${isRtl ? 'text-right sm:right-7' : 'text-left sm:left-7'}`}
+        className={`pointer-events-none absolute bottom-4 z-10 grid w-[min(21rem,calc(100%-2rem))] gap-2 rounded-4xl border p-3 shadow-lg backdrop-blur-md sm:bottom-auto sm:top-16 sm:max-w-sm sm:p-6 ${isRtl ? 'right-4 text-right sm:right-7' : 'left-4 text-left sm:left-7'}`}
         dir={isRtl ? 'rtl' : 'ltr'}
         style={{
           borderColor: sceneTheme.panelBorder,
@@ -721,7 +778,13 @@ export default function LearningConstellation({
               <HugeiconsIcon
                 icon={item.icon}
                 size={15}
-                className={item.kind === 'starred' ? 'star-toggle-icon star-toggle-icon-active' : undefined}
+                className={
+                  item.kind === 'starred'
+                    ? 'star-toggle-icon star-toggle-icon-active'
+                    : item.kind === 'roadmap'
+                      ? ''
+                      : undefined
+                }
                 style={{ color: item.kind === 'starred' ? '#1db954' : palette[item.kind] }}
               />
               {item.label}

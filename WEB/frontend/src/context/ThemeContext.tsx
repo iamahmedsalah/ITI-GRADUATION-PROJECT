@@ -28,13 +28,13 @@ function applyTheme(pref: ThemePref) {
   }
 }
 
-function getResolvedTheme(pref: ThemePref): 'light' | 'dark' {
-  if (pref === 'system') {
-    if (typeof window === 'undefined') return 'light'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
+function readSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
-  return pref === 'dark' ? 'dark' : 'light'
+function getResolvedTheme(pref: ThemePref, systemTheme: 'light' | 'dark'): 'light' | 'dark' {
+  return pref === 'system' ? systemTheme : pref
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
@@ -45,6 +45,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     return normalizeTheme(window.localStorage.getItem('theme'))
   })
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(readSystemTheme)
 
   const setTheme = useCallback((t: ThemePref) => {
     setThemeState(t)
@@ -54,14 +55,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   useEffect(() => {
     applyTheme(theme)
-    applyThemeFavicon(getResolvedTheme(theme))
+    applyThemeFavicon(getResolvedTheme(theme, systemTheme))
 
     const mql = window.matchMedia('(prefers-color-scheme: dark)')
-    const listener = () => {
-      // when system changes and user prefers system, re-apply
+    const listener = (event: MediaQueryListEvent) => {
+      const nextSystemTheme = event.matches ? 'dark' : 'light'
+      setSystemTheme(nextSystemTheme)
       if (theme === 'system') {
-        applyTheme('system')
-        applyThemeFavicon(getResolvedTheme('system'))
+        applyThemeFavicon(nextSystemTheme)
       }
     }
 
@@ -72,9 +73,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       if (mql.removeEventListener) mql.removeEventListener('change', listener)
       else mql.removeListener(listener)
     }
-  }, [theme])
+  }, [systemTheme, theme])
 
-  const resolvedTheme = getResolvedTheme(theme)
+  const resolvedTheme = getResolvedTheme(theme, systemTheme)
 
   const value: ThemeContextValue = {
     theme,
