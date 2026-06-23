@@ -22,7 +22,7 @@ const AnimatedWifiIcon: React.FC<{ isOnline: boolean }> = ({ isOnline }) => {
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-[var(--success)]"
+        className="text-(--success)"
       >
         {/* Dot */}
         <motion.circle
@@ -64,7 +64,7 @@ const AnimatedWifiIcon: React.FC<{ isOnline: boolean }> = ({ isOnline }) => {
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-[var(--error)]"
+        className="text-(--error)"
       >
         {/* Muted WiFi waves underneath */}
         <motion.circle cx="12" cy="18" r="1.5" fill="currentColor" className="opacity-30" />
@@ -126,7 +126,7 @@ const NetworkStatusOverlay: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fixed inset-0 z-9999 flex items-center justify-center p-4"
           style={{
             background: "color-mix(in srgb, var(--bg) 65%, transparent)",
             backdropFilter: "blur(6px)",
@@ -159,7 +159,7 @@ const NetworkStatusOverlay: React.FC = () => {
               {isOnline ? t("networkStatus.onlineTitle") : t("networkStatus.offlineTitle")}
             </h2>
 
-            <p className="text-sm font-medium leading-relaxed" style={{ color: "var(--text)" }}>
+            <p className="text-sm font-medium wrap-break-word leading-relaxed" style={{ color: "var(--text)" }}>
               {isOnline ? t("networkStatus.onlineText") : t("networkStatus.offlineText")}
             </p>
           </motion.div>
