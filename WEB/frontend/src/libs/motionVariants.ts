@@ -374,3 +374,42 @@ export const contactSendIconVariants: Variants = {
     },
   },
 };
+
+export const wifiDotVariants: Variants = {
+  animate: {
+    opacity: [0.3, 1, 0.3],
+    scale: [0.9, 1.1, 0.9],
+    transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+  }
+};
+
+export const wifiWave1Variants: Variants = {
+  animate: {
+    opacity: [0.2, 0.2, 1, 0.2],
+    transition: { duration: 1.5, repeat: Infinity, delay: 0.3, ease: "easeInOut" }
+  }
+};
+
+export const wifiWave2Variants: Variants = {
+  animate: {
+    opacity: [0.2, 0.2, 0.2, 1, 0.2],
+    transition: { duration: 1.5, repeat: Infinity, delay: 0.6, ease: "easeInOut" }
+  }
+};
+
+export const wifiWave3Variants: Variants = {
+  animate: {
+    opacity: [0.2, 0.2, 0.2, 0.2, 1, 0.2],
+    transition: { duration: 1.5, repeat: Infinity, delay: 0.9, ease: "easeInOut" }
+  }
+};
+
+export const wifiSlashVariants: Variants = {
+  initial: { pathLength: 0, opacity: 0 },
+  animate: {
+    pathLength: 1,
+    opacity: 1,
+    transition: { duration: 0.8, delay: 0.2, ease: "easeInOut" }
+  }
+};
+

@@ -1429,5 +1429,11 @@
       "messageMin": "Message must be at least 10 characters.",
       "messageMax": "Message must be at most 5000 characters."
     }
+  },
+  "networkStatus": {
+    "offlineTitle": "You are offline",
+    "offlineText": "Please check your internet connection or Wi-Fi settings.",
+    "onlineTitle": "Back Online!",
+    "onlineText": "Internet connection restored. You can now continue using the app."
   }
 }

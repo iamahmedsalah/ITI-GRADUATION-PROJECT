@@ -2,12 +2,16 @@ import { Suspense } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { appRouter } from './router'
 import Fallback from './components/ui/fallback'
+import NetworkStatusOverlay from './components/ui/NetworkStatusOverlay'
 
 function App() {
   return (
-    <Suspense fallback={<Fallback />}>
-      <RouterProvider router={appRouter} />
-    </Suspense>
+    <>
+      <NetworkStatusOverlay />
+      <Suspense fallback={<Fallback />}>
+        <RouterProvider router={appRouter} />
+      </Suspense>
+    </>
   )
 }
 
