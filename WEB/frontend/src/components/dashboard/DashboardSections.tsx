@@ -1063,8 +1063,8 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
                 item.insight.trend === 'up'
                   ? "border-(--success) bg-(--success-bg) text-(--success)"
                   : item.insight.trend === 'down'
-                    ? "border-(--danger) bg-(--danger-bg) text-(--danger)"
-                    : "border-(--accent-border) bg-(--accent-bg) text-(--text-h)"
+                    ? "border-(--danger-hover-bg) bg-(--danger-bg) text-(--danger)"
+                    : "border-(--success-hover-bg) bg-(--success-bg) text-(--success)"
               ].join(" ")}>
                 {item.insight.trend === 'up' && (
                   <HugeiconsIcon icon={ArrowUp01Icon} size={14} className="mt-0.5 shrink-0 text-(--success)" />

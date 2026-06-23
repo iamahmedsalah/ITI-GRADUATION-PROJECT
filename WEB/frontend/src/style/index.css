@@ -44,9 +44,6 @@
   --bg: #121212;
   --border: #282828;
   --code-bg: #1f2028;
-  --accent: var(--gd-primary);
-  --accent-bg: rgba(29, 185, 84, 0.08);
-  --accent-border: rgba(29, 185, 84, 0.35);
   --social-bg: rgba(47, 48, 58, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.5) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
@@ -61,17 +58,19 @@
   --glow-neutral-rgb: 255, 255, 255;
   --text-primary: #ffffff;
   --text-secondary: #a7a7a7;
-  --success: var(--gd-primary);
   --warning: #f59b23;
   --error: #e22134;
-  --google: #1a73e83a;
-
+  
+  --success: var(--gd-primary);
   --success-bg: rgba(29, 185, 84, 0.08);
   --success-hover-bg: rgba(29, 185, 84, 0.16);
   
+  --danger:var(--error);
   --danger-bg: rgba(226, 33, 52, 0.08);
   --danger-hover-bg: rgba(226, 33, 52, 0.16);
   
+  --google: #1a73e83a;
+
   --sans: "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: "Iceland", "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
