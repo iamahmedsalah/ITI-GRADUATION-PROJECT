@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLoaderData, useLocation, useNavigate, ScrollRestoration } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -70,6 +70,7 @@ export function RootLayout({ children }: RootLayoutProps) {
     <LanguageProvider>
       <ThemeProvider>
         <AppToaster />
+        <ScrollRestoration />
         {children ?? <Outlet />}
       </ThemeProvider>
     </LanguageProvider>

@@ -75,6 +75,7 @@ export function useUpdateStepStatus(options: {
       toast.success(t('roadmapDetail.progressSaved'))
       await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'mine'] })
       await queryClient.invalidateQueries({ queryKey: ['roadmaps', 'progress'] })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (error) => {
       if (error instanceof Error && error.message === 'login-required') {

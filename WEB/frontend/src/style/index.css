@@ -66,6 +66,12 @@
   --error: #e22134;
   --google: #1a73e83a;
 
+  --success-bg: rgba(29, 185, 84, 0.08);
+  --success-hover-bg: rgba(29, 185, 84, 0.16);
+  
+  --danger-bg: rgba(226, 33, 52, 0.08);
+  --danger-hover-bg: rgba(226, 33, 52, 0.16);
+  
   --sans: "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: "Iceland", "DM Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -630,4 +636,11 @@ textarea {
   margin-top: 0.75rem;
   color: var(--text);
   line-height: 1.85;
+}
+
+/* Word break utilities */
+.wrap-break-word {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }

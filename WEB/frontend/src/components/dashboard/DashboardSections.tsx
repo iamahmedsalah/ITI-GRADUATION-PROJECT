@@ -8,6 +8,8 @@ import {
   Activity01Icon,
   Alert02Icon,
   AiMagicIcon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
   BookmarkRemove02Icon,
   CrownIcon,
   Delete02Icon,
@@ -989,37 +991,71 @@ function buildPreferenceInsights({
   const latestRoadmapProgress = Math.max(0, ...(summary?.roadmaps ?? []).map((roadmap) => Math.round(roadmap.progressPercent ?? 0)))
   const upgradeLevel = nextSkillLevel(preferences?.skillLevel)
 
-  const schedule =
-    !summary
-      ? t('dashboard.preferences.insights.waiting', { defaultValue: 'Activity notes appear after your dashboard loads.' })
-      : weeklyHours >= 6 && activeDays <= 1
-        ? t('dashboard.preferences.insights.decreaseTime', { defaultValue: 'Recent activity is lighter than this target; decrease hours or split sessions.' })
-        : weeklyHours <= 3 && activeDays >= 4
-          ? t('dashboard.preferences.insights.increaseTime', { defaultValue: 'Your activity is steady; you can increase weekly time if it feels good.' })
-          : activeLearning > 0
-            ? t('dashboard.preferences.insights.keepTime', { defaultValue: 'Your current pace matches recent learning activity.' })
-            : t('dashboard.preferences.insights.startTime', { defaultValue: 'Start a roadmap so ILMA can compare your target with real activity.' })
+  let scheduleText = ''
+  let scheduleTrend: 'up' | 'down' | 'neutral' = 'neutral'
+  if (!summary) {
+    scheduleText = t('dashboard.preferences.insights.waiting', { defaultValue: 'Activity notes appear after your dashboard loads.' })
+    scheduleTrend = 'neutral'
+  } else if (weeklyHours >= 6 && activeDays <= 1) {
+    scheduleText = t('dashboard.preferences.insights.decreaseTime', { defaultValue: 'Recent activity is lighter than this target; decrease hours or split sessions.' })
+    scheduleTrend = 'down'
+  } else if (weeklyHours <= 3 && activeDays >= 4) {
+    scheduleText = t('dashboard.preferences.insights.increaseTime', { defaultValue: 'Your activity is steady; you can increase weekly time if it feels good.' })
+    scheduleTrend = 'up'
+  } else if (activeLearning > 0) {
+    scheduleText = t('dashboard.preferences.insights.keepTime', { defaultValue: 'Your current pace matches recent learning activity.' })
+    scheduleTrend = 'up'
+  } else {
+    scheduleText = t('dashboard.preferences.insights.startTime', { defaultValue: 'Start a roadmap so ILMA can compare your target with real activity.' })
+    scheduleTrend = 'neutral'
+  }
 
-  const level =
-    upgradeLevel && (completedLearning > 0 || averageProgress >= 75)
-      ? t('dashboard.preferences.insights.levelUp', {
-          level: t(`landing.levels.${upgradeLevel}`, { defaultValue: upgradeLevel }),
-          defaultValue: `Progress suggests you may be ready for ${upgradeLevel}.`,
-        })
-      : averageProgress >= 35 || activeDays >= 3
-        ? t('dashboard.preferences.insights.levelBuilding', { defaultValue: 'You are building evidence for the next skill level.' })
-        : t('dashboard.preferences.insights.levelHold', { defaultValue: 'Stay at this level until more roadmap work is completed.' })
+  let levelText = ''
+  let levelTrend: 'up' | 'down' | 'neutral' = 'neutral'
+  if (upgradeLevel && (completedLearning > 0 || averageProgress >= 75)) {
+    levelText = t('dashboard.preferences.insights.levelUp', {
+      level: t(`landing.levels.${upgradeLevel}`, { defaultValue: upgradeLevel }),
+      defaultValue: `Progress suggests you may be ready for ${upgradeLevel}.`,
+    })
+    levelTrend = 'up'
+  } else if (averageProgress >= 35 || activeDays >= 3) {
+    levelText = t('dashboard.preferences.insights.levelBuilding', { defaultValue: 'You are building evidence for the next skill level.' })
+    levelTrend = 'up'
+  } else {
+    levelText = t('dashboard.preferences.insights.levelHold', { defaultValue: 'Stay at this level until more roadmap work is completed.' })
+    levelTrend = 'down'
+  }
 
-  const goals =
-    completedLearning > 0
-      ? t('dashboard.preferences.insights.goalReview', { defaultValue: 'A learning path ended; check whether your goals were reached.' })
-      : latestRoadmapProgress >= 85
-        ? t('dashboard.preferences.insights.goalNear', { defaultValue: 'A roadmap is near the end; prepare to review your goals.' })
-        : activeLearning > 0
-          ? t('dashboard.preferences.insights.goalTracking', { defaultValue: 'ILMA is tracking progress toward these goals.' })
-          : t('dashboard.preferences.insights.goalStart', { defaultValue: 'When a roadmap ends, ILMA will ask if these goals were reached.' })
+  let goalsText = ''
+  let goalsTrend: 'up' | 'down' | 'neutral' = 'neutral'
+  if (completedLearning > 0) {
+    goalsText = t('dashboard.preferences.insights.goalReview', { defaultValue: 'A learning path ended; check whether your goals were reached.' })
+    goalsTrend = 'up'
+  } else if (latestRoadmapProgress >= 85) {
+    goalsText = t('dashboard.preferences.insights.goalNear', { defaultValue: 'A roadmap is near the end; prepare to review your goals.' })
+    goalsTrend = 'up'
+  } else if (activeLearning > 0) {
+    goalsText = t('dashboard.preferences.insights.goalTracking', { defaultValue: 'ILMA is tracking progress toward these goals.' })
+    goalsTrend = 'up'
+  } else {
+    goalsText = t('dashboard.preferences.insights.goalStart', { defaultValue: 'When a roadmap ends, ILMA will ask if these goals were reached.' })
+    goalsTrend = 'neutral'
+  }
 
-  return { schedule, level, goals }
+  return {
+    schedule: { text: scheduleText, trend: scheduleTrend },
+    level: { text: levelText, trend: levelTrend },
+    goals: { text: goalsText, trend: goalsTrend },
+  }
+}
+
+interface PreferenceItem {
+  label: string
+  value: string
+  insight?: {
+    text: string
+    trend: 'up' | 'down' | 'neutral'
+  }
 }
 
 export function PreferencesPreviewSection({ summary }: { summary?: DashboardSummary }) {
@@ -1034,45 +1070,45 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
   const insights = buildPreferenceInsights({ preferences, summary, t })
   const listLabel = (items?: string[], fallback = t('dashboard.preferences.notSet', 'Not set')) =>
     items?.length ? items.slice(0, 3).join(', ') : fallback
-  const preferenceItems = hasPreferences
+  const preferenceItems: PreferenceItem[] = hasPreferences
     ? [
-        {
-          label: t('dashboard.preferences.items.interests', 'Interests'),
-          value: listLabel(preferences?.interests),
-        },
-        {
-          label: t('dashboard.preferences.items.goals', 'Learning goals'),
-          value: listLabel(preferences?.learningGoals),
-          insight: insights.goals,
-        },
-        {
-          label: t('dashboard.preferences.items.level', 'Current skill level'),
-          value: preferences?.skillLevel ?? t('dashboard.preferences.notSet', 'Not set'),
-          insight: insights.level,
-        },
-        {
-          label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
-          value: t('dashboard.preferences.hours', {
-            count: preferences?.weeklyStudyHours ?? 0,
-            defaultValue: `${preferences?.weeklyStudyHours ?? 0} hours / week`,
-          }),
-          insight: insights.schedule,
-        },
-      ]
+      {
+        label: t('dashboard.preferences.items.interests', 'Interests'),
+        value: listLabel(preferences?.interests),
+      },
+      {
+        label: t('dashboard.preferences.items.goals', 'Learning goals'),
+        value: listLabel(preferences?.learningGoals),
+        insight: insights.goals,
+      },
+      {
+        label: t('dashboard.preferences.items.level', 'Current skill level'),
+        value: preferences?.skillLevel ?? t('dashboard.preferences.notSet', 'Not set'),
+        insight: insights.level,
+      },
+      {
+        label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
+        value: t('dashboard.preferences.hours', {
+          count: preferences?.weeklyStudyHours ?? 0,
+          defaultValue: `${preferences?.weeklyStudyHours ?? 0} hours / week`,
+        }),
+        insight: insights.schedule,
+      },
+    ]
     : [
-        {
-          label: t('dashboard.preferences.items.interests', 'Interests'),
-          value: t('dashboard.preferences.emptyItem', 'Choose topics you want to learn'),
-        },
-        {
-          label: t('dashboard.preferences.items.level', 'Current skill level'),
-          value: t('dashboard.preferences.emptyLevel', 'Set your level and difficulty'),
-        },
-        {
-          label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
-          value: t('dashboard.preferences.emptySchedule', 'Pick your learning pace'),
-        },
-      ]
+      {
+        label: t('dashboard.preferences.items.interests', 'Interests'),
+        value: t('dashboard.preferences.emptyItem', 'Choose topics you want to learn'),
+      },
+      {
+        label: t('dashboard.preferences.items.level', 'Current skill level'),
+        value: t('dashboard.preferences.emptyLevel', 'Set your level and difficulty'),
+      },
+      {
+        label: t('dashboard.preferences.items.schedule', 'Weekly study time'),
+        value: t('dashboard.preferences.emptySchedule', 'Pick your learning pace'),
+      },
+    ]
 
   return (
     <section className="rounded-3xl border border-(--border) bg-(--surface) p-5">
@@ -1103,9 +1139,22 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
                 <span className="wrap-break-word text-xs text-(--text)">{item.value}</span>
               </span>
             </span>
-            {'insight' in item && item.insight ? (
-              <span className="rounded-squircle border border-(--accent-border) bg-(--accent-bg) px-3 py-2 text-xs leading-5 text-(--text-h)">
-                {item.insight}
+            {item.insight ? (
+              <span className={[
+                "rounded-squircle border px-3 py-2 text-xs leading-5 flex items-start gap-1.5",
+                item.insight.trend === 'up'
+                  ? "border-(--success) bg-(--success-bg) text-(--success)"
+                  : item.insight.trend === 'down'
+                    ? "border-(--danger) bg-(--danger-bg) text-(--danger)"
+                    : "border-(--accent-border) bg-(--accent-bg) text-(--text-h)"
+              ].join(" ")}>
+                {item.insight.trend === 'up' && (
+                  <HugeiconsIcon icon={ArrowUp01Icon} size={14} className="mt-0.5 shrink-0 text-(--success)" />
+                )}
+                {item.insight.trend === 'down' && (
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={14} className="mt-0.5 shrink-0 text-(--danger)" />
+                )}
+                <span>{item.insight.text}</span>
               </span>
             ) : null}
           </div>

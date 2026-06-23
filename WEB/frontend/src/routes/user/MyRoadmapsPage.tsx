@@ -205,109 +205,115 @@ export default function MyRoadmapsPage() {
 
                 return (
                   <article key={roadmap._id} className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
-                    <div className="flex items-start gap-3 w-full">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(roadmap._id)}
-                        className="admin-checkbox mt-2"
-                        onChange={(event) => {
-                          setSelectedIds((current) =>
-                            event.target.checked
-                              ? Array.from(new Set([...current, roadmap._id]))
-                              : current.filter((id) => id !== roadmap._id),
-                          )
-                        }}
-                        aria-label={roadmap.template?.title ?? roadmap._id}
-                      />
-                      
-                      {/* Squircle icon container with absolute AI badge */}
-                      <div className="relative shrink-0">
-                        <span className="grid size-10 place-items-center rounded-squircle bg-(--surface) text-(--accent)">
-                          <HugeiconsIcon
-                            icon={Route03Icon}
-                            size={19}
+                    <div className="flex flex-col gap-3">
+                      {/* Top Header Row with Icon, Title, and Actions */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(roadmap._id)}
+                            className="admin-checkbox mt-2"
+                            onChange={(event) => {
+                              setSelectedIds((current) =>
+                                event.target.checked
+                                  ? Array.from(new Set([...current, roadmap._id]))
+                                  : current.filter((id) => id !== roadmap._id),
+                              )
+                            }}
+                            aria-label={roadmap.template?.title ?? roadmap._id}
                           />
-                        </span>
-                        {(roadmap.template?.source === 'ai' || roadmap.template?.source === 'user-ai' || roadmap.template?.source === 'admin-ai') && (
-                          <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-(--accent-bg) border border-(--accent-border) text-(--accent) shadow-sm">
-                            <HugeiconsIcon icon={AiMagicIcon} size={9} />
-                          </span>
+
+                          {/* Squircle icon container with absolute AI badge */}
+                          <div className="relative shrink-0">
+                            <span className="grid size-10 place-items-center rounded-squircle bg-(--surface) text-(--accent)">
+                              <HugeiconsIcon
+                                icon={Route03Icon}
+                                size={19}
+                              />
+                            </span>
+                            {(roadmap.template?.source === 'ai' || roadmap.template?.source === 'user-ai' || roadmap.template?.source === 'admin-ai') && (
+                              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-(--accent-bg) border border-(--accent-border) text-(--accent) shadow-sm">
+                                <HugeiconsIcon icon={AiMagicIcon} size={9} />
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
+                              className="block text-base font-semibold leading-tight text-(--text-h) transition hover:text-(--accent) wrap-break-word"
+                            >
+                              {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+                            </Link>
+                            <p className="mt-1 text-xs text-(--text)">
+                              {roadmap.template?.targetLevel
+                                ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
+                                : t('landing.levels.roadmap')}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Top Right Action Button: Bookmark/Unstar */}
+                        {roadmap.status === 'assigned' && (
+                          <button
+                            type="button"
+                            onClick={() => setBookmarkRemoveTarget(roadmap)}
+                            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-squircle text-(--accent) transition hover:bg-(--accent-bg)"
+                            aria-label={t('dashboard.roadmaps.unstar', 'Remove')}
+                            title={t('dashboard.roadmaps.unstar', 'Remove')}
+                          >
+                            <HugeiconsIcon icon={BookmarkRemove02Icon} size={15} />
+                          </button>
                         )}
                       </div>
 
-                      <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
-                            className="block truncate text-base font-semibold leading-6 text-(--text-h) transition hover:text-(--accent)"
+                      {/* Visibility button inside its own container */}
+                      {roadmap.template?.source === 'user-ai' && isOwner(roadmap) && (
+                        <div className="flex justify-start">
+                          <button
+                            onClick={() => {
+                              updateVisibilityMutation.mutate({
+                                templateId: roadmap.template!._id,
+                                visibility: roadmap.template!.visibility === 'public' ? 'private' : 'public',
+                              })
+                            }}
+                            disabled={updateVisibilityMutation.isPending}
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-3) px-2.5 py-1 text-xs font-semibold text-(--text-h) transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            title={roadmap.template.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
                           >
-                            {roadmap.template?.title ?? t('profile.unknownRoadmap')}
-                          </Link>
-                          <p className="mt-1 text-xs text-(--text)">
-                            {roadmap.template?.targetLevel
-                              ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
-                              : t('landing.levels.roadmap')}
-                          </p>
+                            <HugeiconsIcon
+                              icon={roadmap.template.visibility === 'public' ? EyeIcon : ViewOffSlashIcon}
+                              size={14}
+                              className={roadmap.template.visibility === 'public' ? 'text-(--success)' : 'text-(--text)'}
+                            />
+                            <span>
+                              {roadmap.template.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
+                            </span>
+                          </button>
                         </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {/* Visibility button */}
-                          {roadmap.template?.source === 'user-ai' && isOwner(roadmap) && (
-                            <button
-                              onClick={() => {
-                                updateVisibilityMutation.mutate({
-                                  templateId: roadmap.template!._id,
-                                  visibility: roadmap.template!.visibility === 'public' ? 'private' : 'public',
-                                })
-                              }}
-                              disabled={updateVisibilityMutation.isPending}
-                              className="inline-flex cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-3) px-2 py-1 text-xs font-semibold text-(--text-h) transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-                              title={roadmap.template.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
-                            >
-                              <HugeiconsIcon
-                                icon={roadmap.template.visibility === 'public' ? EyeIcon : ViewOffSlashIcon}
-                                size={14}
-                                className={roadmap.template.visibility === 'public' ? 'text-(--success)' : 'text-(--text)'}
-                              />
-                              <span>
-                                {roadmap.template.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
-                              </span>
-                            </button>
-                          )}
-
-                          {/* Bookmark Remove in a fixed position on the right */}
-                          {roadmap.status === 'assigned' && (
-                            <button
-                              type="button"
-                              onClick={() => setBookmarkRemoveTarget(roadmap)}
-                              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-squircle text-(--accent) transition hover:bg-(--accent-bg)"
-                              aria-label={t('dashboard.roadmaps.unstar', 'Remove')}
-                              title={t('dashboard.roadmaps.unstar', 'Remove')}
-                            >
-                              <HugeiconsIcon icon={BookmarkRemove02Icon} size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-                      <span className="rounded-lg border border-(--border) bg-(--surface) px-3 py-2 text-(--text)">
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                      {/* Type Badge */}
+                      <span className="rounded-full bg-(--surface-3) px-2.5 py-1 font-semibold text-(--text-secondary)">
                         {roadmap.template?.templateType === 'skillBased'
                           ? t('landing.skillRoadmaps')
                           : t('landing.roleRoadmaps')}
                       </span>
-                      <span className="rounded-lg border border-(--border) bg-(--surface) px-3 py-2 text-(--text)">
+                      {/* Status Badge */}
+                      <span className="rounded-full bg-(--surface-3) px-2.5 py-1 font-semibold text-(--text-secondary)">
                         {statusLabel(roadmap.status)}
                       </span>
-                      <div className="flex items-center gap-3 rounded-lg border border-(--border) bg-(--surface) px-3 py-2">
-                        <div className="h-2 w-16 overflow-hidden rounded-full bg-(--surface-3)">
+                      {/* Progress Bar Badge */}
+                      <div className="ms-auto flex items-center gap-2 rounded-full bg-(--surface-3) px-2.5 py-1">
+                        <div className="h-1.5 w-12 overflow-hidden rounded-full bg-zinc-800">
                           <div
                             className="h-full rounded-full bg-(--gd-primary)"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="font-semibold text-xs text-(--text-h)">
+                        <span className="font-bold text-[10px] text-(--text-h)">
                           {progress}%
                         </span>
                       </div>
@@ -322,159 +328,159 @@ export default function MyRoadmapsPage() {
             )}
           </div>
           <div className="hidden overflow-x-auto lg:block">
-          <table className="min-w-full border-separate border-spacing-0 text-sm">
-            <thead className="bg-(--surface-2) text-left text-(--text)">
-              <tr>
-                <th className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    className="admin-checkbox"
-                    onChange={(event) => {
-                      setSelectedIds(event.target.checked ? roadmaps.map((roadmap) => roadmap._id) : [])
-                    }}
-                    aria-label={t('adminUi.common.selectAll')}
-                  />
-                </th>
-                <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableRoadmap')}</th>
-                <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableType', 'Type')}</th>
-                <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableStatus')}</th>
-                <th className="px-4 py-3 font-semibold">{t('aiRoadmap.visibility')}</th>
-                <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableProgress')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roadmapsQuery.isLoading ? (
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
+              <thead className="bg-(--surface-2) text-left text-(--text)">
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-(--text)">
-                    {t('dashboard.loading')}
-                  </td>
+                  <th className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      className="admin-checkbox"
+                      onChange={(event) => {
+                        setSelectedIds(event.target.checked ? roadmaps.map((roadmap) => roadmap._id) : [])
+                      }}
+                      aria-label={t('adminUi.common.selectAll')}
+                    />
+                  </th>
+                  <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableRoadmap')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableType', 'Type')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableStatus')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('aiRoadmap.visibility')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('dashboard.roadmaps.tableProgress')}</th>
                 </tr>
-              ) : roadmaps.length ? (
-                roadmaps.map((roadmap) => {
-                  const progress = Math.round(roadmap.progressPercent ?? 0)
+              </thead>
+              <tbody>
+                {roadmapsQuery.isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-(--text)">
+                      {t('dashboard.loading')}
+                    </td>
+                  </tr>
+                ) : roadmaps.length ? (
+                  roadmaps.map((roadmap) => {
+                    const progress = Math.round(roadmap.progressPercent ?? 0)
 
-                  return (
-                    <tr key={roadmap._id} className="border-t border-(--border)">
-                      <td className="px-4 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(roadmap._id)}
-                          className="admin-checkbox"
-                          onChange={(event) => {
-                            setSelectedIds((current) =>
-                              event.target.checked
-                                ? Array.from(new Set([...current, roadmap._id]))
-                                : current.filter((id) => id !== roadmap._id),
-                            )
-                          }}
-                          aria-label={roadmap.template?.title ?? roadmap._id}
-                        />
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3 w-full">
-                          {/* Squircle icon container with absolute AI badge */}
-                          <div className="relative shrink-0">
-                            <span className="grid size-9 place-items-center rounded-squircle bg-(--surface-2) text-(--accent)">
-                              <HugeiconsIcon
-                                icon={Route03Icon}
-                                size={18}
-                              />
-                            </span>
-                            {(roadmap.template?.source === 'ai' || roadmap.template?.source === 'user-ai' || roadmap.template?.source === 'admin-ai') && (
-                              <span className="absolute -top-2 -left-2 flex h-5 w-5 items-center justify-center rounded-squircle bg-(--surface-3)/80 border border-(--surface) text-(--text) shadow-sm">
-                                <HugeiconsIcon icon={AiMagicIcon} size={14} />
+                    return (
+                      <tr key={roadmap._id} className="border-t border-(--border)">
+                        <td className="px-4 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(roadmap._id)}
+                            className="admin-checkbox"
+                            onChange={(event) => {
+                              setSelectedIds((current) =>
+                                event.target.checked
+                                  ? Array.from(new Set([...current, roadmap._id]))
+                                  : current.filter((id) => id !== roadmap._id),
+                              )
+                            }}
+                            aria-label={roadmap.template?.title ?? roadmap._id}
+                          />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3 w-full">
+                            {/* Squircle icon container with absolute AI badge */}
+                            <div className="relative shrink-0">
+                              <span className="grid size-9 place-items-center rounded-squircle bg-(--surface-2) text-(--accent)">
+                                <HugeiconsIcon
+                                  icon={Route03Icon}
+                                  size={18}
+                                />
                               </span>
-                            )}
-                          </div>
-
-                          <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <Link
-                                to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
-                                className="block truncate font-semibold text-(--text-h) transition hover:text-(--accent)"
-                              >
-                                {roadmap.template?.title ?? t('profile.unknownRoadmap')}
-                              </Link>
-                              <p className="text-xs text-(--text) mt-0.5">
-                                {roadmap.template?.targetLevel
-                                  ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
-                                  : t('landing.levels.roadmap')}
-                              </p>
+                              {(roadmap.template?.source === 'ai' || roadmap.template?.source === 'user-ai' || roadmap.template?.source === 'admin-ai') && (
+                                <span className="absolute -top-2 -left-2 flex h-5 w-5 items-center justify-center rounded-squircle bg-(--surface-3)/80 border border-(--surface) text-(--text) shadow-sm">
+                                  <HugeiconsIcon icon={AiMagicIcon} size={14} />
+                                </span>
+                              )}
                             </div>
 
-                            {/* Bookmark Remove in a fixed position on the right */}
-                            {roadmap.status === 'assigned' && (
-                              <button
-                                type="button"
-                                onClick={() => setBookmarkRemoveTarget(roadmap)}
-                                className="grid size-7 shrink-0 cursor-pointer place-items-center w-9 h-9 bg-(--accent-bg) rounded-squircle text-(--accent) transition hover:bg-(--accent-bg)"
-                                aria-label={t('dashboard.roadmaps.unstar', 'Remove')}
-                                title={t('dashboard.roadmaps.unstar', 'Remove')}
-                              >
-                                <HugeiconsIcon icon={BookmarkRemove02Icon} size={20} />
-                              </button>
-                            )}
+                            <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <Link
+                                  to={`/${language}/roadmaps/${roadmap.template?.slug ?? 'roadmap'}`}
+                                  className="block truncate font-semibold text-(--text-h) transition hover:text-(--accent)"
+                                >
+                                  {roadmap.template?.title ?? t('profile.unknownRoadmap')}
+                                </Link>
+                                <p className="text-xs text-(--text) mt-0.5">
+                                  {roadmap.template?.targetLevel
+                                    ? t(`landing.levels.${roadmap.template.targetLevel}`, { defaultValue: roadmap.template.targetLevel })
+                                    : t('landing.levels.roadmap')}
+                                </p>
+                              </div>
+
+                              {/* Bookmark Remove in a fixed position on the right */}
+                              {roadmap.status === 'assigned' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setBookmarkRemoveTarget(roadmap)}
+                                  className="grid size-7 shrink-0 cursor-pointer place-items-center w-9 h-9 bg-(--accent-bg) rounded-squircle text-(--accent) transition hover:bg-(--accent-bg)"
+                                  aria-label={t('dashboard.roadmaps.unstar', 'Remove')}
+                                  title={t('dashboard.roadmaps.unstar', 'Remove')}
+                                >
+                                  <HugeiconsIcon icon={BookmarkRemove02Icon} size={20} />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-(--text)">
-                        {roadmap.template?.templateType === 'skillBased'
-                          ? t('landing.skillRoadmaps')
-                          : t('landing.roleRoadmaps')}
-                      </td>
-                      <td className="px-4 py-4 text-(--text)">{statusLabel(roadmap.status)}</td>
-                      <td className="px-4 py-4">
-                        {roadmap.template?.source === 'user-ai' && isOwner(roadmap) ? (
-                          <button
-                            onClick={() => {
-                              updateVisibilityMutation.mutate({
-                                templateId: roadmap.template!._id,
-                                visibility: roadmap.template!.visibility === 'public' ? 'private' : 'public',
-                              })
-                            }}
-                            disabled={updateVisibilityMutation.isPending}
-                            className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-3) px-3 py-1.5 text-xs font-semibold text-(--text-h) transition hover:border-(--accent-border) disabled:cursor-not-allowed disabled:opacity-50"
-                            title={roadmap.template.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
-                          >
-                            <HugeiconsIcon
-                              icon={roadmap.template.visibility === 'public' ? EyeIcon : ViewOffSlashIcon}
-                              size={14}
-                              className={roadmap.template.visibility === 'public' ? 'text-(--success)' : 'text-(--text)'}
-                            />
-                            <span>
-                              {roadmap.template.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
+                        </td>
+                        <td className="px-4 py-4 text-(--text)">
+                          {roadmap.template?.templateType === 'skillBased'
+                            ? t('landing.skillRoadmaps')
+                            : t('landing.roleRoadmaps')}
+                        </td>
+                        <td className="px-4 py-4 text-(--text)">{statusLabel(roadmap.status)}</td>
+                        <td className="px-4 py-4">
+                          {roadmap.template?.source === 'user-ai' && isOwner(roadmap) ? (
+                            <button
+                              onClick={() => {
+                                updateVisibilityMutation.mutate({
+                                  templateId: roadmap.template!._id,
+                                  visibility: roadmap.template!.visibility === 'public' ? 'private' : 'public',
+                                })
+                              }}
+                              disabled={updateVisibilityMutation.isPending}
+                              className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-squircle border border-(--border) bg-(--surface-3) px-3 py-1.5 text-xs font-semibold text-(--text-h) transition hover:border-(--accent-border) disabled:cursor-not-allowed disabled:opacity-50"
+                              title={roadmap.template.visibility === 'public' ? t('aiRoadmap.makePrivate') : t('aiRoadmap.makePublic')}
+                            >
+                              <HugeiconsIcon
+                                icon={roadmap.template.visibility === 'public' ? EyeIcon : ViewOffSlashIcon}
+                                size={14}
+                                className={roadmap.template.visibility === 'public' ? 'text-(--success)' : 'text-(--text)'}
+                              />
+                              <span>
+                                {roadmap.template.visibility === 'public' ? t('aiRoadmap.public') : t('aiRoadmap.private')}
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-(--text)">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-20 overflow-hidden rounded-full bg-(--surface-3)">
+                              <div
+                                className="h-full rounded-full bg-(--gd-primary)"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold text-xs text-(--text-h)">
+                              {progress}%
                             </span>
-                          </button>
-                        ) : (
-                          <span className="text-xs text-(--text)">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 w-20 overflow-hidden rounded-full bg-(--surface-3)">
-                            <div
-                              className="h-full rounded-full bg-(--gd-primary)"
-                              style={{ width: `${progress}%` }}
-                            />
                           </div>
-                          <span className="font-semibold text-xs text-(--text-h)">
-                            {progress}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-(--text)">
-                    {t('dashboard.emptyRoadmaps')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-(--text)">
+                      {t('dashboard.emptyRoadmaps')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -509,6 +515,6 @@ export default function MyRoadmapsPage() {
           if (bookmarkRemoveTarget) deleteMutation.mutate(bookmarkRemoveTarget._id)
         }}
       />
-    </main>
+      </main>
   )
 }

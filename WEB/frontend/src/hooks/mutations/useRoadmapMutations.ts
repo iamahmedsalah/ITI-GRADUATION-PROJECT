@@ -16,6 +16,7 @@ export function useAssignRoadmap() {
     mutationFn: assignRoadmap,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: myRoadmapsQueryKey })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -39,6 +40,7 @@ export function useUpdateRoadmapStep() {
           queryKey: roadmapProgressQueryKey(variables.roadmapId),
         }),
         queryClient.invalidateQueries({ queryKey: myRoadmapsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
       ])
     },
   })
@@ -51,6 +53,7 @@ export function useDeleteUserRoadmap() {
     mutationFn: deleteUserRoadmap,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: myRoadmapsQueryKey })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

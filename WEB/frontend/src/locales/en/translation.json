@@ -525,7 +525,7 @@
     },
     "completionPopup": {
       "overline": "Roadmap complete",
-      "title": "You finished the roadmap.",
+      "title": "Congratulations! You finished the roadmap. 🎉",
       "subtitle": "{{roadmap}} is complete. Nice work. ILMA picked a few smart next steps for you.",
       "dashboard": "Open dashboard",
       "keepViewing": "Stay here",
@@ -584,7 +584,6 @@
       "title": "Deactivate or Delete Account",
       "description": "Temporarily deactivate your account or permanently delete it. Deleted accounts can be restored within 7 days.",
       "scheduledText": "Your account is scheduled for deletion on ${scheduledDeletionDate}. You can cancel the deletion before that date using the verification code sent to your email.",
-
       "deleteAccount": {
         "title": "Delete Account",
         "description": "Account deletion will be scheduled and can be canceled within 7 days.",
@@ -592,16 +591,15 @@
         "sendCodeButton": "Send Verification Code",
         "deleteCodeSent": "Deletion code sent to your email.",
         "deleteRequestFailed": "Could not send deletion code.",
-        "deleteScheduled":"Account deletion scheduled. You have 7 days to undo it.",
+        "deleteScheduled": "Account deletion scheduled. You have 7 days to undo it.",
         "deleteConfirmFailed": "Could not confirm deletion.",
         "undoCodeSent": "Cancellation code sent to your email.",
         "undoRequestFailed": "Could not send undo code.",
-        "deleteCanceled":"Account deletion canceled.",
-        "undoConfirmFailed":"Could not confirm cancellation.",
+        "deleteCanceled": "Account deletion canceled.",
+        "undoConfirmFailed": "Could not confirm cancellation.",
         "confirmUndo": "Confirm Cancellation",
         "passwordRequired": "Enter your current password first."
       },
-
       "deactivateAccount": {
         "passwordLabel": "Current Password",
         "passwordPlaceholder": "Enter your current password",

@@ -186,7 +186,6 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                       <HugeiconsIcon icon={Route03Icon} size={18} />
                     ) : null}
                     <span>{link.label}</span>
-                    <span className="text-[10px] leading-none opacity-80">&#9662;</span>
                   </NavLink>
                   <div className="invisible absolute left-0 top-full z-50 min-w-58 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100">
                     <div className="rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
@@ -332,9 +331,6 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                           />
                         </span>
                         <span className="flex-1">{link.label}</span>
-                        <span className="text-[10px] leading-none opacity-80">
-                          &#9662;
-                        </span>
                       </NavLink>
                       <div className="grid gap-0.5 ps-11">
                         {link.dropdownItems.map((item) =>
@@ -384,10 +380,10 @@ export default function Navbar({ language, links = [] }: NavbarProps) {
                           link.to.includes("/ai")
                             ? AiMagicIcon
                             : link.to.includes("/upgrade")
-                            ? CrownIcon
-                            : link.to.includes("roadmap")
-                            ? Route03Icon
-                            : DashboardSquare03Icon
+                              ? CrownIcon
+                              : link.to.includes("roadmap")
+                                ? Route03Icon
+                                : DashboardSquare03Icon
                         }
                         size={16}
                       />
