@@ -47,6 +47,14 @@ const userProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    gitLabUrl: {
+      type: String,
+      trim: true,
+    },
+    xUrl: {
+      type: String,
+      trim: true,
+    },
     websiteUrl: {
       type: String,
       trim: true,

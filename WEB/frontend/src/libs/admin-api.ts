@@ -45,6 +45,9 @@ export type AdminOverviewData = {
     total: number
     unread: number
   }
+  proAccessRequests?: {
+    pending: number
+  }
 }
 
 export type AdminPagination = {
@@ -264,6 +267,31 @@ export type AdminContactMessageRow = {
   lastRepliedAt?: string | null
 }
 
+export type AdminProAccessRequestRow = {
+  _id: string
+  learningGoal: 'career-switch' | 'skill-up' | 'portfolio-project' | 'interview-prep' | 'academic-study' | 'other'
+  needReason: string
+  expectedDurationDays: 7 | 14 | 30
+  status: 'pending' | 'approved' | 'rejected'
+  adminNote?: string
+  accessStartsAt?: string | number | null
+  accessEndsAt?: string | number | null
+  createdAt?: string | number
+  reviewedAt?: string | number
+  user?: {
+    _id?: string
+    username?: string
+    email?: string
+    Fname?: string
+    Lname?: string
+    subscription?: AdminUserRow['subscription']
+  } | null
+  reviewedBy?: {
+    username?: string
+    email?: string
+  } | null
+}
+
 type AdminListResponse<T> = {
   success?: boolean
   message?: string
@@ -304,6 +332,48 @@ export async function fetchAdminOverview() {
   }
 
   return data.data
+}
+
+export async function fetchAdminProAccessRequests(params: {
+  status?: 'pending' | 'approved' | 'rejected'
+  page?: number
+  limit?: number
+}) {
+  const { response, data } = await apiGet<AdminListResponse<AdminProAccessRequestRow[]>>(
+    `/admin/pro-access-requests${toQueryString(params)}`,
+    { data: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } },
+  )
+
+  if (!response.ok) {
+    return null
+  }
+
+  return {
+    data: data.data ?? [],
+    pagination: data.pagination ?? { total: 0, page: 1, limit: 20, pages: 0 },
+  }
+}
+
+export async function reviewAdminProAccessRequest(
+  requestId: string,
+  payload: {
+    action: 'approve' | 'reject'
+    adminNote?: string
+  },
+) {
+  const { response, data } = await apiPost<AdminMutationResponse<{
+    request?: AdminProAccessRequestRow
+  }>>(
+    `/admin/pro-access-requests/${requestId}/review`,
+    {},
+    { json: payload },
+  )
+
+  return {
+    ok: response.ok,
+    message: data.message ?? (response.ok ? 'Pro access request reviewed.' : 'Failed to review request.'),
+    data: data.data?.request ?? null,
+  }
 }
 
 export async function fetchAdminUsers(params: {

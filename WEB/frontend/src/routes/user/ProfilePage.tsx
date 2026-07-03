@@ -1,7 +1,19 @@
 import { lazy, Suspense } from 'react'
-import { useLoaderData} from 'react-router-dom'
+import { useLoaderData } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  CodeIcon,
+  Html5Icon,
+  Css3Icon,
+  ReactIcon,
+  DatabaseIcon,
+  GithubIcon,
+  FigmaIcon,
+  CpuIcon,
+  GitlabIcon,
+} from '@hugeicons/core-free-icons'
 import { useLanguage } from '../../context/LanguageContext'
 import { createHeroLineVariants, createPageVariants, createStaggerContainerVariants } from '../../libs/motionVariants'
 
@@ -49,6 +61,7 @@ function ProfilePage() {
             <Suspense fallback={<ProfileSectionFallback />}>
               <ProfileAvatarUploader user={user} />
             </Suspense>
+            <TechSkillsBanner />
           </div>
           <Suspense fallback={<ProfileSectionFallback />}>
             <ProfileStatusCard user={user} t={t} variants={heroLineVariants} />
@@ -64,6 +77,80 @@ function ProfilePage() {
 }
 
 export default ProfilePage
+
+function TechSkillsBanner() {
+  const { t } = useTranslation()
+  const skillIcons = [
+    { icon: CodeIcon, label: 'Code' },
+    { icon: Html5Icon, label: 'HTML5' },
+    { icon: Css3Icon, label: 'CSS3' },
+    { icon: ReactIcon, label: 'React' },
+    { icon: DatabaseIcon, label: 'Database' },
+    { icon: GithubIcon, label: 'GitHub' },
+    { icon: FigmaIcon, label: 'Figma' },
+    { icon: CpuIcon, label: 'CPU' },
+    { icon: GitlabIcon, label: 'GitLab' },
+  ]
+
+  // Stagger jumping animations
+  const iconVariants = (index: number) => ({
+    animate: {
+      y: [0, -10, 0],
+      transition: {
+        duration: 1.2,
+        repeat: Infinity,
+        ease: 'easeInOut',
+        delay: index * 0.15,
+      } as const,
+    },
+  })
+
+  // Duplicate the list to allow infinite marquee scrolling
+  const marqueeItems = [...skillIcons, ...skillIcons, ...skillIcons]
+
+  return (
+    <div className="relative mt-5 overflow-hidden rounded-4xl border border-(--border) bg-(--surface) py-4">
+      {/* Title */}
+      <p className="px-5 text-xs font-semibold uppercase tracking-[0.14em] text-(--text) mb-3">
+        {t('profile.skills.title', 'Skills & Technologies')}
+      </p>
+
+      {/* Marquee Row */}
+      <div className="flex w-full mt-5  overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
+        <motion.div
+          className="flex gap-8 shrink-0 min-w-full"
+          animate={{ x: ['-50%', '0%'] }}
+          transition={{
+            repeat: Infinity,
+            ease: 'linear',
+            duration: 15,
+          }}
+        >
+          {marqueeItems.map((skill, index) => {
+            const IconComp = skill.icon
+            return (
+              <div
+                key={index}
+                className="flex shrink-0 flex-col items-center gap-1.5"
+              >
+                <motion.div
+                  variants={iconVariants(index)}
+                  animate="animate"
+                  className="grid size-12 place-items-center rounded-squircle bg-(--surface-2) border border-(--border) text-(--accent) shadow-sm"
+                >
+                  <HugeiconsIcon icon={IconComp} size={22} />
+                </motion.div>
+                <span className="text-[10px] font-medium text-(--text)">
+                  {skill.label}
+                </span>
+              </div>
+            )
+          })}
+        </motion.div>
+      </div>
+    </div>
+  )
+}
 
 
 

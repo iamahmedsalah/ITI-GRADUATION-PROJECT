@@ -20,6 +20,7 @@ import coursesRoutes from "./routes/courses.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import contactRoutes from "./routes/contact.route.js";
 import aiRoutes from "./routes/ai.route.js";
+import proAccessRoutes from "./routes/pro-access.route.js";
 import systemRoutes from "./routes/system.route.js";
 import {
   swaggerSpec,
@@ -234,6 +235,9 @@ app.use("/api/courses", coursesRoutes);
 
 // AI-powered recommendations
 app.use("/api/ai", aiRoutes);
+
+// Pro access requests
+app.use("/api/pro-access", proAccessRoutes);
 
 // Admin Routes
 app.use("/api/admin", adminRoutes);

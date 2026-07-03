@@ -771,10 +771,20 @@ export const checkAuth = async (req, res) => {
   }
 
   const hasPreferences = await UserPreference.exists({ user: req.user._id });
+  const profile = await UserProfile.findOne({ user: req.user._id }).lean();
+  const profileVisibility = profile?.visibility || "public";
 
   return res.status(200).json({
     success: true,
     authenticated: true,
-    user: toPublicUser(req.user, { hasPreferences }),
+    user: {
+      ...toPublicUser(req.user, { hasPreferences }),
+      profileVisibility,
+      githubUrl: profile?.githubUrl || "",
+      linkedInUrl: profile?.linkedInUrl || "",
+      gitLabUrl: profile?.gitLabUrl || "",
+      xUrl: profile?.xUrl || "",
+      websiteUrl: profile?.websiteUrl || "",
+    },
   });
 };

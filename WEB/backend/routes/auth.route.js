@@ -49,9 +49,12 @@ import {
   handleGoogleCredentialAuth,
   startSocialAuth,
   handleSocialAuthCallback,
+  getPublicProfile,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
+
+router.get("/users/profile/:username", getPublicProfile);
 
 // PUBLIC ROUTES (Anyone can access these)
 /**

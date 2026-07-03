@@ -50,6 +50,7 @@ import {
   SignupPage,
   UpgradePage,
   VerifyEmailPage,
+  PublicProfilePage,
 } from "./utils/routes.lazy";
 
 export const appRouter = createBrowserRouter([
@@ -121,6 +122,10 @@ export const appRouter = createBrowserRouter([
                 path: "profile",
                 loader: profileLoader,
                 element: <ProfilePage />,
+              },
+              {
+                path: "u/:username",
+                element: <PublicProfilePage />,
               },
               {
                 path: "preferences",

@@ -2,6 +2,7 @@ import RoadmapTemplate from "../../models/roadmap/roadmapTemplateModel.js";
 import User from "../../models/user/userAccountModel.js";
 import UserActivity from "../../models/user/userActivityModel.js";
 import UserCourseProgress from "../../models/user/userCourseProgressModel.js";
+import ProAccessRequest from "../../models/user/proAccessRequestModel.js";
 import UserPreference from "../../models/user/userPreferenceModel.js";
 import UserProfile from "../../models/user/userProfileModel.js";
 import UserRoadmap from "../../models/user/userRoadmapModel.js";
@@ -354,6 +355,7 @@ export const deleteUserByAdmin = async (req, res) => {
       UserPreference.deleteMany({ user: user._id }),
       UserActivity.deleteMany({ user: user._id }),
       UserCourseProgress.deleteMany({ user: user._id }),
+      ProAccessRequest.deleteMany({ user: user._id }),
       UserRoadmapStepProgress.deleteMany({
         $or: [
           { user: user._id },

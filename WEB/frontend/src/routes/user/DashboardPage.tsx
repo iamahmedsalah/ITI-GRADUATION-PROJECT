@@ -24,6 +24,7 @@ const AiRecommendationsSection = lazy(() => loadDashboardRoadmaps().then((module
 const StreakCard = lazy(() => loadDashboardStats().then((module) => ({ default: module.StreakCard })))
 const SubscriptionSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.SubscriptionSection })))
 const PreferencesPreviewSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.PreferencesPreviewSection })))
+const AiUsageSection = lazy(() => loadDashboardPreferences().then((module) => ({ default: module.AiUsageSection })))
 const LearningActivitySection = lazy(() => loadDashboardActivity().then((module) => ({ default: module.LearningActivitySection })))
 
 function DashboardStat({ value, label }: { value: string | number; label: string }) {
@@ -157,6 +158,11 @@ function DashboardPage() {
             <motion.div variants={cardVariants}>
               <Suspense fallback={<SectionFallback />}>
                 <PreferencesPreviewSection summary={summary} />
+              </Suspense>
+            </motion.div>
+            <motion.div variants={cardVariants}>
+              <Suspense fallback={<SectionFallback className="min-h-40" />}>
+                <AiUsageSection />
               </Suspense>
             </motion.div>
           </div>

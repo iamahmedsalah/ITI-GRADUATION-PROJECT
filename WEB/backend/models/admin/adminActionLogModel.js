@@ -17,7 +17,7 @@ const adminActionLogSchema = new mongoose.Schema(
     },
     targetType: {
       type: String,
-      enum: ["user", "roadmapTemplate", "course", "contactMessage", "system"],
+      enum: ["user", "roadmapTemplate", "course", "contactMessage", "proAccessRequest", "system"],
       required: [true, "Please add a target type"],
       index: true,
     },

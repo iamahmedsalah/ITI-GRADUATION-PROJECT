@@ -188,10 +188,27 @@ export const profileUpdateSchema = z.object({
       username: bodySchema.username.optional(),
       Fname: bodySchema.Fname.optional(),
       Lname: bodySchema.Lname.optional(),
+      visibility: z.enum(["public", "private"]).optional(),
+      githubUrl: z.string().trim().optional(),
+      linkedInUrl: z.string().trim().optional(),
+      gitLabUrl: z.string().trim().optional(),
+      xUrl: z.string().trim().optional(),
+      websiteUrl: z.string().trim().optional(),
     })
     .strict()
     .refine(
-      (value) => Boolean(value.username || value.Fname || value.Lname),
+      (value) =>
+        Boolean(
+          value.username ||
+            value.Fname ||
+            value.Lname ||
+            value.visibility ||
+            value.githubUrl ||
+            value.linkedInUrl ||
+            value.gitLabUrl ||
+            value.xUrl ||
+            value.websiteUrl
+        ),
       "Provide at least one field to update.",
     ),
   params: z.object({}).passthrough(),

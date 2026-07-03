@@ -47,7 +47,7 @@ export default function ProfileAvatarUploader({ user, cacheQueryKey = authQueryK
   })
 
   return (
-    <div className="grid items-center gap-5 rounded-3xl border border-(--border) bg-(--surface) p-5 sm:p-6 md:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_auto]">
+    <div className="grid items-center gap-5 rounded-4xl border border-(--border) bg-(--surface) p-5 sm:p-6 md:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_auto]">
       <div className="relative size-28 overflow-hidden rounded-squircle border border-(--accent-border) bg-(--surface-2) sm:size-32">
         {pendingAvatarImage || avatarUrl ? (
           <img src={pendingAvatarImage ?? avatarUrl ?? ''} alt={user.name} className="size-full object-cover" />

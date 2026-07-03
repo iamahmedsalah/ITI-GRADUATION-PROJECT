@@ -2,6 +2,7 @@ import AdminActionLog from "../../models/admin/adminActionLogModel.js";
 import ContactMessage from "../../models/contact/contactMessageModel.js";
 import Course from "../../models/course/courseModel.js";
 import RoadmapTemplate from "../../models/roadmap/roadmapTemplateModel.js";
+import ProAccessRequest from "../../models/user/proAccessRequestModel.js";
 import User from "../../models/user/userAccountModel.js";
 import UserCourseProgress from "../../models/user/userCourseProgressModel.js";
 import UserRoadmap from "../../models/user/userRoadmapModel.js";
@@ -31,6 +32,7 @@ export const getAdminOverview = async (_req, res) => {
       completedCourseEnrollments,
       totalContactMessages,
       unreadContactMessages,
+      pendingProAccessRequests,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ isActive: true }),
@@ -53,6 +55,7 @@ export const getAdminOverview = async (_req, res) => {
       UserCourseProgress.countDocuments({ status: "completed" }),
       ContactMessage.countDocuments({}),
       ContactMessage.countDocuments({ status: "unread" }),
+      ProAccessRequest.countDocuments({ status: "pending" }),
     ]);
 
     return res.status(200).json({
@@ -88,6 +91,9 @@ export const getAdminOverview = async (_req, res) => {
         contactMessages: {
           total: totalContactMessages,
           unread: unreadContactMessages,
+        },
+        proAccessRequests: {
+          pending: pendingProAccessRequests,
         },
       },
     });

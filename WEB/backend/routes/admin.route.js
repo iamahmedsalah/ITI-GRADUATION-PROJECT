@@ -23,6 +23,10 @@ import {
   contactMessageReplySchema,
 } from "../validation/admin.schemas.js";
 import {
+  adminProAccessRequestsListSchema,
+  adminReviewProAccessRequestSchema,
+} from "../validation/pro-access.schemas.js";
+import {
   loginSchema,
   verifyEmailSchema,
   forgetPasswordSchema,
@@ -56,6 +60,8 @@ import {
   adminCheckAuth,
   getAdminContactMessages,
   replyToContactMessageByAdmin,
+  getAdminProAccessRequests,
+  reviewProAccessRequestByAdmin,
 } from "../controllers/admin.controller.js";
 import { createRoadmapTemplate } from "../controllers/roadmap.controller.js";
 
@@ -190,6 +196,20 @@ router.get("/auth/check-auth", adminCheckAuth);
  *       - bearerAuth: []
  */
 router.get("/overview", adminListLimiter, getAdminOverview);
+
+router.get(
+  "/pro-access-requests",
+  adminListLimiter,
+  validateRequest(adminProAccessRequestsListSchema),
+  getAdminProAccessRequests,
+);
+
+router.post(
+  "/pro-access-requests/:requestId/review",
+  adminWriteLimiter,
+  validateRequest(adminReviewProAccessRequestSchema),
+  reviewProAccessRequestByAdmin,
+);
 
 /**
  * @openapi

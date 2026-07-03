@@ -33,4 +33,5 @@ export {
   updatePassword,
   updatePreferences,
   updateProfile,
+  getPublicProfile,
 } from "../services/user.service.js";

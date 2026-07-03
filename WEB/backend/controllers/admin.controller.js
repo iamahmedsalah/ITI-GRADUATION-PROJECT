@@ -40,3 +40,8 @@ export {
   getAdminActionLogs,
   getAdminOverview,
 } from "../services/admin/admin-log.service.js";
+
+export {
+  getAdminProAccessRequests,
+  reviewProAccessRequestByAdmin,
+} from "../services/pro-access.service.js";

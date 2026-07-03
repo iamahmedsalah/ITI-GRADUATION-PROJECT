@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { DashboardSquare03Icon, Mail01Icon, Route03Icon, UserEdit01Icon, GiftIcon } from '@hugeicons/core-free-icons'
+import { Cancel01Icon, CheckmarkCircle01Icon, CrownIcon, DashboardSquare03Icon, Mail01Icon, Route03Icon, UserEdit01Icon, GiftIcon } from '@hugeicons/core-free-icons'
+import { toast } from 'sonner'
 import { useLanguage } from '../../context/LanguageContext'
 import {
   createHeroLineVariants,
   createPageVariants,
   createStaggerContainerVariants,
 } from '../../libs/motionVariants'
-import { fetchAdminOverview } from '../../libs/admin-api'
+import { fetchAdminOverview, fetchAdminProAccessRequests, reviewAdminProAccessRequest } from '../../libs/admin-api'
 import { useWhatsNew } from '../../hooks/useWhatsNew'
 import WhatsNewPanel from '../../components/ui/WhatsNewPanel'
 
@@ -42,6 +43,7 @@ function MetricCard({
 function AdminDashboardPage() {
   const { direction, language } = useLanguage()
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [now, setNow] = useState(() => new Date())
   const pageVariants = createPageVariants(direction)
   const heroLineVariants = createHeroLineVariants(direction)
@@ -52,6 +54,29 @@ function AdminDashboardPage() {
     queryFn: fetchAdminOverview,
     staleTime: 0,
   })
+  const proRequestsQuery = useQuery({
+    queryKey: ['admin', 'pro-access-requests', 'pending'],
+    queryFn: () => fetchAdminProAccessRequests({ status: 'pending', limit: 5 }),
+    staleTime: 0,
+  })
+  const reviewMutation = useMutation({
+    mutationFn: ({ requestId, action }: { requestId: string; action: 'approve' | 'reject' }) =>
+      reviewAdminProAccessRequest(requestId, { action }),
+    onSuccess: async (result) => {
+      if (!result.ok) {
+        toast.error(result.message)
+        return
+      }
+
+      toast.success(result.message)
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'pro-access-requests'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+    onError: () => {
+      toast.error(t('adminUi.proAccess.reviewFailed', { defaultValue: 'Could not review Pro access request.' }))
+    },
+  })
 
   const { isOpen, latestData, dismiss, open } = useWhatsNew('admin')
 
@@ -60,6 +85,7 @@ function AdminDashboardPage() {
   const unreadContactMessages = overview?.contactMessages?.unread ?? 0
   const onlineUsers = overview?.users.online ?? 0
   const activeUsers = overview?.users.active ?? 0
+  const pendingProAccessRequests = overview?.proAccessRequests?.pending ?? 0
   const liveDate = useMemo(
     () =>
       new Intl.DateTimeFormat(language === 'ar' ? 'ar-EG' : 'en-US', {
@@ -107,7 +133,7 @@ function AdminDashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5" variants={staggerContainerVariants}>
+        <motion.div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6" variants={staggerContainerVariants}>
           <MetricCard
             label={t('adminUi.dashboard.metrics.activeUsers')}
             value={activeUsers}
@@ -138,7 +164,85 @@ function AdminDashboardPage() {
             helper={t('adminUi.tabs.contactMessagesHint')}
             icon={Mail01Icon}
           />
+          <MetricCard
+            label={t('adminUi.proAccess.pendingMetric', { defaultValue: 'Pro requests' })}
+            value={pendingProAccessRequests}
+            helper={t('adminUi.proAccess.pendingMetricHint', { defaultValue: 'Pending approval requests.' })}
+            icon={CrownIcon}
+          />
         </motion.div>
+
+        <motion.section variants={heroLineVariants} className="rounded-2xl bg-(--surface) p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-(--text-h)">
+                {t('adminUi.proAccess.title', { defaultValue: 'Pro access requests' })}
+              </h3>
+              <p className="mt-2 text-sm text-(--text)">
+                {t('adminUi.proAccess.subtitle', { defaultValue: 'Approve one free week for students who need to test Pro.' })}
+              </p>
+            </div>
+            <span className="rounded-squircle border border-(--border) px-3 py-1.5 text-xs font-semibold uppercase text-(--accent)">
+              {pendingProAccessRequests} {t('adminUi.proAccess.pending', { defaultValue: 'pending' })}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {proRequestsQuery.isLoading ? (
+              <p className="rounded-squircle border border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
+                {t('adminUi.common.loading')}
+              </p>
+            ) : proRequestsQuery.data?.data.length ? (
+              proRequestsQuery.data.data.map((request) => (
+                <article key={request._id} className="grid gap-3 rounded-squircle border border-(--border) bg-(--surface-2) p-4 lg:grid-cols-[1fr_auto]">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-(--text-h)">
+                        {request.user?.Fname} {request.user?.Lname}
+                      </p>
+                      <span className="rounded-md bg-(--surface) px-2 py-1 text-xs text-(--text)">
+                        {request.user?.email}
+                      </span>
+                      <span className="rounded-md bg-(--accent-bg) px-2 py-1 text-xs font-semibold text-(--accent)">
+                        {request.learningGoal.replaceAll('-', ' ')}
+                      </span>
+                      <span className="rounded-md bg-(--surface) px-2 py-1 text-xs text-(--text)">
+                        {request.expectedDurationDays} {t('adminUi.proAccess.days', { defaultValue: 'days' })}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-(--text)">
+                      {request.needReason}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-start gap-2 lg:justify-end">
+                    <button
+                      type="button"
+                      disabled={reviewMutation.isPending}
+                      onClick={() => reviewMutation.mutate({ requestId: request._id, action: 'approve' })}
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-(--accent-border) px-3 py-2 text-sm font-semibold text-(--accent) transition hover:bg-(--accent-bg) disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={17} />
+                      {t('adminUi.proAccess.approve', { defaultValue: 'Approve 1 week' })}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={reviewMutation.isPending}
+                      onClick={() => reviewMutation.mutate({ requestId: request._id, action: 'reject' })}
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-squircle border border-(--border) px-3 py-2 text-sm font-semibold text-(--text-h) transition hover:bg-(--surface-3) disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} size={17} />
+                      {t('adminUi.proAccess.reject', { defaultValue: 'Reject' })}
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="rounded-squircle border border-dashed border-(--border) bg-(--surface-2) p-4 text-sm text-(--text)">
+                {t('adminUi.proAccess.empty', { defaultValue: 'No pending Pro access requests.' })}
+              </p>
+            )}
+          </div>
+        </motion.section>
 
         <motion.div variants={heroLineVariants} className="grid gap-4 lg:grid-cols-2">
           <article className="rounded-2xl bg-(--surface) p-5">
