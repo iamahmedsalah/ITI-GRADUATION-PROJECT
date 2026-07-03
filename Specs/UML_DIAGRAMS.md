@@ -40,7 +40,354 @@ flowchart LR
     API --> Cloudinary
 ```
 
-## 2. Container Diagram
+## 2. Use Case Diagram
+
+```mermaid
+flowchart LR
+    Visitor["Visitor / Guest"]
+    Student["Student"]
+    Admin["Admin"]
+    Google["Google OAuth"]
+    Email["Email Service"]
+    AI["AI Provider"]
+    Cloudinary["Cloudinary"]
+
+    subgraph System["ILMA Learning Platform"]
+        UC1(("Select language"))
+        UC2(("Browse public roadmaps"))
+        UC3(("Browse public courses"))
+        UC4(("Send contact message"))
+        UC5(("Sign up / Login"))
+        UC6(("Verify email / Reset password"))
+        UC7(("Manage profile and preferences"))
+        UC8(("View dashboard"))
+        UC9(("Assign roadmap"))
+        UC10(("Track roadmap step progress"))
+        UC11(("Enroll in course"))
+        UC12(("Track course progress"))
+        UC13(("Generate AI roadmap"))
+        UC14(("Save AI roadmap"))
+        UC15(("Chat with AI assistant"))
+        UC16(("Explain roadmap topic"))
+        UC17(("Manage users"))
+        UC18(("Manage roadmap templates"))
+        UC19(("Manage courses"))
+        UC20(("Review and reply to contact messages"))
+        UC21(("View admin overview and logs"))
+        UC22(("Generate admin AI roadmap draft"))
+        UC23(("Upload avatar/media"))
+    end
+
+    Visitor --> UC1
+    Visitor --> UC2
+    Visitor --> UC3
+    Visitor --> UC4
+    Visitor --> UC5
+    Visitor --> UC6
+
+    Student --> UC1
+    Student --> UC2
+    Student --> UC3
+    Student --> UC7
+    Student --> UC8
+    Student --> UC9
+    Student --> UC10
+    Student --> UC11
+    Student --> UC12
+    Student --> UC13
+    Student --> UC14
+    Student --> UC15
+    Student --> UC16
+    Student --> UC23
+
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC17
+    Admin --> UC18
+    Admin --> UC19
+    Admin --> UC20
+    Admin --> UC21
+    Admin --> UC22
+    Admin --> UC23
+
+    UC5 -.-> Google
+    UC6 -.-> Email
+    UC4 -.-> Email
+    UC20 -.-> Email
+    UC13 -.-> AI
+    UC15 -.-> AI
+    UC16 -.-> AI
+    UC22 -.-> AI
+    UC23 -.-> Cloudinary
+```
+
+## 3. Use Case Partitions
+
+The full use case diagram is intentionally broad. The following partitions split the same behavior by subsystem so each actor goal is easier to explain and trace to routes, pages, and models.
+
+### 3.1 Auth and Account Partition
+
+```mermaid
+flowchart LR
+    Visitor["Visitor / Guest"]
+    Student["Student"]
+    Admin["Admin"]
+    Google["Google OAuth"]
+    Email["Email Service"]
+
+    subgraph Auth["Auth and Account"]
+        Login(("Login"))
+        Signup(("Sign up"))
+        Verify(("Verify email"))
+        Reset(("Reset password"))
+        Refresh(("Refresh session"))
+        Profile(("Manage profile"))
+        Preferences(("Manage preferences"))
+        AccountLifecycle(("Deactivate / delete account"))
+    end
+
+    Visitor --> Signup
+    Visitor --> Login
+    Visitor --> Verify
+    Visitor --> Reset
+    Student --> Refresh
+    Student --> Profile
+    Student --> Preferences
+    Student --> AccountLifecycle
+    Admin --> Login
+    Admin --> Verify
+    Admin --> Reset
+    Admin --> Refresh
+
+    Login -.-> Google
+    Signup -.-> Google
+    Verify -.-> Email
+    Reset -.-> Email
+```
+
+### 3.2 Learning Partition
+
+```mermaid
+flowchart LR
+    Visitor["Visitor / Guest"]
+    Student["Student"]
+
+    subgraph Learning["Roadmaps and Courses"]
+        BrowseRoadmaps(("Browse public roadmaps"))
+        SearchTopics(("Search roadmap topics"))
+        ViewRoadmap(("View roadmap detail"))
+        AssignRoadmap(("Assign roadmap"))
+        TrackStep(("Track step progress"))
+        BrowseCourses(("Browse public courses"))
+        ViewCourse(("View course detail"))
+        EnrollCourse(("Enroll in course"))
+        TrackLesson(("Track lesson progress"))
+        CompleteRate(("Complete / rate course"))
+        Dashboard(("View dashboard summary"))
+    end
+
+    Visitor --> BrowseRoadmaps
+    Visitor --> SearchTopics
+    Visitor --> ViewRoadmap
+    Visitor --> BrowseCourses
+    Visitor --> ViewCourse
+
+    Student --> BrowseRoadmaps
+    Student --> SearchTopics
+    Student --> ViewRoadmap
+    Student --> AssignRoadmap
+    Student --> TrackStep
+    Student --> BrowseCourses
+    Student --> ViewCourse
+    Student --> EnrollCourse
+    Student --> TrackLesson
+    Student --> CompleteRate
+    Student --> Dashboard
+
+    AssignRoadmap -.-> Dashboard
+    TrackStep -.-> Dashboard
+    TrackLesson -.-> Dashboard
+```
+
+### 3.3 AI Partition
+
+```mermaid
+flowchart LR
+    Student["Student"]
+    Admin["Admin"]
+    AI["AI Provider"]
+
+    subgraph AIFeatures["AI Features"]
+        CheckAccess(("Check AI access limits"))
+        Recommendations(("Get recommendations"))
+        UserDraft(("Generate student roadmap draft"))
+        SaveDraft(("Save AI roadmap"))
+        ExplainTopic(("Explain roadmap topic"))
+        Chat(("Chat with AI assistant"))
+        AdminDraft(("Generate admin roadmap draft"))
+    end
+
+    Student --> CheckAccess
+    Student --> Recommendations
+    Student --> UserDraft
+    Student --> SaveDraft
+    Student --> ExplainTopic
+    Student --> Chat
+    Admin --> AdminDraft
+
+    UserDraft -.-> CheckAccess
+    SaveDraft -.-> UserDraft
+    Chat -.-> CheckAccess
+    ExplainTopic -.-> CheckAccess
+    UserDraft -.-> AI
+    ExplainTopic -.-> AI
+    Chat -.-> AI
+    AdminDraft -.-> AI
+```
+
+### 3.4 Admin Partition
+
+```mermaid
+flowchart LR
+    Admin["Admin"]
+
+    subgraph AdminPanel["Admin Panel"]
+        Overview(("View overview"))
+        ManageUsers(("Manage users"))
+        ManageRoadmaps(("Manage roadmap templates"))
+        PublishRoadmaps(("Publish / unpublish roadmap"))
+        ManageCourses(("Manage courses"))
+        ManageMessages(("Review contact messages"))
+        ReplyMessages(("Reply to contact messages"))
+        ViewLogs(("View admin action logs"))
+    end
+
+    Admin --> Overview
+    Admin --> ManageUsers
+    Admin --> ManageRoadmaps
+    Admin --> PublishRoadmaps
+    Admin --> ManageCourses
+    Admin --> ManageMessages
+    Admin --> ReplyMessages
+    Admin --> ViewLogs
+
+    ManageUsers -.-> ViewLogs
+    ManageRoadmaps -.-> ViewLogs
+    PublishRoadmaps -.-> ViewLogs
+    ManageCourses -.-> ViewLogs
+    ReplyMessages -.-> ViewLogs
+```
+
+### 3.5 Support and Integration Partition
+
+```mermaid
+flowchart LR
+    Visitor["Visitor / Guest"]
+    Student["Student"]
+    Admin["Admin"]
+    Email["Email Service"]
+    Cloudinary["Cloudinary"]
+
+    subgraph Support["Support and Media"]
+        SendContact(("Send contact message"))
+        StoreContact(("Store support request"))
+        NotifyAdmin(("Notify admin"))
+        ReplyContact(("Reply to user"))
+        UploadAvatar(("Upload avatar/media"))
+    end
+
+    Visitor --> SendContact
+    Student --> SendContact
+    SendContact -.-> StoreContact
+    StoreContact -.-> NotifyAdmin
+    NotifyAdmin -.-> Email
+    Admin --> ReplyContact
+    ReplyContact -.-> Email
+    Student --> UploadAvatar
+    Admin --> UploadAvatar
+    UploadAvatar -.-> Cloudinary
+```
+
+## 4. Sample Use Case Explanations
+
+These sample use cases are smaller than the full diagram and can be used directly in a SWE report. Each one maps to visible frontend pages/API clients and backend routes.
+
+### UC-01: Sign Up and Verify Email
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Visitor |
+| Supporting actors | Email service, optional Google OAuth |
+| Goal | Create a student account and verify the email address. |
+| Frontend | `SignupPage`, `SignupForm`, `VerifyEmailPage` |
+| Backend | `POST /api/auth/signup`, `POST /api/auth/verify-email`, `POST /api/auth/resend-verification-code` |
+| Main success scenario | User submits signup data, backend validates uniqueness, account is created, verification code is emailed, user submits code, account becomes verified. |
+| Alternate flows | Duplicate email/username fails validation; invalid/expired verification code returns an error; user requests a new verification code. |
+| Postcondition | A verified user can access protected student flows after login. |
+
+### UC-02: Assign Roadmap and Track Progress
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Student |
+| Goal | Start a roadmap and track step-by-step learning progress. |
+| Frontend | `RoadmapPage`, `MyRoadmapsPage`, `RoadmapGraph`, `StepDetailPanel`, `roadmaps-api.ts` |
+| Backend | `GET /api/roadmaps/templates/by-slug/:slug`, `POST /api/roadmaps/assign`, `GET /api/roadmaps/:roadmapId`, `PUT /api/roadmaps/:roadmapId/steps/:stepKey/progress` |
+| Main success scenario | Student views a roadmap, assigns it to self, backend creates `UserRoadmap`, student updates step status, backend upserts `UserRoadmapStepProgress` and recalculates roadmap progress. |
+| Alternate flows | Already-assigned roadmap is rejected by unique user/template constraint; invalid roadmap ID or step key returns validation/not-found response. |
+| Postcondition | Dashboard and roadmap progress views show updated completion percentage. |
+
+### UC-03: Enroll in Course and Complete Lessons
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Student |
+| Goal | Enroll in a course, track lesson completion, and rate or complete the course. |
+| Frontend | `CoursePage`, dashboard course components, `courses-api.ts` |
+| Backend | `GET /api/courses/published/:slug`, `POST /api/courses/enroll`, `PUT /api/courses/:courseId/progress`, `POST /api/courses/:courseId/complete`, `POST /api/courses/:courseId/rate` |
+| Main success scenario | Student opens a published course, enrolls, backend creates `UserCourseProgress`, lesson progress updates completed lesson IDs and progress percent, student completes and rates the course. |
+| Alternate flows | Unpublished/deleted course is unavailable publicly; progress updates require existing enrollment; rating requires enrollment. |
+| Postcondition | Course progress, dashboard totals, and course stats reflect the student's work. |
+
+### UC-04: Generate and Save AI Roadmap
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Student |
+| Supporting actor | AI provider |
+| Goal | Generate a personalized roadmap draft and save it as a tracked roadmap. |
+| Frontend | `AiRoadmapPage`, `AiRoadmapManager`, `ai-api.ts`, `useAiMutations.ts` |
+| Backend | `GET /api/ai/features/access`, `POST /api/ai/roadmaps/user-draft`, `POST /api/ai/roadmaps/save` |
+| Main success scenario | Student enters goal and study constraints, backend checks AI usage limits, provider returns a structured draft, student saves it, backend creates a user-owned `RoadmapTemplate` and assigned `UserRoadmap`. |
+| Alternate flows | Usage limit blocks generation; AI provider error returns sanitized failure; invalid draft payload is rejected during save. |
+| Postcondition | Saved AI roadmap appears in the student's roadmap list. |
+
+### UC-05: Admin Manage Course
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Admin |
+| Goal | Create, edit, publish, or delete course content. |
+| Frontend | `AdminCoursesPage`, `AdminCourseDetailPage`, `AdminCourseFormModal`, `admin-api.ts` |
+| Backend | `GET /api/admin/courses`, `POST /api/admin/courses`, `GET /api/admin/courses/:courseId`, `PATCH /api/admin/courses/:courseId`, `DELETE /api/admin/courses/:courseId` |
+| Main success scenario | Admin opens course list, creates or edits course metadata/sections/lessons, backend validates payload, saves `Course`, and records an `AdminActionLog`. |
+| Alternate flows | Invalid course schema returns validation errors; delete is soft-delete via `deletedAt`; non-admin users are blocked by `authorizeRoles("admin")`. |
+| Postcondition | Public catalog reflects published, non-deleted courses. |
+
+### UC-06: Contact Support and Admin Reply
+
+| Field | Description |
+| --- | --- |
+| Primary actor | Visitor or Student |
+| Supporting actor | Admin, email service |
+| Goal | Send a support message and receive an admin reply. |
+| Frontend | `ContactUsPage`, `ContactForm`, `AdminContactMessagesPage`, `contact-api.ts`, `admin-api.ts` |
+| Backend | `POST /api/contact`, `GET /api/admin/contact-messages`, `POST /api/admin/contact-messages/:contactMessageId/reply` |
+| Main success scenario | User submits contact form, backend stores `ContactMessage` and notifies admins, admin reviews inbox and sends reply, backend appends reply and emails the user. |
+| Alternate flows | Invalid contact form fails validation; mailer misconfiguration can return service error for public contact submission. |
+| Postcondition | Contact message status becomes replied and reply metadata is stored. |
+
+## 5. Container Diagram
 
 ```mermaid
 flowchart TB
@@ -81,7 +428,7 @@ flowchart TB
     Services --> External
 ```
 
-## 3. Backend Component Diagram
+## 6. Backend Component Diagram
 
 ```mermaid
 flowchart LR
@@ -116,7 +463,7 @@ flowchart LR
     AdminRoute -.-> AdminMw["admin limiters + admin validators"]
 ```
 
-## 4. Frontend Routing and API Diagram
+## 7. Frontend Routing and API Diagram
 
 ```mermaid
 flowchart TB
@@ -149,7 +496,7 @@ flowchart TB
     ContactApi --> ApiUtil
 ```
 
-## 5. Domain Class Diagram
+## 8. Domain Class Diagram
 
 ```mermaid
 classDiagram
@@ -324,7 +671,7 @@ classDiagram
     ContactMessage "1" --> "0..*" ContactReply
 ```
 
-## 6. ER Diagram
+## 9. ER Diagram
 
 ```mermaid
 erDiagram
@@ -349,7 +696,7 @@ erDiagram
     CONTACT_MESSAGE ||--o{ CONTACT_REPLY : receives
 ```
 
-## 7. Authentication Sequence
+## 10. Authentication Sequence
 
 ```mermaid
 sequenceDiagram
@@ -373,7 +720,7 @@ sequenceDiagram
     LoginPage-->>User: Redirect via route loader
 ```
 
-## 8. Protected Request and Token Refresh Sequence
+## 11. Protected Request and Token Refresh Sequence
 
 ```mermaid
 sequenceDiagram
@@ -403,7 +750,7 @@ sequenceDiagram
     end
 ```
 
-## 9. Roadmap Assignment and Step Progress Sequence
+## 12. Roadmap Assignment and Step Progress Sequence
 
 ```mermaid
 sequenceDiagram
@@ -441,7 +788,7 @@ sequenceDiagram
     Mutations->>QueryCache: invalidate progress + my-roadmaps + dashboard
 ```
 
-## 10. Course Browse and Progress Sequence
+## 13. Course Browse and Progress Sequence
 
 ```mermaid
 sequenceDiagram
@@ -475,7 +822,7 @@ sequenceDiagram
     CourseRoutes-->>Home: progress response
 ```
 
-## 11. AI Roadmap Generation Sequence
+## 14. AI Roadmap Generation Sequence
 
 ```mermaid
 sequenceDiagram
@@ -512,7 +859,7 @@ sequenceDiagram
     AiRoute-->>AiApi: template + user roadmap
 ```
 
-## 12. AI Chat Sequence
+## 15. AI Chat Sequence
 
 ```mermaid
 sequenceDiagram
@@ -543,7 +890,7 @@ sequenceDiagram
     AiRoute-->>ChatPage: conversation + messages + access state
 ```
 
-## 13. Admin Content Management Sequence
+## 16. Admin Content Management Sequence
 
 ```mermaid
 sequenceDiagram
@@ -575,7 +922,7 @@ sequenceDiagram
     AdminService-->>AdminPage: mutation result
 ```
 
-## 14. Contact Support Sequence
+## 17. Contact Support Sequence
 
 ```mermaid
 sequenceDiagram
@@ -604,7 +951,7 @@ sequenceDiagram
     AdminRoute->>Mailer: send reply to visitor
 ```
 
-## 15. State Diagram: User Roadmap
+## 18. State Diagram: User Roadmap
 
 ```mermaid
 stateDiagram-v2
@@ -621,7 +968,7 @@ stateDiagram-v2
     completed --> [*]: DELETE /roadmaps/:roadmapId
 ```
 
-## 16. State Diagram: Course Progress
+## 19. State Diagram: Course Progress
 
 ```mermaid
 stateDiagram-v2
@@ -632,7 +979,7 @@ stateDiagram-v2
     abandoned --> inProgress: re-enroll/update progress
 ```
 
-## 17. Deployment Runtime View
+## 20. Deployment Runtime View
 
 ```mermaid
 flowchart LR
@@ -649,7 +996,7 @@ flowchart LR
     BackendHost --> Providers
 ```
 
-## 18. Route Surface Summary
+## 21. Route Surface Summary
 
 | Route group | Public endpoints | Protected student endpoints | Protected admin endpoints |
 | --- | --- | --- | --- |
