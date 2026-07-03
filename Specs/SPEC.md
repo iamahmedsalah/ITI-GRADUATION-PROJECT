@@ -405,6 +405,8 @@ journey
     Receive reply: 3: User
 ```
 
+Related implementation diagrams: [UML_DIAGRAMS.md](UML_DIAGRAMS.md).
+
 ## 13. Feature Inventory
 
 | Feature              | Purpose                       | Frontend                           | Backend                                | Status  |
