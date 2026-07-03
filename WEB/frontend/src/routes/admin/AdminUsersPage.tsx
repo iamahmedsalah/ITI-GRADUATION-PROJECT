@@ -75,12 +75,12 @@ function DetailFieldSection({
   )
 
   return (
-    <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+    <section className="rounded-4xl border border-(--border) bg-(--surface-2) p-4">
       <h3 className="font-semibold text-(--text-h)">{title}</h3>
       {entries.length ? (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {entries.map(([key, value]) => (
-            <div key={key} className="rounded-md bg-(--surface) px-3 py-2">
+            <div key={key} className="rounded-squircle bg-(--surface) px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-(--text)">{humanizeKey(key)}</p>
               <p className="mt-1 wrap-break-word text-sm font-semibold text-(--text-h)">{formatDetailValue(value)}</p>
             </div>
@@ -108,7 +108,7 @@ function StatusCountList({
       {items?.length ? (
         <div className="mt-3 grid gap-2">
           {items.map((item) => (
-            <div key={item._id} className="flex items-center justify-between gap-3 rounded-md bg-(--surface) px-3 py-2 text-sm">
+            <div key={item._id} className="flex items-center justify-between gap-3 rounded-squircle bg-(--surface) px-3 py-2 text-sm">
               <span className="text-(--text)">{humanizeKey(item._id)}</span>
               <span className="font-semibold text-(--text-h)">{item.count}</span>
             </div>
@@ -716,11 +716,11 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-2">
-                  <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                  <section className="rounded-4xl border border-(--border) bg-(--surface-2) p-4">
                     <h3 className="font-semibold text-(--text-h)">{t('adminUi.users.detail.roadmaps')}</h3>
                     <div className="mt-3 grid gap-2">
                       {detailQuery.data.roadmaps?.length ? detailQuery.data.roadmaps.map((roadmap) => (
-                        <article key={roadmap._id} className="rounded-md bg-(--surface) px-3 py-2">
+                        <article key={roadmap._id} className="rounded-squircle bg-(--surface) px-3 py-2">
                           <p className="font-semibold text-(--text-h)">{roadmap.template?.title ?? t('profile.unknownRoadmap')}</p>
                           <p className="text-xs text-(--text)">{roadmap.status} | {Math.round(roadmap.progressPercent ?? 0)}%</p>
                         </article>
@@ -728,11 +728,11 @@ export default function AdminUsersPage() {
                     </div>
                   </section>
 
-                  <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
+                  <section className="rounded-4xl border border-(--border) bg-(--surface-2) p-4">
                     <h3 className="font-semibold text-(--text-h)">{t('adminUi.users.detail.courses')}</h3>
                     <div className="mt-3 grid gap-2">
                       {detailQuery.data.courses?.length ? detailQuery.data.courses.map((courseProgress) => (
-                        <article key={courseProgress._id} className="rounded-md bg-(--surface) px-3 py-2">
+                        <article key={courseProgress._id} className="rounded-squircle bg-(--surface) px-3 py-2">
                           <p className="font-semibold text-(--text-h)">{courseProgress.course?.title ?? t('dashboard.unknownCourse')}</p>
                           <p className="text-xs text-(--text)">{courseProgress.status} | {Math.round(courseProgress.progressPercent ?? 0)}%</p>
                         </article>
@@ -767,7 +767,7 @@ export default function AdminUsersPage() {
                   />
                   <section className="rounded-squircle border border-(--border) bg-(--surface-2) p-4">
                     <h3 className="font-semibold text-(--text-h)">{t('adminUi.users.detail.activity', 'Activity')}</h3>
-                    <div className="mt-3 rounded-md bg-(--surface) px-3 py-2">
+                    <div className="mt-3 rounded-squircle bg-(--surface) px-3 py-2">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-(--text)">
                         {t('adminUi.users.detail.activityCount', 'Activity count')}
                       </p>

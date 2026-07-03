@@ -3,6 +3,7 @@ export function isChromeBrowser(): boolean {
   const ua = navigator.userAgent;
   const vendor = navigator.vendor;
   const isChromium = /Chrome|Chromium/.test(ua) && /Google Inc/.test(vendor);
-  const isNotChrome = /Edge|Edg|OPR|Opera|Vivaldi|YaBrowser|CocCoc/.test(ua) || typeof (navigator as any).brave !== 'undefined';
+  const browserNavigator = navigator as Navigator & { brave?: unknown };
+  const isNotChrome = /Edge|Edg|OPR|Opera|Vivaldi|YaBrowser|CocCoc/.test(ua) || typeof browserNavigator.brave !== 'undefined';
   return isChromium && !isNotChrome;
 }

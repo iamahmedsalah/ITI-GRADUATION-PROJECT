@@ -191,6 +191,12 @@ type ProfileUpdateInput = {
   username: string
   Fname: string
   Lname: string
+  visibility?: 'public' | 'private'
+  githubUrl?: string
+  linkedInUrl?: string
+  gitLabUrl?: string
+  xUrl?: string
+  websiteUrl?: string
 }
 
 type PasswordUpdateInput = {
@@ -324,6 +330,86 @@ export async function updateCurrentUserProfile(input: ProfileUpdateInput) {
   }
 
   return data.user
+}
+
+interface PublicProfileResponse {
+  success: boolean
+  message?: string
+  data: {
+    user: {
+      username: string
+      name: string
+      email?: string
+      avatarUrl?: string | null
+      createdAt?: string
+      loginStreak?: {
+        current: number
+        longest: number
+      }
+    }
+    profile: {
+      headline?: string | null
+      bio?: string | null
+      location?: string | null
+      websiteUrl?: string | null
+      githubUrl?: string | null
+      linkedInUrl?: string | null
+      gitLabUrl?: string | null
+      xUrl?: string | null
+    }
+    preferences: {
+      interests: string[]
+      learningGoals: string[]
+    }
+    stats: {
+      roadmapsCount: number
+    }
+  }
+}
+
+export async function fetchPublicProfile(username: string) {
+  const { response, data } = await apiGet<PublicProfileResponse>(
+    `/auth/users/profile/${encodeURIComponent(username)}`,
+    {
+      success: false,
+      data: {
+        user: {
+          username: '',
+          name: '',
+          email: '',
+          avatarUrl: '',
+          createdAt: '',
+          loginStreak: {
+            current: 0,
+            longest: 0
+          }
+        },
+        profile: {
+          headline: '',
+          bio: '',
+          location: '',
+          websiteUrl: '',
+          githubUrl: '',
+          linkedInUrl: '',
+          gitLabUrl: '',
+          xUrl: ''
+        },
+        preferences: {
+          interests: [],
+          learningGoals: []
+        },
+        stats: {
+          roadmapsCount: 0
+        }
+      }
+    }
+  )
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Could not fetch profile.')
+  }
+
+  return data.data
 }
 
 export async function updateCurrentUserPassword(input: PasswordUpdateInput) {

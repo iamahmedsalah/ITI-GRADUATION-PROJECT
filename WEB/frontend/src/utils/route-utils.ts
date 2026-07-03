@@ -39,6 +39,12 @@ export type AuthUser = {
     scheduledFor?: string | number | null
   }
   hasPreferences?: boolean
+  profileVisibility?: 'public' | 'private'
+  githubUrl?: string
+  linkedInUrl?: string
+  gitLabUrl?: string
+  xUrl?: string
+  websiteUrl?: string
 }
 
 export type DashboardLoaderData = {

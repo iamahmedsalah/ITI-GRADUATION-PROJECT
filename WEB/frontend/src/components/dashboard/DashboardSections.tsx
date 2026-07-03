@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { motion } from 'framer-motion'
 import {
   Activity01Icon,
   AiMagicIcon,
@@ -16,8 +17,11 @@ import {
   Route03Icon,
   UserSettings01Icon,
   ZapIcon,
+  AiChat02Icon,
+  Award01Icon,
 } from '@hugeicons/core-free-icons';
 import { useLanguage } from '../../context/LanguageContext'
+import { useAiFeatureAccess } from '../../hooks/queries/useAiAccess'
 import { deleteUserRoadmap } from '../../libs/roadmaps-api'
 import { deleteDashboardActivity, fetchCurrentUserPreferences } from '../../libs/user-api'
 import CustomDropdown from '../ui/CustomDropdown'
@@ -70,11 +74,13 @@ export function StreakCard({ current, longest }: { current: number; longest: num
   return (
     <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 shadow-(--shadow) sm:p-5">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-(--text)">
-          {t('dashboard.streak.current')} <strong className="text-(--text-h)">{current}</strong>
+        <p className="text-xs text-(--text) flex items-center gap-1">
+          <HugeiconsIcon icon={ZapIcon} size={14} className="text-orange-500 animate-pulse" />
+          {t('dashboard.streak.current')} <strong className="text-(--text-h) font-bold">{current}</strong>
         </p>
-        <p className="text-sm text-(--text)">
-          {t('dashboard.streak.longest')} <strong className="text-(--text-h)">{longest}</strong>
+        <p className="text-xs text-(--text) flex items-center gap-1">
+          <HugeiconsIcon icon={Award01Icon} size={14} className="text-amber-500" />
+          {t('dashboard.streak.longest')} <strong className="text-(--text-h) font-bold">{longest}</strong>
         </p>
       </div>
 
@@ -840,16 +846,28 @@ export function SubscriptionSection({
 }) {
   const { t } = useTranslation()
   const { language } = useLanguage()
+  const [renderNow] = useState(() => Date.now())
 
   const plan = subscription?.plan ?? 'free'
   const status = subscription?.status ?? 'inactive'
+  const statusLabels: Record<string, string> = {
+    inactive: t('dashboard.subscription.statuses.inactive', { defaultValue: 'inactive' }),
+    active: t('dashboard.subscription.statuses.active', { defaultValue: 'active' }),
+    trialing: t('dashboard.subscription.statuses.trialing', { defaultValue: 'trialing' }),
+    pastDue: t('dashboard.subscription.statuses.pastDue', { defaultValue: 'past due' }),
+    canceled: t('dashboard.subscription.statuses.canceled', { defaultValue: 'canceled' }),
+  }
+  const currentPeriodEndTimestamp = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).getTime()
+    : null
+  const hasActivePeriod = currentPeriodEndTimestamp ? currentPeriodEndTimestamp > renderNow : true
   const currentPeriodEnd = subscription?.currentPeriodEnd
     ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
     : null
-  const isPro = plan === 'pro' && ['active', 'trialing'].includes(status)
+  const isPro = plan === 'pro' && ['active', 'trialing'].includes(status) && hasActivePeriod
 
   return (
-    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 sm:p-5">
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 shadow-(--shadow) sm:p-5">
       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-(--text)">
         {t('dashboard.subscription.title', 'Subscription')}
       </h2>
@@ -862,7 +880,7 @@ export function SubscriptionSection({
             </p>
 
             <p className="mt-1 text-sm text-(--text)">
-              {t('dashboard.subscription.status', 'Status')}: {status}
+              {t('dashboard.subscription.status', 'Status')}: {statusLabels[status] ?? status}
             </p>
 
             {currentPeriodEnd && (
@@ -1087,6 +1105,111 @@ export function PreferencesPreviewSection({ summary }: { summary?: DashboardSumm
           ? t('dashboard.preferences.update', 'Update preferences')
           : t('dashboard.preferences.start', 'Set preferences')}
       </Link>
+    </section>
+  )
+}
+
+export function AiUsageSection() {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+  const { data: aiAccess, isLoading } = useAiFeatureAccess()
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse rounded-3xl border border-(--border) bg-(--surface) p-4 min-h-32 flex flex-col justify-center">
+        <div className="h-4 w-32 rounded bg-(--surface-2) mb-3" />
+        <div className="h-4 w-full rounded bg-(--surface-2) mb-2" />
+        <div className="h-4 w-full rounded bg-(--surface-2)" />
+      </div>
+    )
+  }
+
+  const usage = aiAccess?.usage ?? {
+    draftsUsed: 0,
+    draftLimit: 3,
+    freeDraftLimit: 3,
+    proDraftLimit: 10,
+    chatUsed: 0,
+    chatLimit: 30,
+    freeChatLimit: 30,
+    proChatLimit: 150,
+  }
+
+  const plan = aiAccess?.subscription?.plan ?? 'free'
+  const isPro = plan === 'pro'
+
+  // Calculate percentages
+  const draftsPct = Math.min(100, Math.max(0, (usage.draftsUsed / usage.draftLimit) * 100))
+  const chatsPct = Math.min(100, Math.max(0, ((usage.chatUsed || 0) / (usage.chatLimit || 30)) * 100))
+
+  return (
+    <section className="rounded-3xl border border-(--border) bg-(--surface) p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-(--text) flex items-center gap-1.5">
+          <HugeiconsIcon icon={AiMagicIcon} size={15} className="text-(--accent) animate-pulse" />
+          {t('dashboard.aiUsage.title', 'AI Usage')}
+        </h2>
+        <span className={[
+          "rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border border-(--border) bg-(--surface-2)",
+          isPro ? "text-amber-400" : "text-(--accent)"
+        ].join(" ")}>
+          {isPro ? t('dashboard.subscription.pro', 'Pro') : t('dashboard.subscription.free', 'Free')}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3">
+        {/* Roadmap builder limits */}
+        <div className="grid gap-1">
+          <div className="flex items-center justify-between text-[11px] font-medium">
+            <span className="text-(--text-h) flex items-center gap-1">
+              <HugeiconsIcon icon={Route03Icon} size={12} className="text-(--text)" />
+              {t('dashboard.aiUsage.roadmaps', 'Roadmaps')}
+            </span>
+            <span className="text-(--text) font-mono">
+              {usage.draftsUsed}/{usage.draftLimit}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--surface-3)">
+            <motion.div 
+              className="h-full rounded-full bg-(--accent)" 
+              initial={{ width: 0 }}
+              animate={{ width: `${draftsPct}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+
+        {/* Chat limits */}
+        <div className="grid gap-1">
+          <div className="flex items-center justify-between text-[11px] font-medium">
+            <span className="text-(--text-h) flex items-center gap-1">
+              <HugeiconsIcon icon={AiChat02Icon} size={12} className="text-(--text)" />
+              {t('dashboard.aiUsage.chats', 'Chats')}
+            </span>
+            <span className="text-(--text) font-mono">
+              {usage.chatUsed || 0}/{usage.chatLimit || 30}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-(--surface-3)">
+            <motion.div 
+              className="h-full rounded-full bg-(--accent)" 
+              initial={{ width: 0 }}
+              animate={{ width: `${chatsPct}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {!isPro && (
+        <Link
+          to={`/${language}/upgrade`}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-(--accent) hover:bg-(--gd-primary-hover) px-3 py-1.5 text-[10px] font-bold text-white transition duration-200"
+        >
+          <HugeiconsIcon icon={CrownIcon} size={12} />
+          {t('dashboard.aiUsage.upgradeBtn', 'Upgrade')}
+        </Link>
+      )}
     </section>
   )
 }

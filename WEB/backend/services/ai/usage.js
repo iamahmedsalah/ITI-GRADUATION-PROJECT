@@ -52,11 +52,19 @@ export const invalidateAiUserCache = (userId) => {
 export const getAiSubscription = (user = {}) => {
   const plan = user.subscription?.plan || "free";
   const status = user.subscription?.status || "inactive";
-  const isSubscriber = plan === "pro" && ["active", "trialing"].includes(status);
+  const currentPeriodEnd = user.subscription?.currentPeriodEnd || null;
+  const hasActivePeriod = currentPeriodEnd
+    ? new Date(currentPeriodEnd).getTime() > Date.now()
+    : true;
+  const isSubscriber =
+    plan === "pro" &&
+    ["active", "trialing"].includes(status) &&
+    hasActivePeriod;
 
   return {
     plan,
     status,
+    currentPeriodEnd,
     isSubscriber,
   };
 };
@@ -135,7 +143,7 @@ export const buildAiAccessPayload = async (user) => {
 };
 
 export const getCachedAiAccessPayload = async (user) => {
-  const cacheKey = `ai-access:${toId(user._id)}:${user.subscription?.plan || "free"}:${user.subscription?.status || "inactive"}`;
+  const cacheKey = `ai-access:${toId(user._id)}:${user.subscription?.plan || "free"}:${user.subscription?.status || "inactive"}:${user.subscription?.currentPeriodEnd?.getTime?.() || user.subscription?.currentPeriodEnd || ""}`;
   const cached = aiCache.get(cacheKey);
   if (cached) return cached;
 

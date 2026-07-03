@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -9,21 +10,75 @@ import {
   CrownIcon,
   Route03Icon,
 } from '@hugeicons/core-free-icons'
+import CustomDropdown from '../../components/ui/CustomDropdown'
 import { useLanguage } from '../../context/LanguageContext'
 import { authQueryKey, fetchCurrentUser } from '../../libs/react-query'
+import {
+  createProAccessRequest,
+  fetchMyProAccessRequest,
+  type ProAccessRequest,
+} from '../../libs/pro-access-api'
+import { toast } from 'sonner'
 
 const planKeys = ['free', 'pro'] as const
+const goalOptions: Array<{ value: ProAccessRequest['learningGoal']; label: string }> = [
+  { value: 'career-switch', label: 'Career switch' },
+  { value: 'skill-up', label: 'Skill up' },
+  { value: 'portfolio-project', label: 'Portfolio project' },
+  { value: 'interview-prep', label: 'Interview prep' },
+  { value: 'academic-study', label: 'Academic study' },
+  { value: 'other', label: 'Other' },
+]
+// const durationOptions: Array<{ value: ProAccessRequest['expectedDurationDays']; label: string }> = [
+//   { value: 7, label: '1 week' },
+//   { value: 14, label: '2 weeks' },
+//   { value: 30, label: '1 month' },
+// ]
 
 export default function UpgradePage() {
   const { t } = useTranslation()
   const { language, direction } = useLanguage()
+  const queryClient = useQueryClient()
+  const [learningGoal, setLearningGoal] = useState<ProAccessRequest['learningGoal']>('skill-up')
+ // const [expectedDurationDays, setExpectedDurationDays] = useState<ProAccessRequest['expectedDurationDays']>(7)
+  const [needReason, setNeedReason] = useState('')
+  const [renderNow] = useState(() => Date.now())
   const authQuery = useQuery({
     queryKey: authQueryKey,
     queryFn: fetchCurrentUser,
     staleTime: 0,
   })
   const user = authQuery.data
-  const isPro = user?.subscription?.plan === 'pro' && ['active', 'trialing'].includes(user.subscription.status ?? '')
+  const periodEnd = user?.subscription?.currentPeriodEnd ? new Date(user.subscription.currentPeriodEnd).getTime() : null
+  const hasActivePeriod = periodEnd ? periodEnd > renderNow : true
+  const isPro =
+    user?.subscription?.plan === 'pro' &&
+    ['active', 'trialing'].includes(user.subscription.status ?? '') &&
+    hasActivePeriod
+  const requestQuery = useQuery({
+    queryKey: ['pro-access', 'mine'],
+    queryFn: fetchMyProAccessRequest,
+    enabled: Boolean(user) && !isPro,
+    staleTime: 0,
+  })
+  const latestRequest = requestQuery.data
+  const hasPendingRequest = latestRequest?.status === 'pending'
+  const requestMutation = useMutation({
+    mutationFn: () =>
+      createProAccessRequest({
+        learningGoal,
+        needReason,
+        expectedDurationDays: 7
+      }),
+    onSuccess: async () => {
+      toast.success(t('upgrade.requestSubmitted', { defaultValue: 'Pro access request submitted.' }))
+      setNeedReason('')
+      await queryClient.invalidateQueries({ queryKey: ['pro-access', 'mine'] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : t('upgrade.requestFailed', { defaultValue: 'Could not submit request.' }))
+    },
+  })
 
   return (
     <main className="min-h-screen bg-(--bg) px-4 py-8 text-(--text-h) sm:px-6 lg:px-8" dir={direction}>
@@ -98,6 +153,14 @@ export default function UpgradePage() {
                     <span className="rounded-squircle border border-(--accent-border) px-4 py-2 text-sm font-semibold text-(--accent)">
                       {t('upgrade.currentPlan')}
                     </span>
+                  ) : user && highlighted ? (
+                    <a
+                      href="#pro-access-request"
+                      className="inline-flex items-center gap-2 rounded-squircle bg-(--gd-primary) px-4 py-2 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover)"
+                    >
+                      <HugeiconsIcon icon={CrownIcon} size={17} />
+                      {t('upgrade.requestProAccess', { defaultValue: 'Request Pro Access' })}
+                    </a>
                   ) : user ? (
                     <span className="rounded-squircle border border-(--border) px-4 py-2 text-sm font-semibold text-(--text)">
                       {t('upgrade.adminManaged')}
@@ -116,6 +179,93 @@ export default function UpgradePage() {
             )
           })}
         </section>
+
+        {user && !isPro ? (
+          <section id="pro-access-request" className="rounded-xl border border-(--accent-border) bg-(--surface) p-6 shadow-(--shadow)">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-(--accent)">
+                  {t('upgrade.request.overline', { defaultValue: 'Learning grant' })}
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-(--text-h)">
+                  {t('upgrade.request.title', { defaultValue: 'Request one free week of Pro' })}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-(--text)">
+                  {t('upgrade.request.subtitle', {
+                    defaultValue: 'Tell the admin what you are trying to learn. If approved, you get 7 days of Pro access to test AI roadmap and chat features.',
+                  })}
+                </p>
+              </div>
+              {latestRequest ? (
+                <span className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-2 text-sm font-semibold text-(--text-h)">
+                  {t('upgrade.request.latestStatus', { defaultValue: 'Latest status' })}: {latestRequest.status}
+                </span>
+              ) : null}
+            </div>
+
+            {latestRequest?.status === 'approved' && latestRequest.accessEndsAt ? (
+              <p className="mt-5 rounded-squircle border border-(--accent-border) bg-(--accent-bg) px-4 py-3 text-sm text-(--accent)">
+                {t('upgrade.request.approvedUntil', { defaultValue: 'Approved until' })}: {new Date(latestRequest.accessEndsAt).toLocaleDateString()}
+              </p>
+            ) : null}
+            {latestRequest?.status === 'rejected' && latestRequest.adminNote ? (
+              <p className="mt-5 rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm text-(--text)">
+                {t('upgrade.request.adminNote', { defaultValue: 'Admin note' })}: {latestRequest.adminNote}
+              </p>
+            ) : null}
+
+            <div className="mt-5 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-(--text)">
+                  {t('upgrade.request.learningGoal', { defaultValue: 'Learning goal' })}
+                </span>
+                <CustomDropdown
+                  value={learningGoal}
+                  disabled={hasPendingRequest || requestMutation.isPending}
+                  options={goalOptions}
+                  onChange={(value) => setLearningGoal(value as ProAccessRequest['learningGoal'])}
+                  className="w-full"
+                  buttonClassName="bg-(--surface-2)"
+                />
+              </label>
+              <label className="grid gap-2 md:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-(--text)">
+                  {t('upgrade.request.reason', { defaultValue: 'Why do you need AI roadmap/chat?' })}
+                </span>
+                <textarea
+                  value={needReason}
+                  disabled={hasPendingRequest || requestMutation.isPending}
+                  onChange={(event) => setNeedReason(event.target.value)}
+                  rows={5}
+                  maxLength={1000}
+                  placeholder={t('upgrade.request.reasonPlaceholder', {
+                    defaultValue: 'Example: I am preparing for frontend interviews and need AI help organizing topics, explaining weak points, and generating a focused roadmap.',
+                  })}
+                  className="rounded-squircle border border-(--border) bg-(--surface-2) px-4 py-3 text-sm leading-6 text-(--text-h) outline-none"
+                />
+              </label>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={hasPendingRequest || requestMutation.isPending || needReason.trim().length < 20}
+                onClick={() => requestMutation.mutate()}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-squircle bg-(--gd-primary) px-5 py-3 text-sm font-semibold text-white transition hover:bg-(--gd-primary-hover) disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <HugeiconsIcon icon={CrownIcon} size={18} />
+                {requestMutation.isPending
+                  ? t('upgrade.request.submitting', { defaultValue: 'Submitting...' })
+                  : hasPendingRequest
+                    ? t('upgrade.request.pending', { defaultValue: 'Request pending' })
+                    : t('upgrade.request.submit', { defaultValue: 'Submit request' })}
+              </button>
+              <span className="text-sm text-(--text)">
+                {t('upgrade.request.approvalNote', { defaultValue: 'Approval grants 7 free days. After that, a subscription is required.' })}
+              </span>
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid gap-4 rounded-xl border border-(--border) bg-(--surface) p-6 shadow-(--shadow) md:grid-cols-3">
           {[

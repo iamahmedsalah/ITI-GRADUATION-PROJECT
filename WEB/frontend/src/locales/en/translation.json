@@ -571,6 +571,9 @@
       "passwordSubtitle": "Change your password with your current credentials.",
       "currentPassword": "Current password",
       "newPassword": "New password",
+      "githubUrl": "GitHub URL",
+      "linkedInUrl": "LinkedIn URL",
+      "gitLabUrl": "GitLab URL",
       "saveProfile": "Save profile",
       "savePassword": "Update password",
       "saving": "Saving...",
@@ -617,6 +620,64 @@
         "undoCode": "Cancellation Code",
         "sendUndoCode": "Send Cancellation Code"
       }
+    },
+    "sharing": {
+      "title": "Profile Visibility & Sharing",
+      "subtitle": "Choose whether your profile is public or private to others.",
+      "statusPublic": "Public Profile",
+      "statusPrivate": "Private Profile",
+      "descPublic": "Anyone with the link can view your skills and learning roadmap.",
+      "descPrivate": "Only you can view your profile details and learning progress.",
+      "link": "Shareable Profile Link",
+      "copyBtn": "Copy Link",
+      "previewBtn": "Preview Profile",
+      "qrInstruction": "Scan this QR code with a mobile device to view this profile.",
+      "copied": "Copied profile link!",
+      "madePublic": "Profile is now public!",
+      "madePrivate": "Profile is now private!",
+      "error": "Could not update visibility."
+    },
+    "badges": {
+      "day": "Day",
+      "days": "Days",
+      "genesisTitle": "Genesis Badge",
+      "genesisDesc": "Unlocks on your 1st login streak day!",
+      "weekTitle": "Consistent Explorer",
+      "weekDesc": "Maintained a login streak for 1 week (7 days).",
+      "monthTitle": "Dedicated Scholar",
+      "monthDesc": "Maintained a login streak for 1 month (30 days).",
+      "threeMonthsTitle": "Quarterly Master",
+      "threeMonthsDesc": "Maintained a login streak for 3 months (90 days).",
+      "sixMonthsTitle": "Semi-Annual Elite",
+      "sixMonthsDesc": "Maintained a login streak for 6 months (180 days).",
+      "yearTitle": "Annual Legend",
+      "yearDesc": "Maintained a login streak for 1 year (365 days) and get 1 Month Free Pro!",
+      "prizeNotice": "+ 1 Month Free Pro!"
+    },
+    "public": {
+      "loading": "Loading public profile...",
+      "privateTitle": "Private Profile",
+      "privateDesc": "This user has set their profile to private. Only the account owner can view these details.",
+      "notFoundTitle": "Profile Not Found",
+      "notFoundDesc": "The profile you are looking for does not exist or has been deleted.",
+      "goHome": "Back to Dashboard",
+      "joined": "Joined",
+      "about": "About",
+      "interests": "Interests",
+      "learningGoals": "Learning Goals",
+      "achievements": "Achievements & Badges",
+      "stats": "Stats",
+      "currentStreak": "Current Streak",
+      "longestStreak": "Longest Streak",
+      "roadmaps": "Roadmaps Followed",
+      "details": "Details",
+      "location": "Location",
+      "website": "Website",
+      "day": "day",
+      "days": "days"
+    },
+    "skills": {
+      "title": "Skills & Technologies"
     }
   },
   "dashboard": {
@@ -816,7 +877,20 @@
       "free": "Free Plan",
       "status": "Status",
       "renewsAt": "Current period ends",
-      "upgrade": "Upgrade to Pro"
+      "upgrade": "Upgrade to Pro",
+      "statuses": {
+        "inactive": "inactive",
+        "active": "active",
+        "trialing": "trialing",
+        "pastDue": "past due",
+        "canceled": "canceled"
+      }
+    },
+    "onboarding": {
+      "title": "Kickstart Your Learning Journey!",
+      "subtitle": "You have not started tracking any roadmap yet. Generate a custom roadmap tailored by AI, or explore standard templates.",
+      "ctaAi": "Generate AI Roadmap",
+      "ctaBrowse": "Browse Templates"
     }
   },
   "auth": {
@@ -1435,5 +1509,10 @@
     "offlineText": "Please check your internet connection or Wi-Fi settings.",
     "onlineTitle": "Back Online!",
     "onlineText": "Internet connection restored. You can now continue using the app."
+  },
+  "whatsNew": {
+    "triggerBtn": "What's New",
+    "badge": "NEW RELEASE",
+    "cta": "Got It, Thanks!"
   }
 }

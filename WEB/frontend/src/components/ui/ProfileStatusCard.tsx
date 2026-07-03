@@ -15,7 +15,7 @@ export default function ProfileStatusCard({ user, t, variants }: Props) {
   ]
 
   return (
-    <motion.article variants={variants} className="rounded-3xl border border-(--border) bg-(--surface) p-5 sm:p-6">
+    <motion.article variants={variants} className="rounded-4xl border border-(--border) bg-(--surface) p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-(--text-h)">{t('profile.status')}</h2>
       <div className="mt-4 grid gap-3">
         {items.map((item) => (

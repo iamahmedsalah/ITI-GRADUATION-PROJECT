@@ -358,7 +358,7 @@ export const adminLogsSchema = z.object({
   body: z.object({}).passthrough(),
   params: z.object({}).passthrough(),
   query: paginationQuerySchema.extend({
-    targetType: z.enum(["user", "roadmapTemplate", "course", "contactMessage", "system"]).optional(),
+    targetType: z.enum(["user", "roadmapTemplate", "course", "contactMessage", "proAccessRequest", "system"]).optional(),
     action: z.string().trim().max(100).optional(),
   }),
 });

@@ -8,6 +8,7 @@ import UserRoadmap from "../models/user/userRoadmapModel.js";
 import UserRoadmapStepProgress from "../models/user/userRoadmapStepProgressModel.js";
 import { resolveUserAvatarUrl } from "../config/cloudinary.js";
 import { toPublicUser } from "../helpers/auth.helpers.js";
+import UserProfile from "../models/user/userProfileModel.js";
 
 export const getPreferences = async (req, res) => {
   try {
@@ -220,7 +221,17 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const { username, Fname, Lname } = req.body;
+    const {
+      username,
+      Fname,
+      Lname,
+      visibility,
+      githubUrl,
+      linkedInUrl,
+      gitLabUrl,
+      xUrl,
+      websiteUrl,
+    } = req.body;
 
     if (username && username !== user.username) {
       const usernameOwner = await User.findOne({
@@ -247,13 +258,39 @@ export const updateProfile = async (req, res) => {
       user.Lname = Lname;
     }
 
+    const profileUpdate = {};
+    if (visibility) profileUpdate.visibility = visibility;
+    if (githubUrl !== undefined) profileUpdate.githubUrl = githubUrl;
+    if (linkedInUrl !== undefined) profileUpdate.linkedInUrl = linkedInUrl;
+    if (gitLabUrl !== undefined) profileUpdate.gitLabUrl = gitLabUrl;
+    if (xUrl !== undefined) profileUpdate.xUrl = xUrl;
+    if (websiteUrl !== undefined) profileUpdate.websiteUrl = websiteUrl;
+
+    if (Object.keys(profileUpdate).length > 0) {
+      await UserProfile.findOneAndUpdate(
+        { user: user._id },
+        profileUpdate,
+        { new: true, upsert: true }
+      );
+    }
+
     await user.save();
     const hasPreferences = await UserPreference.exists({ user: user._id });
+    const profile = await UserProfile.findOne({ user: user._id }).lean();
+    const profileVisibility = profile?.visibility || "public";
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: toPublicUser(user, { hasPreferences }),
+      user: {
+        ...toPublicUser(user, { hasPreferences }),
+        profileVisibility,
+        githubUrl: profile?.githubUrl || "",
+        linkedInUrl: profile?.linkedInUrl || "",
+        gitLabUrl: profile?.gitLabUrl || "",
+        xUrl: profile?.xUrl || "",
+        websiteUrl: profile?.websiteUrl || "",
+      },
     });
   } catch (error) {
     if (error?.code === 11000) {
@@ -333,6 +370,103 @@ export const updateAvatar = async (req, res) => {
     return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Could not update avatar.",
+    });
+  }
+};
+
+export const getPublicProfile = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username }).select(
+      "username Fname Lname avatarUrl createdAt loginStreak"
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const profile = await UserProfile.findOne({ user: user._id }).lean();
+    const visibility = profile?.visibility || "public";
+
+    if (visibility === "private") {
+      return res.status(403).json({ success: false, message: "This profile is private." });
+    }
+
+    const preference = await UserPreference.findOne({ user: user._id }).lean();
+    
+    // Load all user roadmaps populated with template details
+    const roadmaps = await UserRoadmap.find({ user: user._id })
+      .populate("template", "title slug source description targetLevel templateType tags estimatedTotalMinutes")
+      .lean();
+
+    const roadmapsCount = roadmaps.length;
+    
+    // Filter completed roadmaps
+    const completedRoadmaps = roadmaps.filter((r) => r.status === "completed");
+
+    // Filter AI-generated roadmaps
+    const aiRoadmaps = roadmaps.filter(
+      (r) =>
+        r.template?.source === "user-ai" ||
+        r.template?.source === "admin-ai" ||
+        String(r.template?.source || "").endsWith("-ai")
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          _id: user._id,
+          username: user.username,
+          Fname: user.Fname,
+          Lname: user.Lname,
+          name: `${user.Fname || ""} ${user.Lname || ""}`.trim() || user.username,
+          avatarUrl: user.avatarUrl || null,
+          createdAt: user.createdAt,
+          loginStreak: user.loginStreak || { current: 0, longest: 0 },
+        },
+        profile: {
+          bio: profile?.bio || "",
+          headline: profile?.headline || "",
+          location: profile?.location || "",
+          githubUrl: profile?.githubUrl || "",
+          linkedInUrl: profile?.linkedInUrl || "",
+          gitLabUrl: profile?.gitLabUrl || "",
+          xUrl: profile?.xUrl || "",
+          websiteUrl: profile?.websiteUrl || "",
+          visibility,
+        },
+        preferences: preference
+          ? {
+              interests: preference.interests || [],
+              learningGoals: preference.learningGoals || [],
+              skillLevel: preference.skillLevel || "beginner",
+            }
+          : null,
+        stats: {
+          roadmapsCount,
+        },
+        completedRoadmaps: completedRoadmaps.map((r) => ({
+          _id: r._id,
+          title: r.template?.title || "Untitled Roadmap",
+          slug: r.template?.slug || "",
+          progressPercent: r.progressPercent,
+          completedAt: r.completedAt || r.updatedAt,
+        })),
+        aiRoadmaps: aiRoadmaps.map((r) => ({
+          _id: r._id,
+          title: r.template?.title || "Untitled AI Roadmap",
+          slug: r.template?.slug || "",
+          progressPercent: r.progressPercent,
+          createdAt: r.createdAt,
+        })),
+      },
+    });
+  } catch (error) {
+    logger.error("Get public profile error", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not retrieve public profile.",
     });
   }
 };

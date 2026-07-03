@@ -1,61 +1,62 @@
-import { lazy } from "react";
+import { lazyWithRetry } from "./lazyWithRetry";
 
-export const NotFound = lazy(() => import("../routes/common/NotFound"));
-export const HomePage = lazy(() => import("../routes/user/HomePage"));
-export const LoginPage = lazy(() => import("../routes/user/LoginPage"));
-export const ForgotPasswordPage = lazy(
+export const NotFound = lazyWithRetry(() => import("../routes/common/NotFound"));
+export const HomePage = lazyWithRetry(() => import("../routes/user/HomePage"));
+export const LoginPage = lazyWithRetry(() => import("../routes/user/LoginPage"));
+export const ForgotPasswordPage = lazyWithRetry(
   () => import("../routes/user/ForgotPasswordPage"),
 );
-export const ResetPasswordPage = lazy(
+export const ResetPasswordPage = lazyWithRetry(
   () => import("../routes/user/ResetPasswordPage"),
 );
-export const AdminLoginPage = lazy(
+export const AdminLoginPage = lazyWithRetry(
   () => import("../routes/admin/AdminLoginPage"),
 );
-export const AdminForgotPasswordPage = lazy(
+export const AdminForgotPasswordPage = lazyWithRetry(
   () => import("../routes/admin/AdminForgotPasswordPage"),
 );
-export const AdminResetPasswordPage = lazy(
+export const AdminResetPasswordPage = lazyWithRetry(
   () => import("../routes/admin/AdminResetPasswordPage"),
 );
-export const AdminDashboardPage = lazy(
+export const AdminDashboardPage = lazyWithRetry(
   () => import("../routes/admin/AdminDashboardPage"),
 );
-export const AdminProfilePage = lazy(
+export const AdminProfilePage = lazyWithRetry(
   () => import("../routes/admin/AdminProfilePage"),
 );
-export const AdminUsersPage = lazy(
+export const AdminUsersPage = lazyWithRetry(
   () => import("../routes/admin/AdminUsersPage"),
 );
-export const AdminRoadmapsPage = lazy(
+export const AdminRoadmapsPage = lazyWithRetry(
   () => import("../routes/admin/AdminRoadmapsPage"),
 );
-export const AdminRoadmapDetailPage = lazy(
+export const AdminRoadmapDetailPage = lazyWithRetry(
   () => import("../routes/admin/AdminRoadmapDetailPage"),
 );
-export const AdminCoursesPage = lazy(
+export const AdminCoursesPage = lazyWithRetry(
   () => import("../routes/admin/AdminCoursesPage"),
 );
-export const AdminCourseDetailPage = lazy(
+export const AdminCourseDetailPage = lazyWithRetry(
   () => import("../routes/admin/AdminCourseDetailPage"),
 );
-export const AdminContactMessagesPage = lazy(
+export const AdminContactMessagesPage = lazyWithRetry(
   () => import("../routes/admin/AdminContactMessagesPage"),
 );
-export const SignupPage = lazy(() => import("../routes/user/SignupPage"));
-export const VerifyEmailPage = lazy(
+export const SignupPage = lazyWithRetry(() => import("../routes/user/SignupPage"));
+export const VerifyEmailPage = lazyWithRetry(
   () => import("../routes/user/VerifyEmailPage"),
 );
-export const DashboardPage = lazy(() => import("../routes/user/DashboardPage"));
-export const AiChatPage = lazy(() => import("../routes/user/AiChatPage"));
-export const AiRoadmapPage = lazy(() => import("../routes/user/AiRoadmapPage"));
-export const UpgradePage = lazy(() => import("../routes/user/UpgradePage"));
-export const ProfilePage = lazy(() => import("../routes/user/ProfilePage"));
-export const PreferencesPage = lazy(() => import("../routes/user/PreferencesPage"));
-export const MyRoadmapsPage = lazy(() => import("../routes/user/MyRoadmapsPage"));
-export const FaqsPage = lazy(() => import("../routes/user/FaqsPage"));
-export const ContactPage = lazy(() => import("../routes/user/ContactUsPage"));
-export const GuidePage = lazy(() => import("../routes/user/GuidePage"));
-export const RoadmapPage = lazy(() => import("../routes/user/RoadmapPage"));
-export const CoursePage = lazy(() => import("../routes/user/CoursePage"));
+export const DashboardPage = lazyWithRetry(() => import("../routes/user/DashboardPage"));
+export const AiChatPage = lazyWithRetry(() => import("../routes/user/AiChatPage"));
+export const AiRoadmapPage = lazyWithRetry(() => import("../routes/user/AiRoadmapPage"));
+export const UpgradePage = lazyWithRetry(() => import("../routes/user/UpgradePage"));
+export const ProfilePage = lazyWithRetry(() => import("../routes/user/ProfilePage"));
+export const PreferencesPage = lazyWithRetry(() => import("../routes/user/PreferencesPage"));
+export const MyRoadmapsPage = lazyWithRetry(() => import("../routes/user/MyRoadmapsPage"));
+export const FaqsPage = lazyWithRetry(() => import("../routes/user/FaqsPage"));
+export const ContactPage = lazyWithRetry(() => import("../routes/user/ContactUsPage"));
+export const GuidePage = lazyWithRetry(() => import("../routes/user/GuidePage"));
+export const RoadmapPage = lazyWithRetry(() => import("../routes/user/RoadmapPage"));
+export const CoursePage = lazyWithRetry(() => import("../routes/user/CoursePage"));
+export const PublicProfilePage = lazyWithRetry(() => import("../routes/user/PublicProfilePage"));
 
