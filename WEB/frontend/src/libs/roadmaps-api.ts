@@ -126,6 +126,7 @@ export async function fetchRoadmapTemplates(
   limit = 18,
   templateType?: RoadmapTemplate['templateType'],
   source?: RoadmapTemplate['source'],
+  ownership?: 'admin' | 'student',
 ) {
   const searchParams = new URLSearchParams({
     limit: String(limit),
@@ -137,6 +138,10 @@ export async function fetchRoadmapTemplates(
 
   if (source) {
     searchParams.set('source', source)
+  }
+
+  if (ownership) {
+    searchParams.set('ownership', ownership)
   }
 
   const { response, data } = await apiGet<RoadmapTemplatesResponse>(
@@ -156,6 +161,7 @@ export async function searchRoadmaps(
   query: string,
   limit = 18,
   templateType?: RoadmapTemplate['templateType'],
+  ownership?: 'admin' | 'student',
 ) {
   const trimmedQuery = query.trim()
   const searchParams = new URLSearchParams({
@@ -168,6 +174,10 @@ export async function searchRoadmaps(
 
   if (templateType) {
     searchParams.set('templateType', templateType)
+  }
+
+  if (ownership) {
+    searchParams.set('ownership', ownership)
   }
 
   const { response, data } = await apiGet<RoadmapSearchResponse>(

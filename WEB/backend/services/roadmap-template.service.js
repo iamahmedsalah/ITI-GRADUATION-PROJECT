@@ -15,6 +15,20 @@ import {
 
 //  ROADMAP TEMPLATE SERVICES
 
+const applyOwnershipFilter = (query, ownership) => {
+  if (ownership === "student") {
+    query.owner = { $exists: true, $ne: null };
+    return;
+  }
+
+  if (ownership === "admin") {
+    query.$and = [
+      ...(query.$and || []),
+      { $or: [{ owner: { $exists: false } }, { owner: null }] },
+    ];
+  }
+};
+
 export const createRoadmapTemplate = async (req, res) => {
   const userId = req.user._id;
   const {
@@ -269,7 +283,15 @@ export const getRoadmapTopic = async (req, res) => {
 };
 
 export const getAllRoadmapTemplates = async (req, res) => {
-  const { targetLevel, targetRole, templateType, page = 1, limit = 10, source } = req.query;
+  const {
+    targetLevel,
+    targetRole,
+    templateType,
+    page = 1,
+    limit = 10,
+    source,
+    ownership,
+  } = req.query;
 
   try {
     const query = publicTemplateFilter();
@@ -277,8 +299,12 @@ export const getAllRoadmapTemplates = async (req, res) => {
     if (targetLevel) query.targetLevel = targetLevel;
     if (targetRole) query.targetRole = targetRole;
     if (source) query.source = source;
+    applyOwnershipFilter(query, ownership);
     if (templateType === "roleBased") {
-      query.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+      query.$and = [
+        ...(query.$and || []),
+        { $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] },
+      ];
     } else if (templateType) {
       query.templateType = templateType;
     }
@@ -322,7 +348,14 @@ export const getAllRoadmapTemplates = async (req, res) => {
 };
 
 export const searchRoadmapsAndTopics = async (req, res) => {
-  const { q = "", targetLevel, targetRole, templateType, limit = 10 } = req.query;
+  const {
+    q = "",
+    targetLevel,
+    targetRole,
+    templateType,
+    limit = 10,
+    ownership,
+  } = req.query;
 
   try {
     const queryText = String(q).trim();
@@ -331,8 +364,12 @@ export const searchRoadmapsAndTopics = async (req, res) => {
 
     if (targetLevel) baseFilters.targetLevel = targetLevel;
     if (targetRole) baseFilters.targetRole = targetRole;
+    applyOwnershipFilter(baseFilters, ownership);
     if (templateType === "roleBased") {
-      baseFilters.$and = [{ $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] }];
+      baseFilters.$and = [
+        ...(baseFilters.$and || []),
+        { $or: [{ templateType: "roleBased" }, { templateType: { $exists: false } }] },
+      ];
     } else if (templateType) {
       baseFilters.templateType = templateType;
     }

@@ -167,14 +167,14 @@ export default function RoadmapLanding() {
       : null
 
   const templatesQuery = useQuery({
-    queryKey: ['roadmaps', 'templates', 50, selectedType],
-    queryFn: () => fetchRoadmapTemplates(50, selectedType ?? undefined),
+    queryKey: ['roadmaps', 'templates', 50, selectedType, 'admin'],
+    queryFn: () => fetchRoadmapTemplates(50, selectedType ?? undefined, undefined, 'admin'),
     staleTime: 60_000,
   })
 
   const searchQuery = useQuery({
-    queryKey: ['roadmaps', 'search', trimmedQuery, selectedType],
-    queryFn: () => searchRoadmaps(trimmedQuery, 18, selectedType ?? undefined),
+    queryKey: ['roadmaps', 'search', trimmedQuery, selectedType, 'admin'],
+    queryFn: () => searchRoadmaps(trimmedQuery, 18, selectedType ?? undefined, 'admin'),
     enabled: trimmedQuery.length > 0,
     staleTime: 30_000,
   })
