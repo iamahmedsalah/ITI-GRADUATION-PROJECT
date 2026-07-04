@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -21,14 +21,6 @@ import {
 import { toast } from 'sonner'
 
 const planKeys = ['free', 'pro'] as const
-const goalOptions: Array<{ value: ProAccessRequest['learningGoal']; label: string }> = [
-  { value: 'career-switch', label: 'Career switch' },
-  { value: 'skill-up', label: 'Skill up' },
-  { value: 'portfolio-project', label: 'Portfolio project' },
-  { value: 'interview-prep', label: 'Interview prep' },
-  { value: 'academic-study', label: 'Academic study' },
-  { value: 'other', label: 'Other' },
-]
 // const durationOptions: Array<{ value: ProAccessRequest['expectedDurationDays']; label: string }> = [
 //   { value: 7, label: '1 week' },
 //   { value: 14, label: '2 weeks' },
@@ -39,6 +31,17 @@ export default function UpgradePage() {
   const { t } = useTranslation()
   const { language, direction } = useLanguage()
   const queryClient = useQueryClient()
+  const goalOptions = useMemo<Array<{ value: ProAccessRequest['learningGoal']; label: string }>>(
+    () => [
+      { value: 'career-switch', label: t('upgrade.request.goals.careerSwitch') },
+      { value: 'skill-up', label: t('upgrade.request.goals.skillUp') },
+      { value: 'portfolio-project', label: t('upgrade.request.goals.portfolioProject') },
+      { value: 'interview-prep', label: t('upgrade.request.goals.interviewPrep') },
+      { value: 'academic-study', label: t('upgrade.request.goals.academicStudy') },
+      { value: 'other', label: t('upgrade.request.goals.other') },
+    ],
+    [t],
+  )
   const [learningGoal, setLearningGoal] = useState<ProAccessRequest['learningGoal']>('skill-up')
  // const [expectedDurationDays, setExpectedDurationDays] = useState<ProAccessRequest['expectedDurationDays']>(7)
   const [needReason, setNeedReason] = useState('')

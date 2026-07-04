@@ -334,7 +334,7 @@ export default function AiRoadmapPage() {
       <div className="mx-auto grid max-w-7xl gap-5">
         <section
           className={[
-            'grid gap-5 rounded-2xl border border-(--border) bg-gradient-to-b from-(--surface) to-(--surface-2) p-4 shadow-lg shadow-black/10 sm:p-6',
+            'grid gap-5 rounded-2xl border border-(--border) bg-linear-to-b from-(--surface) to-(--surface-2) p-4 shadow-lg shadow-black/10 sm:p-6',
             isManagerOpen ? 'lg:grid-cols-[minmax(0,1fr)_minmax(19rem,23rem)]' : '',
           ].join(' ')}
         >
@@ -418,7 +418,7 @@ export default function AiRoadmapPage() {
 
               {/* Pre-build AI Disclaimer */}
               <div className="flex items-start gap-3 rounded-xl border border-(--accent-border) bg-(--accent-bg) p-4 text-xs leading-5 text-(--text) backdrop-blur-sm">
-                <HugeiconsIcon icon={Alert02Icon} size={18} className="text-(--accent) mt-0.5 flex-shrink-0" />
+                <HugeiconsIcon icon={Alert02Icon} size={18} className="text-(--accent) mt-0.5 shrink-0" />
                 <p>
                   <strong className="font-semibold text-(--text-h)">{t('aiRoadmap.disclaimerTitle', { defaultValue: 'Note:' })}</strong>{' '}
                   {t('aiRoadmap.disclaimerText', {
